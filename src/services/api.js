@@ -1,0 +1,46 @@
+import axios from 'axios';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 15000,
+});
+
+// Request interceptor to attach JWT Authorization header
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response interceptor to handle errors cleanly
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Handle unauthorized (401) or forbidden (403)
+    if (error.response?.status === 401) {
+      // Clear token if expired or invalid when accessing protected endpoints
+      const isLoginRequest = error.config?.url?.includes('/api/auth/login');
+      if (!isLoginRequest) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('permissions');
+        localStorage.removeItem('screens');
+        // Let component or route handle redirect
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default api;
+export { API_BASE_URL };
