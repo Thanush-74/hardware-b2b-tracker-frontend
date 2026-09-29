@@ -298,6 +298,7 @@ const LoginPage = () => {
             <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 1, fontWeight: 600 }}>
               SEEDED CREDENTIALS:
             </Typography>
+
             <Chip
               label="admin@company.com / password"
               size="small"

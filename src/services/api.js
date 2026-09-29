@@ -26,7 +26,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle unauthorized (401) or forbidden (403)
+    // Handle unauthorized (401)
     if (error.response?.status === 401) {
       // Clear token if expired or invalid when accessing protected endpoints
       const isLoginRequest = error.config?.url?.includes('/api/auth/login');
@@ -35,7 +35,10 @@ api.interceptors.response.use(
         localStorage.removeItem('user');
         localStorage.removeItem('permissions');
         localStorage.removeItem('screens');
-        // Let component or route handle redirect
+        
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('auth:unauthorized'));
+        }
       }
     }
     return Promise.reject(error);

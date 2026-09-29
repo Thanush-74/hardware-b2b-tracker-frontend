@@ -70,26 +70,61 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('screens');
   }, []);
 
+  // Listen for unauthorized 401 events from Axios interceptor
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      logout();
+    };
+
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => {
+      window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    };
+  }, [logout]);
+
+  // Check permission strictly against backend-returned permissions list
   const hasPermission = useCallback(
     (permissionSlug) => {
-      if (!user) return false;
-      if (user.role?.slug === 'admin') return true;
+      if (!permissions || permissions.length === 0) return false;
       return permissions.some((p) => p.slug === permissionSlug);
     },
-    [user, permissions]
+    [permissions]
   );
 
+  // Check screen strictly against backend-returned screens list (by slug)
   const hasScreen = useCallback(
     (screenSlug) => {
-      if (!user) return false;
-      if (user.role?.slug === 'admin') return true;
+      if (!screens || screens.length === 0) return false;
       return screens.some((s) => s.slug === screenSlug);
     },
-    [user, screens]
+    [screens]
   );
+
+  // Check screen strictly against backend-returned screens list (by route)
+  const hasScreenRoute = useCallback(
+    (routePath) => {
+      if (!screens || screens.length === 0) return false;
+      const normalizedPath = (routePath || '').replace(/\/$/, '') || '/';
+      return screens.some((s) => {
+        const screenRoute = (s.route || '').replace(/\/$/, '') || '/';
+        return screenRoute === normalizedPath;
+      });
+    },
+    [screens]
+  );
+
+  // Determine initial default route for the user based on permitted screens
+  const getDefaultRoute = useCallback(() => {
+    if (!screens || screens.length === 0) return '/login';
+    // If dashboard is permitted, use dashboard; otherwise first permitted screen route
+    const dashboardScreen = screens.find((s) => s.slug === 'dashboard' || s.route === '/dashboard');
+    if (dashboardScreen) return dashboardScreen.route || '/dashboard';
+    return screens[0]?.route || '/';
+  }, [screens]);
 
   const value = {
     user,
+    role: user?.role || null,
     token,
     permissions,
     screens,
@@ -99,6 +134,8 @@ export const AuthProvider = ({ children }) => {
     logout,
     hasPermission,
     hasScreen,
+    hasScreenRoute,
+    getDefaultRoute,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
