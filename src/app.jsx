@@ -17,42 +17,50 @@ const AuthenticatedSessionView = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        display: 'flex',
+        display: 'grid',
         alignItems: 'center',
         justifyContent: 'center',
         p: 2,
-        backgroundColor: 'background.default',
+        backgroundColor: '#f8fafc',
       }}
     >
       <Paper
-        elevation={6}
+        elevation={0}
         sx={{
           p: 4,
-          borderRadius: 3,
+          borderRadius: 2,
           maxWidth: 580,
           width: '100%',
           textAlign: 'center',
+          backgroundColor: '#ffffff',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
         }}
       >
         <Chip
           label="✓ Authentication & RBAC Synced"
-          color="success"
           size="small"
-          sx={{ mb: 2, fontWeight: 700 }}
+          sx={{
+            mb: 2,
+            fontWeight: 600,
+            backgroundColor: '#f0fdf4',
+            color: '#15803d',
+            border: '1px solid #bbf7d0',
+          }}
         />
 
-        <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary' }}>
-          TITAN<Box component="span" sx={{ color: 'primary.main' }}>CORE</Box>
+        <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a' }}>
+          TITAN<Box component="span" sx={{ color: '#2563eb' }}>CORE</Box>
         </Typography>
-        <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, letterSpacing: '0.08em', display: 'block', mb: 3 }}>
+        <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, letterSpacing: '0.08em', display: 'block', mb: 3 }}>
           B2B HARDWARE TRACKER
         </Typography>
 
         <Box
           sx={{
-            backgroundColor: 'rgba(0, 0, 0, 0.25)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: 2,
+            backgroundColor: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            borderRadius: 1.5,
             p: 2.5,
             mb: 3,
             textAlign: 'left',
@@ -60,38 +68,39 @@ const AuthenticatedSessionView = () => {
         >
           <Stack spacing={1.5}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>User:</Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
+              <Typography variant="body2" sx={{ color: '#64748b' }}>User:</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a' }}>
                 {user?.first_name} {user?.last_name}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>Email:</Typography>
-              <Typography variant="body2" sx={{ fontFamily: 'monospace', color: 'text.primary' }}>
+              <Typography variant="body2" sx={{ color: '#64748b' }}>Email:</Typography>
+              <Typography variant="body2" sx={{ fontFamily: 'monospace', color: '#0f172a' }}>
                 {user?.email}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>Role:</Typography>
+              <Typography variant="body2" sx={{ color: '#64748b' }}>Role:</Typography>
               <Chip
                 label={role?.name || role?.slug || 'Staff'}
                 size="small"
                 sx={{
-                  backgroundColor: 'rgba(245, 158, 11, 0.15)',
-                  color: 'primary.light',
-                  fontWeight: 700,
+                  backgroundColor: '#eff6ff',
+                  color: '#1d4ed8',
+                  border: '1px solid #bfdbfe',
+                  fontWeight: 600,
                   fontSize: '0.75rem',
                 }}
               />
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>Backend Permissions:</Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
+              <Typography variant="body2" sx={{ color: '#64748b' }}>Backend Permissions:</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a' }}>
                 {permissions?.length || 0} granted
               </Typography>
             </Box>
-            <Box sx={{ pt: 1, borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
-              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mb: 1 }}>
+            <Box sx={{ pt: 1, borderTop: '1px solid #e2e8f0' }}>
+              <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, display: 'block', mb: 1 }}>
                 ACCESSIBLE SCREENS FROM BACKEND ({screens?.length || 0}):
               </Typography>
               <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
@@ -101,17 +110,17 @@ const AuthenticatedSessionView = () => {
                       key={screen.id || screen.slug}
                       label={`${screen.name} (${screen.route})`}
                       size="small"
-                      variant="outlined"
                       sx={{
                         fontSize: '0.75rem',
-                        borderColor: 'rgba(245, 158, 11, 0.3)',
-                        color: 'text.primary',
-                        backgroundColor: 'rgba(245, 158, 11, 0.05)',
+                        borderColor: '#e2e8f0',
+                        color: '#0f172a',
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #e2e8f0',
                       }}
                     />
                   ))
                 ) : (
-                  <Typography variant="caption" sx={{ color: 'warning.main' }}>
+                  <Typography variant="caption" sx={{ color: '#d97706' }}>
                     No accessible screens granted by backend.
                   </Typography>
                 )}
@@ -126,7 +135,12 @@ const AuthenticatedSessionView = () => {
           onClick={logout}
           sx={{
             py: 1.2,
-            fontWeight: 700,
+            fontWeight: 600,
+            backgroundColor: '#2563eb',
+            color: '#ffffff',
+            '&:hover': {
+              backgroundColor: '#1d4ed8',
+            },
           }}
         >
           Sign Out
@@ -152,10 +166,9 @@ import ExpenseManagementPage from './pages/ExpenseManagementPage';
 import InspectionManagementPage from './pages/InspectionManagementPage';
 import BusinessModulePage from './pages/BusinessModulePage';
 
-// Handles redirecting / to user's first accessible screen or /dashboard
+// Handles redirecting / directly to /dashboard
 const RootRedirect = () => {
-  const { getDefaultRoute } = useAuth();
-  return <Navigate to={getDefaultRoute()} replace />;
+  return <Navigate to="/dashboard" replace />;
 };
 
 function App() {
@@ -184,8 +197,10 @@ function App() {
                   </ProtectedRoute>
                 }
               >
-                {/* Root redirects to the default accessible route (e.g. /dashboard) */}
+                {/* Root redirects directly to /dashboard */}
                 <Route path="/" element={<RootRedirect />} />
+
+                {/* Dashboard Screen - Active */}
                 <Route
                   path="/dashboard"
                   element={
@@ -194,6 +209,7 @@ function App() {
                     </ScreenRoute>
                   }
                 />
+
                 <Route
                   path="/staff"
                   element={
@@ -282,7 +298,6 @@ function App() {
                     </ScreenRoute>
                   }
                 />
-                {/* Admin Role Management protected by AdminRoute */}
                 <Route
                   path="/roles"
                   element={

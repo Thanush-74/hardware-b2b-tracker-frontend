@@ -29,10 +29,10 @@ import { getStaff } from '../services/staffService';
 import { ManufacturingIcon, StaffIcon } from '../components/Icons';
 
 const WORK_STATUS_COLORS = {
-  Working: { bg: 'rgba(16, 185, 129, 0.15)', text: '#10B981', border: 'rgba(16, 185, 129, 0.3)' },
-  'On Break': { bg: 'rgba(245, 158, 11, 0.15)', text: '#F59E0B', border: 'rgba(245, 158, 11, 0.3)' },
-  Completed: { bg: 'rgba(59, 130, 246, 0.15)', text: '#3B82F6', border: 'rgba(59, 130, 246, 0.3)' },
-  Standby: { bg: 'rgba(148, 163, 184, 0.15)', text: '#94A3B8', border: 'rgba(148, 163, 184, 0.3)' },
+  Working: { bg: '#f0fdf4', text: '#15803d', border: '#bbf7d0' },
+  'On Break': { bg: '#fffbeb', text: '#b45309', border: '#fde68a' },
+  Completed: { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' },
+  Standby: { bg: '#f8fafc', text: '#475569', border: '#e2e8f0' },
 };
 
 const COMMON_SECTORS = [
@@ -301,109 +301,115 @@ const ManufacturingManagementPage = () => {
       )}
 
       {/* KPI Stats */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase' }}>
-              Floor Assignments
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary', mt: 0.5 }}>
-              {summary?.totalAssignments !== undefined ? summary.totalAssignments : assignments.length}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Active personnel stationed
-            </Typography>
-          </Paper>
-        </Grid>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>
+            Floor Assignments
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.5 }}>
+            {summary?.totalAssignments !== undefined ? summary.totalAssignments : assignments.length}
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#64748b' }}>
+            Active personnel stationed
+          </Typography>
+        </Paper>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'success.light', fontWeight: 700, textTransform: 'uppercase' }}>
-              Currently Working
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'success.main', mt: 0.5 }}>
-              {assignments.filter((a) => a.status === 'Working').length}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Active assembly line output
-            </Typography>
-          </Paper>
-        </Grid>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>
+            Currently Working
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.5 }}>
+            {assignments.filter((a) => a.status === 'Working').length}
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#64748b' }}>
+            Active assembly line output
+          </Typography>
+        </Paper>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'warning.light', fontWeight: 700, textTransform: 'uppercase' }}>
-              On Break / Standby
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'warning.main', mt: 0.5 }}>
-              {assignments.filter((a) => a.status === 'On Break' || a.status === 'Standby').length}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Temporary relief rotation
-            </Typography>
-          </Paper>
-        </Grid>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>
+            On Break / Standby
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.5 }}>
+            {assignments.filter((a) => a.status === 'On Break' || a.status === 'Standby').length}
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#64748b' }}>
+            Temporary relief rotation
+          </Typography>
+        </Paper>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'info.light', fontWeight: 700, textTransform: 'uppercase' }}>
-              Active Floor Sectors
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'info.main', mt: 0.5 }}>
-              {uniqueSectors.length}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Operating workstations
-            </Typography>
-          </Paper>
-        </Grid>
-      </Grid>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>
+            Active Floor Sectors
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.5 }}>
+            {uniqueSectors.length}
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#64748b' }}>
+            Operating workstations
+          </Typography>
+        </Paper>
+      </Box>
 
       {/* Filter toolbar */}
       <Paper
-        elevation={1}
+        elevation={0}
         sx={{
           p: 2,
           mb: 3,
-          borderRadius: 2.5,
-          backgroundColor: 'background.paper',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 2,
+          backgroundColor: '#ffffff',
+          border: '1px solid #e5e7eb',
         }}
       >
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={5}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '5fr 3.5fr 3.5fr' },
+            gap: 2,
+            alignItems: 'center',
+          }}
+        >
+          <Box sx={{ gridColumn: { xs: '1 / -1', md: 'auto' } }}>
             <TextField
               size="small"
               fullWidth
@@ -411,67 +417,63 @@ const ManufacturingManagementPage = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-          </Grid>
-          <Grid item xs={6} md={3.5}>
-            <TextField
-              select
-              size="small"
-              fullWidth
-              label="Work Station / Sector"
-              value={sectorFilter}
-              onChange={(e) => setSectorFilter(e.target.value)}
-            >
-              <MenuItem value="ALL">All Sectors</MenuItem>
-              {uniqueSectors.map((sec) => (
-                <MenuItem key={sec} value={sec}>
-                  {sec}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
-          <Grid item xs={6} md={3.5}>
-            <TextField
-              select
-              size="small"
-              fullWidth
-              label="Status"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <MenuItem value="ALL">All Statuses</MenuItem>
-              <MenuItem value="Working">Working</MenuItem>
-              <MenuItem value="On Break">On Break</MenuItem>
-              <MenuItem value="Standby">Standby</MenuItem>
-              <MenuItem value="Completed">Completed</MenuItem>
-            </TextField>
-          </Grid>
-        </Grid>
+          </Box>
+          <TextField
+            select
+            size="small"
+            fullWidth
+            label="Work Station / Sector"
+            value={sectorFilter}
+            onChange={(e) => setSectorFilter(e.target.value)}
+          >
+            <MenuItem value="ALL">All Sectors</MenuItem>
+            {uniqueSectors.map((sec) => (
+              <MenuItem key={sec} value={sec}>
+                {sec}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            select
+            size="small"
+            fullWidth
+            label="Status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <MenuItem value="ALL">All Statuses</MenuItem>
+            <MenuItem value="Working">Working</MenuItem>
+            <MenuItem value="On Break">On Break</MenuItem>
+            <MenuItem value="Standby">Standby</MenuItem>
+            <MenuItem value="Completed">Completed</MenuItem>
+          </TextField>
+        </Box>
       </Paper>
 
       {/* Assignments Table */}
       <Paper
-        elevation={2}
+        elevation={0}
         sx={{
-          borderRadius: 2.5,
+          borderRadius: 2,
           overflow: 'hidden',
-          backgroundColor: 'background.paper',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          backgroundColor: '#ffffff',
+          border: '1px solid #e5e7eb',
         }}
       >
         {isLoading ? (
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 8 }}>
             <CircularProgress size={38} color="primary" />
-            <Typography variant="body2" sx={{ mt: 2, color: 'text.secondary' }}>
+            <Typography variant="body2" sx={{ mt: 2, color: '#64748b' }}>
               Loading manufacturing lines...
             </Typography>
           </Box>
         ) : filteredAssignments.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 8, px: 3 }}>
-            <ManufacturingIcon sx={{ fontSize: 50, color: 'text.secondary', opacity: 0.4, mb: 1 }} />
-            <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.secondary' }}>
+            <ManufacturingIcon sx={{ fontSize: 50, color: '#64748b', opacity: 0.4, mb: 1 }} />
+            <Typography variant="h6" sx={{ fontWeight: 700, color: '#0f172a' }}>
               No Manufacturing Assignments
             </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5, maxWidth: 450, mx: 'auto' }}>
+            <Typography variant="body2" sx={{ color: '#64748b', mt: 0.5, maxWidth: 450, mx: 'auto' }}>
               Deploy your first line technician or assembly staff to a manufacturing workstation.
             </Typography>
             {canCreate && (
@@ -486,24 +488,31 @@ const ManufacturingManagementPage = () => {
             )}
           </Box>
         ) : (
-          <TableContainer>
-            <Table>
-              <TableHead sx={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Technician / Staff</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Work Station & Sector</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Shift</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Product Line</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
+          <TableContainer
+            sx={{
+              width: '100%',
+              overflowX: 'auto',
+              '&::-webkit-scrollbar': { height: '5px' },
+              '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: '4px' },
+            }}
+          >
+            <Table sx={{ minWidth: 700 }}>
+              <TableHead sx={{ backgroundColor: '#f9fafb' }}>
+                <TableRow sx={{ '& th': { color: '#0f172a', fontWeight: 700, borderBottom: '1px solid #e5e7eb' } }}>
+                  <TableCell>Technician / Staff</TableCell>
+                  <TableCell>Work Station & Sector</TableCell>
+                  <TableCell>Shift</TableCell>
+                  <TableCell>Product Line</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {filteredAssignments.map((item) => {
                   const statusStyle = WORK_STATUS_COLORS[item.status] || {
-                    bg: 'rgba(255, 255, 255, 0.05)',
-                    text: '#FFF',
-                    border: 'rgba(255, 255, 255, 0.1)',
+                    bg: '#f9fafb',
+                    text: '#0f172a',
+                    border: '#e5e7eb',
                   };
 
                   const staffName = item.staff
@@ -513,19 +522,19 @@ const ManufacturingManagementPage = () => {
                   return (
                     <TableRow key={item.id} hover>
                       <TableCell>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a' }}>
                           {staffName}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                        <Typography variant="caption" sx={{ color: '#64748b' }}>
                           {item.staff?.email || `ID #${item.staff_id}`}
                         </Typography>
                       </TableCell>
 
                       <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: 'primary.light' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#2563eb' }}>
                           {item.sector}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                        <Typography variant="caption" sx={{ color: '#64748b' }}>
                           Since: {item.start_date || 'N/A'}
                         </Typography>
                       </TableCell>
@@ -534,7 +543,7 @@ const ManufacturingManagementPage = () => {
                         <Chip
                           label={`${item.shift || 'Day'} Shift`}
                           size="small"
-                          sx={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', fontWeight: 600 }}
+                          sx={{ backgroundColor: '#f1f5f9', color: '#334155', fontWeight: 600 }}
                         />
                       </TableCell>
 
@@ -723,68 +732,61 @@ const ManufacturingManagementPage = () => {
                 ))}
               </TextField>
 
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    select
-                    fullWidth
-                    size="small"
-                    label="Shift"
-                    value={newShift}
-                    onChange={(e) => setNewShift(e.target.value)}
-                  >
-                    {SHIFTS.map((sh) => (
-                      <MenuItem key={sh} value={sh}>
-                        {sh} Shift
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    select
-                    fullWidth
-                    size="small"
-                    label="Initial Status"
-                    value={newStatus}
-                    onChange={(e) => setNewStatus(e.target.value)}
-                  >
-                    <MenuItem value="Working">Working</MenuItem>
-                    <MenuItem value="Standby">Standby</MenuItem>
-                  </TextField>
-                </Grid>
-              </Grid>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  label="Shift"
+                  value={newShift}
+                  onChange={(e) => setNewShift(e.target.value)}
+                >
+                  {SHIFTS.map((sh) => (
+                    <MenuItem key={sh} value={sh}>
+                      {sh} Shift
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  label="Initial Status"
+                  value={newStatus}
+                  onChange={(e) => setNewStatus(e.target.value)}
+                >
+                  <MenuItem value="Working">Working</MenuItem>
+                  <MenuItem value="Standby">Standby</MenuItem>
+                </TextField>
+              </Box>
 
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    select
-                    fullWidth
-                    size="small"
-                    label="Dedicated Product (Optional)"
-                    value={newProductId}
-                    onChange={(e) => setNewProductId(e.target.value)}
-                  >
-                    <MenuItem value="">General Production</MenuItem>
-                    {products.map((prod) => (
-                      <MenuItem key={prod.id} value={prod.id}>
-                        {prod.name}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Assignment Start Date"
-                    type="date"
-                    InputLabelProps={{ shrink: true }}
-                    value={newStartDate}
-                    onChange={(e) => setNewStartDate(e.target.value)}
-                  />
-                </Grid>
-              </Grid>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  label="Dedicated Product (Optional)"
+                  value={newProductId}
+                  onChange={(e) => setNewProductId(e.target.value)}
+                >
+                  <MenuItem value="">General Production</MenuItem>
+                  {products.map((prod) => (
+                    <MenuItem key={prod.id} value={prod.id}>
+                      {prod.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Assignment Start Date"
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  value={newStartDate}
+                  onChange={(e) => setNewStartDate(e.target.value)}
+                />
+              </Box>
 
               <TextField
                 fullWidth

@@ -33,25 +33,26 @@ class ErrorBoundary extends React.Component {
             alignItems: 'center',
             justifyContent: 'center',
             p: 3,
-            backgroundColor: 'background.default',
+            backgroundColor: '#f8fafc',
           }}
         >
           <Paper
-            elevation={4}
+            elevation={0}
             sx={{
               p: 4,
               maxWidth: 520,
               width: '100%',
               textAlign: 'center',
-              borderRadius: 3,
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              backgroundColor: 'background.paper',
+              borderRadius: 2,
+              border: '1px solid #fecaca',
+              backgroundColor: '#ffffff',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
             }}
           >
-            <Typography variant="h5" sx={{ fontWeight: 800, color: 'error.main', mb: 1.5 }}>
+            <Typography variant="h5" sx={{ fontWeight: 800, color: '#dc2626', mb: 1.5 }}>
               Something Went Wrong
             </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
+            <Typography variant="body2" sx={{ color: '#64748b', mb: 3 }}>
               An unexpected error occurred while rendering this page.
             </Typography>
             {this.state.error?.message && (
@@ -59,12 +60,12 @@ class ErrorBoundary extends React.Component {
                 sx={{
                   p: 2,
                   mb: 3,
-                  borderRadius: 2,
-                  backgroundColor: 'rgba(239, 68, 68, 0.08)',
-                  border: '1px solid rgba(239, 68, 68, 0.2)',
+                  borderRadius: 1.5,
+                  backgroundColor: '#fef2f2',
+                  border: '1px solid #fecaca',
                   fontFamily: 'monospace',
                   fontSize: '0.8rem',
-                  color: 'error.light',
+                  color: '#b91c1c',
                   textAlign: 'left',
                   wordBreak: 'break-word',
                 }}
@@ -73,10 +74,18 @@ class ErrorBoundary extends React.Component {
               </Box>
             )}
             <Stack direction="row" spacing={2} justifyContent="center">
-              <Button variant="outlined" color="primary" onClick={this.handleGoHome}>
+              <Button
+                variant="outlined"
+                onClick={this.handleGoHome}
+                sx={{ borderColor: '#d1d5db', color: '#0f172a', fontWeight: 600, '&:hover': { backgroundColor: '#f8fafc', borderColor: '#9ca3af' } }}
+              >
                 Go to Home
               </Button>
-              <Button variant="contained" color="primary" onClick={this.handleReload}>
+              <Button
+                variant="contained"
+                onClick={this.handleReload}
+                sx={{ backgroundColor: '#2563eb', color: '#ffffff', fontWeight: 600, '&:hover': { backgroundColor: '#1d4ed8' } }}
+              >
                 Refresh Page
               </Button>
             </Stack>

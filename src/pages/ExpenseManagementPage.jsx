@@ -282,11 +282,11 @@ const ExpenseManagementPage = () => {
                 width: 44,
                 height: 44,
                 borderRadius: 2,
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                backgroundColor: '#eff6ff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'success.main',
+                color: 'primary.main',
               }}
             >
               <ExpensesIcon sx={{ fontSize: 24 }} />
@@ -329,167 +329,166 @@ const ExpenseManagementPage = () => {
       )}
 
       {/* KPI Stats Cards */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'success.light', fontWeight: 700, textTransform: 'uppercase' }}>
-              Total Revenue / Income
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'success.main', mt: 0.5, fontFamily: 'monospace' }}>
-              ${Number(totalIncome || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Recorded cash & sales inflows
-            </Typography>
-          </Paper>
-        </Grid>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Total Revenue / Income
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#15803d', mt: 0.5 }}>
+            ₹{Number(totalIncome || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            Recorded cash & sales inflows
+          </Typography>
+        </Paper>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'error.light', fontWeight: 700, textTransform: 'uppercase' }}>
-              Total Expenses
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'error.main', mt: 0.5, fontFamily: 'monospace' }}>
-              ${Number(totalExpense || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Materials, tools & operations
-            </Typography>
-          </Paper>
-        </Grid>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Total Expenses
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#b91c1c', mt: 0.5 }}>
+            ₹{Number(totalExpense || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            Materials, tools & operations
+          </Typography>
+        </Paper>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Net Operating Balance
+          </Typography>
+          <Typography
+            variant="h4"
             sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              fontWeight: 700,
+              color: netBalance >= 0 ? '#2563eb' : '#b45309',
+              mt: 0.5,
             }}
           >
-            <Typography variant="caption" sx={{ color: netBalance >= 0 ? 'primary.light' : 'warning.light', fontWeight: 700, textTransform: 'uppercase' }}>
-              Net Operating Balance
-            </Typography>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 800,
-                color: netBalance >= 0 ? 'primary.main' : 'warning.main',
-                mt: 0.5,
-                fontFamily: 'monospace',
-              }}
-            >
-              ${Number(netBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Net cash reserve balance
-            </Typography>
-          </Paper>
-        </Grid>
+            ₹{Number(netBalance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            Net cash reserve balance
+          </Typography>
+        </Paper>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase' }}>
-              Total Transactions
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary', mt: 0.5 }}>
-              {expenses.length}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Audited ledger entries
-            </Typography>
-          </Paper>
-        </Grid>
-      </Grid>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Total Transactions
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#111827', mt: 0.5 }}>
+            {expenses.length}
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            Audited ledger entries
+          </Typography>
+        </Paper>
+      </Box>
 
       {/* Filter toolbar */}
       <Paper
-        elevation={1}
+        elevation={0}
         sx={{
           p: 2,
           mb: 3,
-          borderRadius: 2.5,
-          backgroundColor: 'background.paper',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 2,
+          backgroundColor: '#ffffff',
+          border: '1px solid #e5e7eb',
         }}
       >
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={5}>
-            <TextField
-              size="small"
-              fullWidth
-              placeholder="Search title, category, reference number, or notes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </Grid>
-          <Grid item xs={6} md={3.5}>
-            <TextField
-              select
-              size="small"
-              fullWidth
-              label="Transaction Type"
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-            >
-              <MenuItem value="ALL">All Types</MenuItem>
-              <MenuItem value="Expense">Expense Only</MenuItem>
-              <MenuItem value="Income">Income / Revenue Only</MenuItem>
-            </TextField>
-          </Grid>
-          <Grid item xs={6} md={3.5}>
-            <TextField
-              select
-              size="small"
-              fullWidth
-              label="Category"
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-            >
-              <MenuItem value="ALL">All Categories</MenuItem>
-              {CATEGORIES.map((cat) => (
-                <MenuItem key={cat} value={cat}>
-                  {cat}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
-        </Grid>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '5fr 3.5fr 3.5fr' },
+            gap: 2,
+            alignItems: 'center',
+          }}
+        >
+          <TextField
+            size="small"
+            fullWidth
+            placeholder="Search title, category, reference number, or notes..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <TextField
+            select
+            size="small"
+            fullWidth
+            label="Transaction Type"
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+          >
+            <MenuItem value="ALL">All Types</MenuItem>
+            <MenuItem value="Expense">Expense Only</MenuItem>
+            <MenuItem value="Income">Income / Revenue Only</MenuItem>
+          </TextField>
+          <TextField
+            select
+            size="small"
+            fullWidth
+            label="Category"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+          >
+            <MenuItem value="ALL">All Categories</MenuItem>
+            {CATEGORIES.map((cat) => (
+              <MenuItem key={cat} value={cat}>
+                {cat}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Box>
       </Paper>
 
       {/* Expenses Table */}
       <Paper
-        elevation={2}
+        elevation={0}
         sx={{
-          borderRadius: 2.5,
+          borderRadius: 2,
           overflow: 'hidden',
-          backgroundColor: 'background.paper',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          backgroundColor: '#ffffff',
+          border: '1px solid #e5e7eb',
         }}
       >
         {isLoading ? (
@@ -520,14 +519,22 @@ const ExpenseManagementPage = () => {
             )}
           </Box>
         ) : (
-          <TableContainer>
-            <Table>
-              <TableHead sx={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}>
+          <TableContainer
+            sx={{
+              width: '100%',
+              overflowX: 'auto',
+              minWidth: 0,
+              '&::-webkit-scrollbar': { height: '5px' },
+              '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(148, 163, 184, 0.25)', borderRadius: '4px' },
+            }}
+          >
+            <Table sx={{ width: '100%', minWidth: 700 }}>
+              <TableHead sx={{ backgroundColor: '#f8fafc' }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700 }}>Description</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Type</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Category</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Amount ($)</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Amount (₹)</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Payment Method</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
@@ -555,9 +562,10 @@ const ExpenseManagementPage = () => {
                           label={item.type}
                           size="small"
                           sx={{
-                            backgroundColor: isIncome ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                            color: isIncome ? '#10B981' : '#EF4444',
-                            fontWeight: 700,
+                            backgroundColor: isIncome ? '#dcfce7' : '#fee2e2',
+                            color: isIncome ? '#15803d' : '#b91c1c',
+                            border: `1px solid ${isIncome ? '#bbf7d0' : '#fecaca'}`,
+                            fontWeight: 600,
                           }}
                         />
                       </TableCell>
@@ -577,7 +585,7 @@ const ExpenseManagementPage = () => {
                             color: isIncome ? 'success.main' : 'error.main',
                           }}
                         >
-                          {isIncome ? '+' : '-'}${Number(item.amount || 0).toFixed(2)}
+                          {isIncome ? '+' : '-'}₹{Number(item.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </Typography>
                       </TableCell>
 
@@ -642,33 +650,29 @@ const ExpenseManagementPage = () => {
               onChange={(e) => setEditTitle(e.target.value)}
             />
 
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
-                <TextField
-                  select
-                  fullWidth
-                  size="small"
-                  label="Type"
-                  value={editType}
-                  onChange={(e) => setEditType(e.target.value)}
-                >
-                  <MenuItem value="Expense">Expense</MenuItem>
-                  <MenuItem value="Income">Income</MenuItem>
-                </TextField>
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  required
-                  fullWidth
-                  size="small"
-                  label="Amount ($)"
-                  type="number"
-                  inputProps={{ min: 0, step: 'any' }}
-                  value={editAmount}
-                  onChange={(e) => setEditAmount(e.target.value)}
-                />
-              </Grid>
-            </Grid>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Type"
+                value={editType}
+                onChange={(e) => setEditType(e.target.value)}
+              >
+                <MenuItem value="Expense">Expense</MenuItem>
+                <MenuItem value="Income">Income</MenuItem>
+              </TextField>
+              <TextField
+                required
+                fullWidth
+                size="small"
+                label="Amount (₹)"
+                type="number"
+                inputProps={{ min: 0, step: 'any' }}
+                value={editAmount}
+                onChange={(e) => setEditAmount(e.target.value)}
+              />
+            </Box>
 
             <TextField
               select
@@ -745,93 +749,82 @@ const ExpenseManagementPage = () => {
                 onChange={(e) => setNewTitle(e.target.value)}
               />
 
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    select
-                    fullWidth
-                    size="small"
-                    label="Transaction Type"
-                    value={newType}
-                    onChange={(e) => setNewType(e.target.value)}
-                  >
-                    <MenuItem value="Expense">Expense (Cash Outflow)</MenuItem>
-                    <MenuItem value="Income">Income (Cash Inflow)</MenuItem>
-                  </TextField>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    required
-                    fullWidth
-                    size="small"
-                    label="Amount ($)"
-                    type="number"
-                    inputProps={{ min: 0, step: 'any' }}
-                    placeholder="0.00"
-                    value={newAmount}
-                    onChange={(e) => setNewAmount(e.target.value)}
-                  />
-                </Grid>
-              </Grid>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  label="Transaction Type"
+                  value={newType}
+                  onChange={(e) => setNewType(e.target.value)}
+                >
+                  <MenuItem value="Expense">Expense (Cash Outflow)</MenuItem>
+                  <MenuItem value="Income">Income (Cash Inflow)</MenuItem>
+                </TextField>
+                <TextField
+                  required
+                  fullWidth
+                  size="small"
+                  label="Amount (₹)"
+                  type="number"
+                  inputProps={{ min: 0, step: 'any' }}
+                  placeholder="0.00"
+                  value={newAmount}
+                  onChange={(e) => setNewAmount(e.target.value)}
+                />
+              </Box>
 
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    select
-                    fullWidth
-                    size="small"
-                    label="Category"
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
-                  >
-                    {CATEGORIES.map((cat) => (
-                      <MenuItem key={cat} value={cat}>
-                        {cat}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    select
-                    fullWidth
-                    size="small"
-                    label="Payment Method"
-                    value={newPaymentMethod}
-                    onChange={(e) => setNewPaymentMethod(e.target.value)}
-                  >
-                    {PAYMENT_METHODS.map((pm) => (
-                      <MenuItem key={pm} value={pm}>
-                        {pm}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-              </Grid>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  label="Category"
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                >
+                  {CATEGORIES.map((cat) => (
+                    <MenuItem key={cat} value={cat}>
+                      {cat}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  label="Payment Method"
+                  value={newPaymentMethod}
+                  onChange={(e) => setNewPaymentMethod(e.target.value)}
+                >
+                  {PAYMENT_METHODS.map((pm) => (
+                    <MenuItem key={pm} value={pm}>
+                      {pm}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Box>
 
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Date"
-                    type="date"
-                    InputLabelProps={{ shrink: true }}
-                    value={newDate}
-                    onChange={(e) => setNewDate(e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Reference # / Invoice Code"
-                    placeholder="INV-9921, CHK-882"
-                    value={newReferenceNo}
-                    onChange={(e) => setNewReferenceNo(e.target.value)}
-                  />
-                </Grid>
-              </Grid>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Date"
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  value={newDate}
+                  onChange={(e) => setNewDate(e.target.value)}
+                />
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Reference # / Invoice Code"
+                  placeholder="INV-9921, CHK-882"
+                  value={newReferenceNo}
+                  onChange={(e) => setNewReferenceNo(e.target.value)}
+                />
+              </Box>
 
               <TextField
                 select

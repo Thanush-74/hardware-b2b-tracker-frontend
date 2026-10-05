@@ -44,13 +44,11 @@ const EyeOffIcon = () => (
 );
 
 const StaffManagementPage = () => {
-  // Staff & Roles State
   const [staffList, setStaffList] = useState([]);
   const [roles, setRoles] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
 
-  // Form State
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -58,7 +56,6 @@ const StaffManagementPage = () => {
   const [roleId, setRoleId] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  // Submission State
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
@@ -125,7 +122,6 @@ const StaffManagementPage = () => {
         `Employee "${created.first_name} ${created.last_name}" created successfully with role "${roleObj?.name || 'Assigned Role'}"!`
       );
 
-      // Reset form
       setFirstName('');
       setLastName('');
       setEmail('');
@@ -133,7 +129,6 @@ const StaffManagementPage = () => {
       setRoleId('');
       setFormErrors({});
 
-      // Refresh staff list
       const refreshedStaff = await getStaff();
       setStaffList(refreshedStaff?.staff || refreshedStaff || []);
     } catch (err) {
@@ -159,16 +154,15 @@ const StaffManagementPage = () => {
 
   return (
     <Box>
-      {/* Header */}
       <Box sx={{ mb: 3 }}>
         <Stack direction="row" spacing={1.5} alignItems="center">
           <Box
             sx={{
               width: 44,
               height: 44,
-              borderRadius: 2,
-              backgroundColor: 'rgba(245, 158, 11, 0.12)',
-              color: 'primary.main',
+              borderRadius: 1.5,
+              backgroundColor: '#eff6ff',
+              color: '#2563eb',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -177,17 +171,16 @@ const StaffManagementPage = () => {
             <StaffIcon sx={{ fontSize: 28 }} />
           </Box>
           <Box>
-            <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary' }}>
+            <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a' }}>
               Staff & Employee Management
             </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            <Typography variant="caption" sx={{ color: '#64748b' }}>
               Create employee accounts and assign existing RBAC roles (POST /api/staff, GET /api/roles)
             </Typography>
           </Box>
         </Stack>
       </Box>
 
-      {/* Global Load Error */}
       {loadError && (
         <Alert severity="error" sx={{ mb: 3 }} action={<Button color="inherit" size="small" onClick={fetchData}>Retry</Button>}>
           {loadError}
@@ -199,33 +192,30 @@ const StaffManagementPage = () => {
           <CircularProgress color="primary" />
         </Box>
       ) : (
-        <Grid container spacing={3.5}>
-          {/* Create Employee Form */}
-          <Grid item xs={12} lg={5}>
-            <Paper
-              elevation={2}
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '5fr 7fr' }, gap: 3.5, alignItems: 'start' }}>
+          <Paper
+              elevation={0}
               sx={{
                 p: { xs: 2.5, sm: 3.5 },
-                borderRadius: 2.5,
-                backgroundColor: 'background.paper',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: 2,
+                backgroundColor: '#ffffff',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
               }}
             >
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5, color: 'text.primary' }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5, color: '#0f172a' }}>
                 Create Employee
               </Typography>
               <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 3 }}>
                 New accounts automatically receive screen access matching their selected role.
               </Typography>
 
-              {/* Success Alert */}
               {submitSuccess && (
                 <Alert severity="success" sx={{ mb: 2.5 }} onClose={() => setSubmitSuccess('')}>
                   {submitSuccess}
                 </Alert>
               )}
 
-              {/* Error Alert */}
               {submitError && (
                 <Alert severity="error" sx={{ mb: 2.5 }} onClose={() => setSubmitError('')}>
                   <AlertTitle>Creation Failed</AlertTitle>
@@ -235,42 +225,38 @@ const StaffManagementPage = () => {
 
               <Box component="form" onSubmit={handleSubmit} noValidate>
                 <Stack spacing={2.5}>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        id="staff-first-name"
-                        label="First Name"
-                        placeholder="John"
-                        fullWidth
-                        required
-                        value={firstName}
-                        onChange={(e) => {
-                          setFirstName(e.target.value);
-                          if (formErrors.firstName) setFormErrors({ ...formErrors, firstName: null });
-                        }}
-                        error={Boolean(formErrors.firstName)}
-                        helperText={formErrors.firstName}
-                        disabled={isSubmitting}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        id="staff-last-name"
-                        label="Last Name"
-                        placeholder="Doe"
-                        fullWidth
-                        required
-                        value={lastName}
-                        onChange={(e) => {
-                          setLastName(e.target.value);
-                          if (formErrors.lastName) setFormErrors({ ...formErrors, lastName: null });
-                        }}
-                        error={Boolean(formErrors.lastName)}
-                        helperText={formErrors.lastName}
-                        disabled={isSubmitting}
-                      />
-                    </Grid>
-                  </Grid>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                  <TextField
+                    id="staff-first-name"
+                    label="First Name"
+                    placeholder="John"
+                    fullWidth
+                    required
+                    value={firstName}
+                    onChange={(e) => {
+                      setFirstName(e.target.value);
+                      if (formErrors.firstName) setFormErrors({ ...formErrors, firstName: null });
+                    }}
+                    error={Boolean(formErrors.firstName)}
+                    helperText={formErrors.firstName}
+                    disabled={isSubmitting}
+                  />
+                  <TextField
+                    id="staff-last-name"
+                    label="Last Name"
+                    placeholder="Doe"
+                    fullWidth
+                    required
+                    value={lastName}
+                    onChange={(e) => {
+                      setLastName(e.target.value);
+                      if (formErrors.lastName) setFormErrors({ ...formErrors, lastName: null });
+                    }}
+                    error={Boolean(formErrors.lastName)}
+                    helperText={formErrors.lastName}
+                    disabled={isSubmitting}
+                  />
+                </Box>
 
                   <TextField
                     id="staff-email"
@@ -361,18 +347,22 @@ const StaffManagementPage = () => {
                     id="create-staff-btn"
                     type="submit"
                     variant="contained"
-                    color="primary"
                     disabled={isSubmitting}
                     sx={{
                       py: 1.2,
-                      fontWeight: 700,
+                      fontWeight: 600,
                       fontSize: '0.9rem',
                       mt: 1,
+                      backgroundColor: '#2563eb',
+                      color: '#ffffff',
+                      '&:hover': {
+                        backgroundColor: '#1d4ed8',
+                      },
                     }}
                   >
                     {isSubmitting ? (
                       <Stack direction="row" spacing={1.5} alignItems="center">
-                        <CircularProgress size={18} sx={{ color: '#0b0f19' }} />
+                        <CircularProgress size={18} sx={{ color: '#ffffff' }} />
                         <span>Creating Employee...</span>
                       </Stack>
                     ) : (
@@ -382,40 +372,46 @@ const StaffManagementPage = () => {
                 </Stack>
               </Box>
             </Paper>
-          </Grid>
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2.5, sm: 3.5 },
+              borderRadius: 2,
+              backgroundColor: '#ffffff',
+              border: '1px solid #e2e8f0',
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: '#0f172a' }}>
+                  Staff Accounts ({staffList.length})
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#64748b' }}>
+                  Staff members and their assigned RBAC roles
+                </Typography>
+              </Box>
+              <Button size="small" variant="outlined" onClick={fetchData} sx={{ textTransform: 'none', borderColor: '#d1d5db', color: '#0f172a' }}>
+                Refresh
+              </Button>
+            </Box>
 
-          {/* Existing Staff List */}
-          <Grid item xs={12} lg={7}>
-            <Paper
-              elevation={2}
+            <TableContainer
               sx={{
-                p: { xs: 2.5, sm: 3.5 },
-                borderRadius: 2.5,
-                backgroundColor: 'background.paper',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
+                flexGrow: 1,
+                maxHeight: 600,
+                width: '100%',
+                overflowX: 'auto',
+                '&::-webkit-scrollbar': { height: '5px' },
+                '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: '4px' },
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                    Staff Accounts ({staffList.length})
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                    Staff members and their assigned RBAC roles
-                  </Typography>
-                </Box>
-                <Button size="small" variant="outlined" onClick={fetchData} sx={{ textTransform: 'none' }}>
-                  Refresh
-                </Button>
-              </Box>
-
-              <TableContainer sx={{ flexGrow: 1, maxHeight: 600 }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow sx={{ '& th': { color: 'text.secondary', fontWeight: 700, fontSize: '0.75rem' } }}>
+              <Table size="small" sx={{ minWidth: 550 }}>
+                  <TableHead sx={{ backgroundColor: '#f8fafc' }}>
+                    <TableRow sx={{ '& th': { color: '#0f172a', fontWeight: 700, fontSize: '0.75rem', borderBottom: '1px solid #e2e8f0' } }}>
                       <TableCell>Staff Member</TableCell>
                       <TableCell>Email</TableCell>
                       <TableCell>Role</TableCell>
@@ -428,17 +424,17 @@ const StaffManagementPage = () => {
                       <TableRow
                         key={member.id}
                         sx={{
-                          '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.02)' },
-                          '& td': { borderColor: 'rgba(255, 255, 255, 0.06)' },
+                          '&:hover': { backgroundColor: '#f8fafc' },
+                          '& td': { borderColor: '#f1f5f9' },
                         }}
                       >
                         <TableCell sx={{ py: 1.5 }}>
-                          <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>
                             {member.first_name} {member.last_name}
                           </Typography>
                         </TableCell>
                         <TableCell sx={{ py: 1.5 }}>
-                          <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
+                          <Typography variant="caption" sx={{ fontFamily: 'monospace', color: '#64748b' }}>
                             {member.email}
                           </Typography>
                         </TableCell>
@@ -447,9 +443,10 @@ const StaffManagementPage = () => {
                             label={member.role?.name || member.role?.slug || 'Staff'}
                             size="small"
                             sx={{
-                              backgroundColor: 'rgba(245, 158, 11, 0.12)',
-                              color: 'primary.light',
-                              fontWeight: 700,
+                              backgroundColor: '#eff6ff',
+                              color: '#1d4ed8',
+                              border: '1px solid #bfdbfe',
+                              fontWeight: 600,
                               fontSize: '0.72rem',
                             }}
                           />
@@ -487,8 +484,7 @@ const StaffManagementPage = () => {
                 </Table>
               </TableContainer>
             </Paper>
-          </Grid>
-        </Grid>
+        </Box>
       )}
     </Box>
   );

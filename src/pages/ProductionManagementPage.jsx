@@ -29,10 +29,10 @@ import { productionService, productService } from '../services/businessService';
 import { ProductionIcon } from '../components/Icons';
 
 const PRODUCTION_STATUS_COLORS = {
-  Planned: { bg: 'rgba(59, 130, 246, 0.15)', text: '#3B82F6', border: 'rgba(59, 130, 246, 0.3)' },
-  'In Production': { bg: 'rgba(245, 158, 11, 0.15)', text: '#F59E0B', border: 'rgba(245, 158, 11, 0.3)' },
-  Completed: { bg: 'rgba(16, 185, 129, 0.15)', text: '#10B981', border: 'rgba(16, 185, 129, 0.3)' },
-  Cancelled: { bg: 'rgba(148, 163, 184, 0.15)', text: '#94A3B8', border: 'rgba(148, 163, 184, 0.3)' },
+  Planned: { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' },
+  'In Production': { bg: '#fffbeb', text: '#b45309', border: '#fde68a' },
+  Completed: { bg: '#f0fdf4', text: '#15803d', border: '#bbf7d0' },
+  Cancelled: { bg: '#fef2f2', text: '#b91c1c', border: '#fecaca' },
 };
 
 const ProductionManagementPage = () => {
@@ -292,160 +292,162 @@ const ProductionManagementPage = () => {
       )}
 
       {/* KPI Stats Cards */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase' }}>
-              Total Batches
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary', mt: 0.5 }}>
-              {totalBatches}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Planned & running batches
-            </Typography>
-          </Paper>
-        </Grid>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>
+            Total Batches
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.5 }}>
+            {totalBatches}
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#64748b' }}>
+            Planned & running batches
+          </Typography>
+        </Paper>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'warning.light', fontWeight: 700, textTransform: 'uppercase' }}>
-              Active In Production
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'warning.main', mt: 0.5 }}>
-              {inProductionCount}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Floor lines actively building
-            </Typography>
-          </Paper>
-        </Grid>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>
+            Active In Production
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.5 }}>
+            {inProductionCount}
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#64748b' }}>
+            Floor lines actively building
+          </Typography>
+        </Paper>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'info.light', fontWeight: 700, textTransform: 'uppercase' }}>
-              Total Units Planned
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'info.main', mt: 0.5, fontFamily: 'monospace' }}>
-              {totalUnitsPlanned.toLocaleString()}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Target hardware output
-            </Typography>
-          </Paper>
-        </Grid>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>
+            Total Units Planned
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.5, fontFamily: 'monospace' }}>
+            {totalUnitsPlanned.toLocaleString()}
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#64748b' }}>
+            Target hardware output
+          </Typography>
+        </Paper>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'success.light', fontWeight: 700, textTransform: 'uppercase' }}>
-              Total Completed
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'success.main', mt: 0.5, fontFamily: 'monospace' }}>
-              {totalUnitsCompleted.toLocaleString()}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Manufactured & ready
-            </Typography>
-          </Paper>
-        </Grid>
-      </Grid>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>
+            Total Completed
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.5, fontFamily: 'monospace' }}>
+            {totalUnitsCompleted.toLocaleString()}
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#64748b' }}>
+            Manufactured & ready
+          </Typography>
+        </Paper>
+      </Box>
 
       {/* Filter and Search toolbar */}
       <Paper
-        elevation={1}
+        elevation={0}
         sx={{
           p: 2,
           mb: 3,
-          borderRadius: 2.5,
-          backgroundColor: 'background.paper',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 2,
+          backgroundColor: '#ffffff',
+          border: '1px solid #e5e7eb',
         }}
       >
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={7}>
-            <TextField
-              size="small"
-              fullWidth
-              placeholder="Search by Product Name, Type, or Notes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </Grid>
-          <Grid item xs={12} md={5}>
-            <TextField
-              select
-              size="small"
-              fullWidth
-              label="Batch Status"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <MenuItem value="ALL">All Batch Statuses</MenuItem>
-              <MenuItem value="Planned">Planned</MenuItem>
-              <MenuItem value="In Production">In Production</MenuItem>
-              <MenuItem value="Completed">Completed</MenuItem>
-              <MenuItem value="Cancelled">Cancelled</MenuItem>
-            </TextField>
-          </Grid>
-        </Grid>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '7fr 5fr' },
+            gap: 2,
+            alignItems: 'center',
+          }}
+        >
+          <TextField
+            size="small"
+            fullWidth
+            placeholder="Search by Product Name, Type, or Notes..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <TextField
+            select
+            size="small"
+            fullWidth
+            label="Batch Status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <MenuItem value="ALL">All Batch Statuses</MenuItem>
+            <MenuItem value="Planned">Planned</MenuItem>
+            <MenuItem value="In Production">In Production</MenuItem>
+            <MenuItem value="Completed">Completed</MenuItem>
+            <MenuItem value="Cancelled">Cancelled</MenuItem>
+          </TextField>
+        </Box>
       </Paper>
 
       {/* Production Table */}
       <Paper
-        elevation={2}
+        elevation={0}
         sx={{
-          borderRadius: 2.5,
+          borderRadius: 2,
           overflow: 'hidden',
-          backgroundColor: 'background.paper',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          backgroundColor: '#ffffff',
+          border: '1px solid #e5e7eb',
         }}
       >
         {isLoading ? (
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 8 }}>
             <CircularProgress size={38} color="primary" />
-            <Typography variant="body2" sx={{ mt: 2, color: 'text.secondary' }}>
+            <Typography variant="body2" sx={{ mt: 2, color: '#64748b' }}>
               Fetching production planning records...
             </Typography>
           </Box>
         ) : filteredList.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 8, px: 3 }}>
-            <ProductionIcon sx={{ fontSize: 50, color: 'text.secondary', opacity: 0.4, mb: 1 }} />
-            <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.secondary' }}>
+            <ProductionIcon sx={{ fontSize: 50, color: '#64748b', opacity: 0.4, mb: 1 }} />
+            <Typography variant="h6" sx={{ fontWeight: 700, color: '#0f172a' }}>
               No Production Batches Found
             </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5, maxWidth: 450, mx: 'auto' }}>
+            <Typography variant="body2" sx={{ color: '#64748b', mt: 0.5, maxWidth: 450, mx: 'auto' }}>
               {searchQuery || statusFilter !== 'ALL'
                 ? 'Try adjusting your search query or status filter.'
                 : 'Schedule a new production batch for any hardware product to track assembly line output.'}
@@ -462,10 +464,18 @@ const ProductionManagementPage = () => {
             )}
           </Box>
         ) : (
-          <TableContainer>
-            <Table>
-              <TableHead sx={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}>
-                <TableRow>
+          <TableContainer
+            sx={{
+              width: '100%',
+              overflowX: 'auto',
+              minWidth: 0,
+              '&::-webkit-scrollbar': { height: '5px' },
+              '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(148, 163, 184, 0.25)', borderRadius: '4px' },
+            }}
+          >
+            <Table sx={{ width: '100%', minWidth: 700 }}>
+              <TableHead sx={{ backgroundColor: '#f9fafb' }}>
+                <TableRow sx={{ '& th': { color: '#0f172a', fontWeight: 700, borderBottom: '1px solid #e5e7eb' } }}>
                   <TableCell sx={{ fontWeight: 700 }}>Batch & Product</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Progress & Output</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Weekly Capacity</TableCell>
@@ -477,9 +487,9 @@ const ProductionManagementPage = () => {
               <TableBody>
                 {filteredList.map((batch) => {
                   const statusStyle = PRODUCTION_STATUS_COLORS[batch.status] || {
-                    bg: 'rgba(255, 255, 255, 0.05)',
-                    text: '#FFF',
-                    border: 'rgba(255, 255, 255, 0.1)',
+                    bg: '#f9fafb',
+                    text: '#0f172a',
+                    border: '#e5e7eb',
                   };
 
                   const planned = Number(batch.quantity_planned) || 0;
@@ -490,10 +500,10 @@ const ProductionManagementPage = () => {
                   return (
                     <TableRow key={batch.id} hover>
                       <TableCell>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a' }}>
                           {batch.product_name}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                        <Typography variant="caption" sx={{ color: '#64748b' }}>
                           Batch #{batch.id} {batch.product_type ? `• ${batch.product_type}` : ''}
                         </Typography>
                       </TableCell>
@@ -503,7 +513,7 @@ const ProductionManagementPage = () => {
                           <Typography variant="caption" sx={{ fontWeight: 700 }}>
                             {completed} / {planned} units
                           </Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 700, color: 'primary.light' }}>
+                          <Typography variant="caption" sx={{ fontWeight: 700, color: '#2563eb' }}>
                             {completionPercentage}%
                           </Typography>
                         </Box>
@@ -513,9 +523,9 @@ const ProductionManagementPage = () => {
                           sx={{
                             height: 7,
                             borderRadius: 3,
-                            backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                            backgroundColor: '#e5e7eb',
                             '& .MuiLinearProgress-bar': {
-                              backgroundColor: completionPercentage === 100 ? 'success.main' : 'primary.main',
+                              backgroundColor: completionPercentage === 100 ? '#16a34a' : '#2563eb',
                               borderRadius: 3,
                             },
                           }}
@@ -721,80 +731,70 @@ const ProductionManagementPage = () => {
                 ))}
               </TextField>
 
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    required
-                    fullWidth
-                    size="small"
-                    label="Planned Target Quantity"
-                    type="number"
-                    value={newPlannedQty}
-                    onChange={(e) => setNewPlannedQty(e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Initial Producing Quantity"
-                    type="number"
-                    value={newProducingQty}
-                    onChange={(e) => setNewProducingQty(e.target.value)}
-                  />
-                </Grid>
-              </Grid>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <TextField
+                  required
+                  fullWidth
+                  size="small"
+                  label="Planned Target Quantity"
+                  type="number"
+                  value={newPlannedQty}
+                  onChange={(e) => setNewPlannedQty(e.target.value)}
+                />
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Initial Producing Quantity"
+                  type="number"
+                  value={newProducingQty}
+                  onChange={(e) => setNewProducingQty(e.target.value)}
+                />
+              </Box>
 
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Weekly Capacity (units/wk)"
-                    type="number"
-                    value={newCapacity}
-                    onChange={(e) => setNewCapacity(e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    select
-                    fullWidth
-                    size="small"
-                    label="Initial Batch Status"
-                    value={newBatchStatus}
-                    onChange={(e) => setNewBatchStatus(e.target.value)}
-                  >
-                    <MenuItem value="Planned">Planned</MenuItem>
-                    <MenuItem value="In Production">In Production</MenuItem>
-                  </TextField>
-                </Grid>
-              </Grid>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Weekly Capacity (units/wk)"
+                  type="number"
+                  value={newCapacity}
+                  onChange={(e) => setNewCapacity(e.target.value)}
+                />
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  label="Initial Batch Status"
+                  value={newBatchStatus}
+                  onChange={(e) => setNewBatchStatus(e.target.value)}
+                >
+                  <MenuItem value="Planned">Planned</MenuItem>
+                  <MenuItem value="In Production">In Production</MenuItem>
+                </TextField>
+              </Box>
 
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Start Date"
-                    type="date"
-                    InputLabelProps={{ shrink: true }}
-                    value={newStartDate}
-                    onChange={(e) => setNewStartDate(e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Expected Completion Date"
-                    type="date"
-                    InputLabelProps={{ shrink: true }}
-                    value={newExpectedDate}
-                    onChange={(e) => setNewExpectedDate(e.target.value)}
-                  />
-                </Grid>
-              </Grid>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Start Date"
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  value={newStartDate}
+                  onChange={(e) => setNewStartDate(e.target.value)}
+                />
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Expected Completion Date"
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  value={newExpectedDate}
+                  onChange={(e) => setNewExpectedDate(e.target.value)}
+                />
+              </Box>
 
               <TextField
                 fullWidth

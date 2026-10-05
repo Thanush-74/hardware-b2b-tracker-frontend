@@ -131,9 +131,9 @@ const InventoryManagementPage = () => {
               sx={{
                 width: 44,
                 height: 44,
-                borderRadius: 2,
-                backgroundColor: 'rgba(245, 158, 11, 0.12)',
-                color: 'primary.main',
+                borderRadius: 1.5,
+                backgroundColor: '#eff6ff',
+                color: '#2563eb',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -142,16 +142,16 @@ const InventoryManagementPage = () => {
               <InventoryIcon sx={{ fontSize: 26 }} />
             </Box>
             <Box>
-              <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary' }}>
+              <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a' }}>
                 Inventory & Stock Tracking
               </Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              <Typography variant="caption" sx={{ color: '#64748b' }}>
                 Warehouse Real-Time Stock Tracking (GET /api/inventory, POST /api/inventory/:id/increase, decrease)
               </Typography>
             </Box>
           </Stack>
 
-          <Button size="small" variant="outlined" onClick={fetchInventory} disabled={isLoading} sx={{ textTransform: 'none' }}>
+          <Button size="small" variant="outlined" onClick={fetchInventory} disabled={isLoading} sx={{ textTransform: 'none', borderColor: '#d1d5db', color: '#0f172a' }}>
             Refresh Stock
           </Button>
         </Stack>
@@ -163,9 +163,9 @@ const InventoryManagementPage = () => {
         sx={{
           p: 1.5,
           mb: 3,
-          borderRadius: 2,
-          backgroundColor: 'rgba(255, 255, 255, 0.02)',
-          border: '1px solid rgba(255, 255, 255, 0.06)',
+          borderRadius: 1.5,
+          backgroundColor: '#ffffff',
+          border: '1px solid #e2e8f0',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -173,12 +173,12 @@ const InventoryManagementPage = () => {
           gap: 1,
         }}
       >
-        <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
-          ROLE: <Box component="span" sx={{ color: 'primary.light' }}>{role?.name || role?.slug || 'Staff'}</Box> • ACTIVE RBAC ACTIONS:
+        <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
+          ROLE: <Box component="span" sx={{ color: '#0f172a', fontWeight: 700 }}>{role?.name || role?.slug || 'Staff'}</Box> • ACTIVE RBAC ACTIONS:
         </Typography>
         <Stack direction="row" spacing={1} flexWrap="wrap">
           <Chip label="inventory.view (Read Stock)" size="small" color="success" variant="outlined" sx={{ height: 22, fontSize: '0.7rem' }} />
-          {canEdit && <Chip label="inventory.edit (Increase / Decrease Stock)" size="small" color="primary" sx={{ height: 22, fontSize: '0.7rem' }} />}
+          {canEdit && <Chip label="inventory.edit (Increase / Decrease Stock)" size="small" sx={{ height: 22, fontSize: '0.7rem', backgroundColor: '#2563eb', color: '#ffffff' }} />}
         </Stack>
       </Paper>
 
@@ -199,17 +199,18 @@ const InventoryManagementPage = () => {
 
       {/* Search Bar */}
       <Paper
-        elevation={2}
+        elevation={0}
         sx={{
           p: 2,
           mb: 3,
-          borderRadius: 2.5,
-          backgroundColor: 'background.paper',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 2,
+          backgroundColor: '#ffffff',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
         }}
       >
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={6} md={4}>
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, gap: 2 }}>
+          <Box sx={{ flex: 1, maxWidth: { xs: '100%', sm: 380 } }}>
             <TextField
               size="small"
               placeholder="Filter inventory by product name or type..."
@@ -217,22 +218,21 @@ const InventoryManagementPage = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-          </Grid>
-          <Grid item xs={12} sm={6} md={8}>
-            <Stack direction="row" spacing={1.5} justifyContent={{ xs: 'flex-start', sm: 'flex-end' }}>
-              <Chip label={`Warehouse SKUs: ${totalCount}`} size="small" sx={{ fontWeight: 600 }} />
-            </Stack>
-          </Grid>
-        </Grid>
+          </Box>
+          <Stack direction="row" spacing={1.5} justifyContent={{ xs: 'flex-start', sm: 'flex-end' }}>
+            <Chip label={`Warehouse SKUs: ${totalCount}`} size="small" sx={{ fontWeight: 600, backgroundColor: '#f1f5f9', color: '#334155' }} />
+          </Stack>
+        </Box>
       </Paper>
 
       {/* Inventory Table */}
       <Paper
-        elevation={2}
+        elevation={0}
         sx={{
-          borderRadius: 2.5,
-          backgroundColor: 'background.paper',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 2,
+          backgroundColor: '#ffffff',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
           overflow: 'hidden',
         }}
       >
@@ -247,10 +247,18 @@ const InventoryManagementPage = () => {
             </Typography>
           </Box>
         ) : (
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow sx={{ '& th': { color: 'text.secondary', fontWeight: 700, fontSize: '0.75rem', py: 1.5 } }}>
+          <TableContainer
+            sx={{
+              width: '100%',
+              overflowX: 'auto',
+              minWidth: 0,
+              '&::-webkit-scrollbar': { height: '5px' },
+              '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(148, 163, 184, 0.25)', borderRadius: '4px' },
+            }}
+          >
+            <Table size="small" sx={{ width: '100%', minWidth: 680 }}>
+              <TableHead sx={{ backgroundColor: '#f8fafc' }}>
+                <TableRow sx={{ '& th': { color: '#0f172a', fontWeight: 700, fontSize: '0.75rem', py: 1.5, borderBottom: '1px solid #e2e8f0' } }}>
                   <TableCell>Product Item</TableCell>
                   <TableCell>Warehouse Location</TableCell>
                   <TableCell>Total Stock</TableCell>
@@ -265,35 +273,35 @@ const InventoryManagementPage = () => {
                   <TableRow
                     key={item.id}
                     sx={{
-                      '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.02)' },
-                      '& td': { borderColor: 'rgba(255, 255, 255, 0.06)', py: 1.2 },
+                      '&:hover': { backgroundColor: '#f8fafc' },
+                      '& td': { borderColor: '#f1f5f9', py: 1.2 },
                     }}
                   >
                     <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>
                         {item.product_name || item.product?.name || `Product #${item.product_id}`}
                       </Typography>
                       {item.product_type && (
-                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                        <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
                           Type: {item.product_type}
                         </Typography>
                       )}
                     </TableCell>
                     <TableCell>
-                      <Chip label={item.location || 'Main Warehouse'} size="small" sx={{ fontSize: '0.7rem', height: 20 }} />
+                      <Chip label={item.location || 'Main Warehouse'} size="small" sx={{ fontSize: '0.7rem', height: 20, backgroundColor: '#f1f5f9', color: '#334155' }} />
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a' }}>
                         {item.total_quantity ?? item.quantity} units
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                      <Typography variant="body2" sx={{ color: '#64748b' }}>
                         {item.reserved_quantity || 0} units
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 700, color: 'primary.light' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>
                         {item.available_quantity ?? item.quantity} units
                       </Typography>
                     </TableCell>

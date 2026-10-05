@@ -189,9 +189,9 @@ const RoleManagementPage = () => {
             sx={{
               width: 44,
               height: 44,
-              borderRadius: 2,
-              backgroundColor: 'rgba(245, 158, 11, 0.12)',
-              color: 'primary.main',
+              borderRadius: 1.5,
+              backgroundColor: '#eff6ff',
+              color: '#2563eb',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -200,10 +200,10 @@ const RoleManagementPage = () => {
             <RolesIcon sx={{ fontSize: 28 }} />
           </Box>
           <Box>
-            <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary' }}>
+            <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a' }}>
               Admin Role Management
             </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            <Typography variant="caption" sx={{ color: '#64748b' }}>
               Create roles and configure screen access permissions via RBAC (GET /api/screens, POST /api/roles)
             </Typography>
           </Box>
@@ -222,19 +222,19 @@ const RoleManagementPage = () => {
           <CircularProgress color="primary" />
         </Box>
       ) : (
-        <Grid container spacing={3.5}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 3.5, alignItems: 'start' }}>
           {/* Create Role Form */}
-          <Grid item xs={12} lg={6}>
-            <Paper
-              elevation={2}
+          <Paper
+              elevation={0}
               sx={{
                 p: { xs: 2.5, sm: 3.5 },
-                borderRadius: 2.5,
-                backgroundColor: 'background.paper',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: 2,
+                backgroundColor: '#ffffff',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
               }}
             >
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5, color: 'text.primary' }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5, color: '#0f172a' }}>
                 Create Role
               </Typography>
               <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 3 }}>
@@ -335,18 +335,18 @@ const RoleManagementPage = () => {
                       variant="outlined"
                       sx={{
                         p: 1.5,
-                        borderRadius: 2,
-                        borderColor: formErrors.screens ? 'error.main' : 'rgba(255, 255, 255, 0.1)',
-                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                        borderRadius: 1.5,
+                        borderColor: formErrors.screens ? 'error.main' : '#e2e8f0',
+                        backgroundColor: '#f8fafc',
                         maxHeight: 280,
                         overflowY: 'auto',
                       }}
                     >
-                      <Grid container spacing={0.5}>
+                      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 0.5 }}>
                         {screens.map((screen) => {
                           const isChecked = selectedScreenIds.includes(Number(screen.id));
                           return (
-                            <Grid item xs={12} sm={6} key={screen.id}>
+                            <Box key={screen.id}>
                               <FormControlLabel
                                 control={
                                   <Checkbox
@@ -359,14 +359,14 @@ const RoleManagementPage = () => {
                                 }
                                 label={
                                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    <Box sx={{ color: isChecked ? 'primary.main' : 'text.secondary', display: 'flex' }}>
+                                    <Box sx={{ color: isChecked ? '#2563eb' : '#64748b', display: 'flex' }}>
                                       {getScreenIcon(screen.slug, { sx: { fontSize: 16 } })}
                                     </Box>
                                     <Box>
-                                      <Typography variant="body2" sx={{ fontWeight: isChecked ? 700 : 500, fontSize: '0.82rem' }}>
+                                      <Typography variant="body2" sx={{ fontWeight: isChecked ? 700 : 500, fontSize: '0.82rem', color: '#0f172a' }}>
                                         {screen.name}
                                       </Typography>
-                                      <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                                      <Typography variant="caption" sx={{ color: '#64748b', fontSize: '0.7rem' }}>
                                         {screen.route}
                                       </Typography>
                                     </Box>
@@ -374,10 +374,10 @@ const RoleManagementPage = () => {
                                 }
                                 sx={{ m: 0, p: 0.5, width: '100%' }}
                               />
-                            </Grid>
+                            </Box>
                           );
                         })}
-                      </Grid>
+                      </Box>
                     </Paper>
                   </Box>
 
@@ -385,18 +385,22 @@ const RoleManagementPage = () => {
                     id="create-role-btn"
                     type="submit"
                     variant="contained"
-                    color="primary"
                     disabled={isSubmitting}
                     sx={{
                       py: 1.2,
-                      fontWeight: 700,
+                      fontWeight: 600,
                       fontSize: '0.9rem',
                       mt: 1,
+                      backgroundColor: '#2563eb',
+                      color: '#ffffff',
+                      '&:hover': {
+                        backgroundColor: '#1d4ed8',
+                      },
                     }}
                   >
                     {isSubmitting ? (
                       <Stack direction="row" spacing={1.5} alignItems="center">
-                        <CircularProgress size={18} sx={{ color: '#0b0f19' }} />
+                        <CircularProgress size={18} sx={{ color: '#ffffff' }} />
                         <span>Creating Role...</span>
                       </Stack>
                     ) : (
@@ -406,40 +410,47 @@ const RoleManagementPage = () => {
                 </Stack>
               </Box>
             </Paper>
-          </Grid>
-
           {/* Existing Roles List */}
-          <Grid item xs={12} lg={6}>
-            <Paper
-              elevation={2}
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2.5, sm: 3.5 },
+              borderRadius: 2,
+              backgroundColor: '#ffffff',
+              border: '1px solid #e2e8f0',
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: '#0f172a' }}>
+                  Existing Roles ({roles.length})
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#64748b' }}>
+                  Roles currently configured in the database
+                </Typography>
+              </Box>
+              <Button size="small" variant="outlined" onClick={fetchData} sx={{ textTransform: 'none', borderColor: '#d1d5db', color: '#0f172a' }}>
+                Refresh
+              </Button>
+            </Box>
+
+            <TableContainer
               sx={{
-                p: { xs: 2.5, sm: 3.5 },
-                borderRadius: 2.5,
-                backgroundColor: 'background.paper',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
+                flexGrow: 1,
+                maxHeight: 600,
+                width: '100%',
+                overflowX: 'auto',
+                '&::-webkit-scrollbar': { height: '5px' },
+                '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: '4px' },
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                    Existing Roles ({roles.length})
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                    Roles currently configured in the database
-                  </Typography>
-                </Box>
-                <Button size="small" variant="outlined" onClick={fetchData} sx={{ textTransform: 'none' }}>
-                  Refresh
-                </Button>
-              </Box>
-
-              <TableContainer sx={{ flexGrow: 1, maxHeight: 600 }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow sx={{ '& th': { color: 'text.secondary', fontWeight: 700, fontSize: '0.75rem' } }}>
+              <Table size="small" sx={{ minWidth: 500 }}>
+                  <TableHead sx={{ backgroundColor: '#f8fafc' }}>
+                    <TableRow sx={{ '& th': { color: '#0f172a', fontWeight: 700, fontSize: '0.75rem', borderBottom: '1px solid #e2e8f0' } }}>
                       <TableCell>Role</TableCell>
                       <TableCell>Slug</TableCell>
                       <TableCell>Assigned Screens</TableCell>
@@ -452,16 +463,16 @@ const RoleManagementPage = () => {
                         <TableRow
                           key={r.id}
                           sx={{
-                            '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.02)' },
-                            '& td': { borderColor: 'rgba(255, 255, 255, 0.06)' },
+                            '&:hover': { backgroundColor: '#f8fafc' },
+                            '& td': { borderColor: '#f1f5f9' },
                           }}
                         >
                           <TableCell sx={{ verticalAlign: 'top', py: 1.5 }}>
-                            <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                            <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>
                               {r.name}
                             </Typography>
                             {r.description && (
-                              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                              <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
                                 {r.description}
                               </Typography>
                             )}
@@ -474,8 +485,9 @@ const RoleManagementPage = () => {
                                 fontFamily: 'monospace',
                                 fontSize: '0.7rem',
                                 height: 20,
-                                backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                                color: 'primary.light',
+                                backgroundColor: '#eff6ff',
+                                color: '#1d4ed8',
+                                border: '1px solid #bfdbfe',
                               }}
                             />
                           </TableCell>
@@ -491,7 +503,8 @@ const RoleManagementPage = () => {
                                     sx={{
                                       fontSize: '0.68rem',
                                       height: 20,
-                                      borderColor: 'rgba(255, 255, 255, 0.15)',
+                                      borderColor: '#e2e8f0',
+                                      color: '#0f172a',
                                     }}
                                   />
                                 ))
@@ -509,8 +522,7 @@ const RoleManagementPage = () => {
                 </Table>
               </TableContainer>
             </Paper>
-          </Grid>
-        </Grid>
+        </Box>
       )}
     </Box>
   );

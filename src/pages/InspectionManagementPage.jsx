@@ -30,17 +30,17 @@ import { getStaff } from '../services/staffService';
 import { InspectionIcon } from '../components/Icons';
 
 const RESULT_COLORS = {
-  Passed: { bg: 'rgba(16, 185, 129, 0.15)', text: '#10B981', border: 'rgba(16, 185, 129, 0.3)' },
-  Failed: { bg: 'rgba(239, 68, 68, 0.15)', text: '#EF4444', border: 'rgba(239, 68, 68, 0.3)' },
-  Pending: { bg: 'rgba(245, 158, 11, 0.15)', text: '#F59E0B', border: 'rgba(245, 158, 11, 0.3)' },
-  Conditional: { bg: 'rgba(59, 130, 246, 0.15)', text: '#3B82F6', border: 'rgba(59, 130, 246, 0.3)' },
+  Passed: { bg: '#f0fdf4', text: '#15803d', border: '#bbf7d0' },
+  Failed: { bg: '#fef2f2', text: '#b91c1c', border: '#fecaca' },
+  Pending: { bg: '#fffbeb', text: '#b45309', border: '#fde68a' },
+  Conditional: { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' },
 };
 
 const SEVERITY_COLORS = {
-  Low: { bg: 'rgba(148, 163, 184, 0.15)', text: '#94A3B8' },
-  Medium: { bg: 'rgba(245, 158, 11, 0.15)', text: '#F59E0B' },
-  High: { bg: 'rgba(234, 88, 12, 0.15)', text: '#EA580C' },
-  Critical: { bg: 'rgba(239, 68, 68, 0.15)', text: '#EF4444' },
+  Low: { bg: '#eff6ff', text: '#1d4ed8' },
+  Medium: { bg: '#fffbeb', text: '#b45309' },
+  High: { bg: '#fef2f2', text: '#dc2626' },
+  Critical: { bg: '#fef2f2', text: '#b91c1c' },
 };
 
 const DEFECT_TYPES = [
@@ -355,162 +355,162 @@ const InspectionManagementPage = () => {
       )}
 
       {/* KPI Stats Cards */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'success.light', fontWeight: 700, textTransform: 'uppercase' }}>
-              Quality Pass Rate
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'success.main', mt: 0.5, fontFamily: 'monospace' }}>
-              {passRate}%
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Factory yield efficiency
-            </Typography>
-          </Paper>
-        </Grid>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Quality Pass Rate
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#111827', mt: 0.5 }}>
+            {passRate}%
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            Factory yield efficiency
+          </Typography>
+        </Paper>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase' }}>
-              Total Inspected
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary', mt: 0.5, fontFamily: 'monospace' }}>
-              {totalInspected.toLocaleString()}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Hardware units audited
-            </Typography>
-          </Paper>
-        </Grid>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Total Inspected
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#111827', mt: 0.5 }}>
+            {totalInspected.toLocaleString()}
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            Hardware units audited
+          </Typography>
+        </Paper>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'primary.light', fontWeight: 700, textTransform: 'uppercase' }}>
-              Units Passed
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'primary.main', mt: 0.5, fontFamily: 'monospace' }}>
-              {totalPassed.toLocaleString()}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Verified defect-free
-            </Typography>
-          </Paper>
-        </Grid>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Units Passed
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#2563eb', mt: 0.5 }}>
+            {totalPassed.toLocaleString()}
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            Verified defect-free
+          </Typography>
+        </Paper>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'error.light', fontWeight: 700, textTransform: 'uppercase' }}>
-              Units Defective / Failed
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'error.main', mt: 0.5, fontFamily: 'monospace' }}>
-              {totalFailed.toLocaleString()}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Rejected or routed to rework
-            </Typography>
-          </Paper>
-        </Grid>
-      </Grid>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Units Defective / Failed
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#b91c1c', mt: 0.5 }}>
+            {totalFailed.toLocaleString()}
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            Rejected or routed to rework
+          </Typography>
+        </Paper>
+      </Box>
 
       {/* Filter toolbar */}
       <Paper
-        elevation={1}
+        elevation={0}
         sx={{
           p: 2,
           mb: 3,
-          borderRadius: 2.5,
-          backgroundColor: 'background.paper',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 2,
+          backgroundColor: '#ffffff',
+          border: '1px solid #e5e7eb',
         }}
       >
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={5}>
-            <TextField
-              size="small"
-              fullWidth
-              placeholder="Search batch #, defect type, inspector, product..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </Grid>
-          <Grid item xs={6} md={3.5}>
-            <TextField
-              select
-              size="small"
-              fullWidth
-              label="QA Result"
-              value={resultFilter}
-              onChange={(e) => setResultFilter(e.target.value)}
-            >
-              <MenuItem value="ALL">All Results</MenuItem>
-              {RESULTS.map((res) => (
-                <MenuItem key={res} value={res}>
-                  {res}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
-          <Grid item xs={6} md={3.5}>
-            <TextField
-              select
-              size="small"
-              fullWidth
-              label="Severity"
-              value={severityFilter}
-              onChange={(e) => setSeverityFilter(e.target.value)}
-            >
-              <MenuItem value="ALL">All Severities</MenuItem>
-              {SEVERITIES.map((sev) => (
-                <MenuItem key={sev} value={sev}>
-                  {sev}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
-        </Grid>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '5fr 3.5fr 3.5fr' },
+            gap: 2,
+            alignItems: 'center',
+          }}
+        >
+          <TextField
+            size="small"
+            fullWidth
+            placeholder="Search batch #, defect type, inspector, product..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <TextField
+            select
+            size="small"
+            fullWidth
+            label="QA Result"
+            value={resultFilter}
+            onChange={(e) => setResultFilter(e.target.value)}
+          >
+            <MenuItem value="ALL">All Results</MenuItem>
+            {RESULTS.map((res) => (
+              <MenuItem key={res} value={res}>
+                {res}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            select
+            size="small"
+            fullWidth
+            label="Severity"
+            value={severityFilter}
+            onChange={(e) => setSeverityFilter(e.target.value)}
+          >
+            <MenuItem value="ALL">All Severities</MenuItem>
+            {SEVERITIES.map((sev) => (
+              <MenuItem key={sev} value={sev}>
+                {sev}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Box>
       </Paper>
 
       {/* Inspections Table */}
       <Paper
-        elevation={2}
+        elevation={0}
         sx={{
-          borderRadius: 2.5,
+          borderRadius: 2,
           overflow: 'hidden',
-          backgroundColor: 'background.paper',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          backgroundColor: '#ffffff',
+          border: '1px solid #e5e7eb',
         }}
       >
         {isLoading ? (
@@ -541,29 +541,37 @@ const InspectionManagementPage = () => {
             )}
           </Box>
         ) : (
-          <TableContainer>
-            <Table>
-              <TableHead sx={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}>
+          <TableContainer
+            sx={{
+              width: '100%',
+              overflowX: 'auto',
+              minWidth: 0,
+              '&::-webkit-scrollbar': { height: '5px' },
+              '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(148, 163, 184, 0.25)', borderRadius: '4px' },
+            }}
+          >
+            <Table sx={{ width: '100%', minWidth: 720 }}>
+              <TableHead sx={{ backgroundColor: '#f9fafb' }}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Batch / Audit</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Product & Inspector</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Yield Rate & Units</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Defect & Severity</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Result</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Batch / Audit</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Product & Inspector</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Yield Rate & Units</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Defect & Severity</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Result</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, color: '#111827' }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {filteredList.map((item) => {
                   const resStyle = RESULT_COLORS[item.result] || {
-                    bg: 'rgba(255, 255, 255, 0.05)',
-                    text: '#FFF',
-                    border: 'rgba(255, 255, 255, 0.1)',
+                    bg: '#f9fafb',
+                    text: '#111827',
+                    border: '#e5e7eb',
                   };
 
                   const sevStyle = SEVERITY_COLORS[item.severity] || {
-                    bg: 'rgba(255, 255, 255, 0.05)',
-                    text: '#FFF',
+                    bg: '#f9fafb',
+                    text: '#111827',
                   };
 
                   const inspected = Number(item.quantity_inspected) || 1;
@@ -610,7 +618,7 @@ const InspectionManagementPage = () => {
                           sx={{
                             height: 6,
                             borderRadius: 3,
-                            backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                            backgroundColor: '#e5e7eb',
                             '& .MuiLinearProgress-bar': {
                               backgroundColor: yieldPct >= 95 ? 'success.main' : 'warning.main',
                               borderRadius: 3,
@@ -815,150 +823,133 @@ const InspectionManagementPage = () => {
           <DialogTitle sx={{ fontWeight: 800 }}>Log Hardware Quality Inspection</DialogTitle>
           <DialogContent dividers>
             <Stack spacing={2} sx={{ mt: 1 }}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    select
-                    required
-                    fullWidth
-                    size="small"
-                    label="QA Auditor / Inspector"
-                    value={newInspectorId}
-                    onChange={(e) => setNewInspectorId(e.target.value)}
-                  >
-                    {staffList.map((st) => (
-                      <MenuItem key={st.id} value={st.id}>
-                        {st.first_name} {st.last_name} ({st.email})
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    select
-                    fullWidth
-                    size="small"
-                    label="Product Line Audited"
-                    value={newProductId}
-                    onChange={(e) => setNewProductId(e.target.value)}
-                  >
-                    <MenuItem value="">General Assembly Inspection</MenuItem>
-                    {products.map((p) => (
-                      <MenuItem key={p.id} value={p.id}>
-                        {p.name}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-              </Grid>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <TextField
+                  select
+                  required
+                  fullWidth
+                  size="small"
+                  label="QA Auditor / Inspector"
+                  value={newInspectorId}
+                  onChange={(e) => setNewInspectorId(e.target.value)}
+                >
+                  {staffList.map((st) => (
+                    <MenuItem key={st.id} value={st.id}>
+                      {st.first_name} {st.last_name} ({st.email})
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  label="Product Line Audited"
+                  value={newProductId}
+                  onChange={(e) => setNewProductId(e.target.value)}
+                >
+                  <MenuItem value="">General Assembly Inspection</MenuItem>
+                  {products.map((p) => (
+                    <MenuItem key={p.id} value={p.id}>
+                      {p.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Box>
 
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Batch / Production Run Number"
-                    value={newBatchNo}
-                    onChange={(e) => setNewBatchNo(e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Inspection Date"
-                    type="date"
-                    InputLabelProps={{ shrink: true }}
-                    value={newInspectionDate}
-                    onChange={(e) => setNewInspectionDate(e.target.value)}
-                  />
-                </Grid>
-              </Grid>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Batch / Production Run Number"
+                  value={newBatchNo}
+                  onChange={(e) => setNewBatchNo(e.target.value)}
+                />
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Inspection Date"
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  value={newInspectionDate}
+                  onChange={(e) => setNewInspectionDate(e.target.value)}
+                />
+              </Box>
 
-              <Grid container spacing={2}>
-                <Grid item xs={4}>
-                  <TextField
-                    required
-                    fullWidth
-                    size="small"
-                    label="Units Inspected"
-                    type="number"
-                    value={newInspected}
-                    onChange={(e) => {
-                      setNewInspected(e.target.value);
-                      setNewPassed(e.target.value);
-                      setNewFailed('0');
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={4}>
-                  <TextField
-                    required
-                    fullWidth
-                    size="small"
-                    label="Units Passed"
-                    type="number"
-                    value={newPassed}
-                    onChange={(e) => {
-                      const p = Number(e.target.value) || 0;
-                      const tot = Number(newInspected) || 0;
-                      setNewPassed(e.target.value);
-                      setNewFailed(String(Math.max(0, tot - p)));
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={4}>
-                  <TextField
-                    required
-                    fullWidth
-                    size="small"
-                    label="Units Failed"
-                    type="number"
-                    value={newFailed}
-                    onChange={(e) => {
-                      const f = Number(e.target.value) || 0;
-                      const tot = Number(newInspected) || 0;
-                      setNewFailed(e.target.value);
-                      setNewPassed(String(Math.max(0, tot - f)));
-                    }}
-                  />
-                </Grid>
-              </Grid>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2 }}>
+                <TextField
+                  required
+                  fullWidth
+                  size="small"
+                  label="Units Inspected"
+                  type="number"
+                  value={newInspected}
+                  onChange={(e) => {
+                    setNewInspected(e.target.value);
+                    setNewPassed(e.target.value);
+                    setNewFailed('0');
+                  }}
+                />
+                <TextField
+                  required
+                  fullWidth
+                  size="small"
+                  label="Units Passed"
+                  type="number"
+                  value={newPassed}
+                  onChange={(e) => {
+                    const p = Number(e.target.value) || 0;
+                    const tot = Number(newInspected) || 0;
+                    setNewPassed(e.target.value);
+                    setNewFailed(String(Math.max(0, tot - p)));
+                  }}
+                />
+                <TextField
+                  required
+                  fullWidth
+                  size="small"
+                  label="Units Failed"
+                  type="number"
+                  value={newFailed}
+                  onChange={(e) => {
+                    const f = Number(e.target.value) || 0;
+                    const tot = Number(newInspected) || 0;
+                    setNewFailed(e.target.value);
+                    setNewPassed(String(Math.max(0, tot - f)));
+                  }}
+                />
+              </Box>
 
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <TextField
-                    select
-                    fullWidth
-                    size="small"
-                    label="Final QA Decision"
-                    value={newResult}
-                    onChange={(e) => setNewResult(e.target.value)}
-                  >
-                    {RESULTS.map((r) => (
-                      <MenuItem key={r} value={r}>
-                        {r}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-                <Grid item xs={6}>
-                  <TextField
-                    select
-                    fullWidth
-                    size="small"
-                    label="Defect Severity"
-                    value={newSeverity}
-                    onChange={(e) => setNewSeverity(e.target.value)}
-                  >
-                    {SEVERITIES.map((s) => (
-                      <MenuItem key={s} value={s}>
-                        {s}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-              </Grid>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  label="Final QA Decision"
+                  value={newResult}
+                  onChange={(e) => setNewResult(e.target.value)}
+                >
+                  {RESULTS.map((r) => (
+                    <MenuItem key={r} value={r}>
+                      {r}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  label="Defect Severity"
+                  value={newSeverity}
+                  onChange={(e) => setNewSeverity(e.target.value)}
+                >
+                  {SEVERITIES.map((s) => (
+                    <MenuItem key={s} value={s}>
+                      {s}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Box>
 
               <TextField
                 select

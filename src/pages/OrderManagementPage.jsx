@@ -33,19 +33,19 @@ import { getStaff } from '../services/staffService';
 import { OrdersIcon, DeliveriesIcon, CartIcon } from '../components/Icons';
 
 const ORDER_STATUS_COLORS = {
-  Pending: { bg: 'rgba(245, 158, 11, 0.15)', text: '#F59E0B', border: 'rgba(245, 158, 11, 0.3)' },
-  Confirmed: { bg: 'rgba(59, 130, 246, 0.15)', text: '#3B82F6', border: 'rgba(59, 130, 246, 0.3)' },
-  Processing: { bg: 'rgba(168, 85, 247, 0.15)', text: '#A855F7', border: 'rgba(168, 85, 247, 0.3)' },
-  Shipped: { bg: 'rgba(14, 165, 233, 0.15)', text: '#0EA5E9', border: 'rgba(14, 165, 233, 0.3)' },
-  Delivered: { bg: 'rgba(16, 185, 129, 0.15)', text: '#10B981', border: 'rgba(16, 185, 129, 0.3)' },
-  Cancelled: { bg: 'rgba(239, 68, 68, 0.15)', text: '#EF4444', border: 'rgba(239, 68, 68, 0.3)' },
+  Pending: { bg: '#fffbeb', text: '#b45309', border: '#fde68a' },
+  Confirmed: { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' },
+  Processing: { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' },
+  Shipped: { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' },
+  Delivered: { bg: '#f0fdf4', text: '#15803d', border: '#bbf7d0' },
+  Cancelled: { bg: '#fef2f2', text: '#b91c1c', border: '#fecaca' },
 };
 
 const PAYMENT_STATUS_COLORS = {
-  Pending: { bg: 'rgba(245, 158, 11, 0.12)', text: '#F59E0B' },
-  Paid: { bg: 'rgba(16, 185, 129, 0.12)', text: '#10B981' },
-  'Partially Paid': { bg: 'rgba(59, 130, 246, 0.12)', text: '#3B82F6' },
-  Failed: { bg: 'rgba(239, 68, 68, 0.12)', text: '#EF4444' },
+  Pending: { bg: '#fffbeb', text: '#b45309' },
+  Paid: { bg: '#f0fdf4', text: '#15803d' },
+  'Partially Paid': { bg: '#eff6ff', text: '#1d4ed8' },
+  Failed: { bg: '#fef2f2', text: '#b91c1c' },
 };
 
 const OrderManagementPage = () => {
@@ -316,18 +316,18 @@ const OrderManagementPage = () => {
               sx={{
                 width: 44,
                 height: 44,
-                borderRadius: 2,
-                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                borderRadius: 1.5,
+                backgroundColor: '#eff6ff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'primary.main',
+                color: '#2563eb',
               }}
             >
               <OrdersIcon sx={{ fontSize: 24 }} />
             </Box>
             <Box>
-              <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', letterSpacing: '-0.02em' }}>
+              <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>
                 B2B Orders Management
               </Typography>
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
@@ -376,162 +376,161 @@ const OrderManagementPage = () => {
       )}
 
       {/* KPI Stats Cards */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase' }}>
-              Total Orders
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary', mt: 0.5 }}>
-              {orders.length}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'primary.light' }}>
-              Lifetime customer records
-            </Typography>
-          </Paper>
-        </Grid>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>
+            Total Orders
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.5 }}>
+            {orders.length}
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#2563eb', fontWeight: 500 }}>
+            Lifetime customer records
+          </Typography>
+        </Paper>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'warning.light', fontWeight: 700, textTransform: 'uppercase' }}>
-              Pending / Confirmed
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'warning.main', mt: 0.5 }}>
-              {pendingOrdersCount}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Awaiting packaging or payment
-            </Typography>
-          </Paper>
-        </Grid>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>
+            Pending / Confirmed
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.5 }}>
+            {pendingOrdersCount}
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#64748b' }}>
+            Awaiting packaging or payment
+          </Typography>
+        </Paper>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'info.light', fontWeight: 700, textTransform: 'uppercase' }}>
-              Processing / In Transit
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'info.main', mt: 0.5 }}>
-              {processingCount}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Active warehouse handling
-            </Typography>
-          </Paper>
-        </Grid>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>
+            Processing / In Transit
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.5 }}>
+            {processingCount}
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#64748b' }}>
+            Active warehouse handling
+          </Typography>
+        </Paper>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'success.light', fontWeight: 700, textTransform: 'uppercase' }}>
-              Total Revenue
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'success.main', mt: 0.5, fontFamily: 'monospace' }}>
-              ${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              {deliveredCount} delivered successfully
-            </Typography>
-          </Paper>
-        </Grid>
-      </Grid>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>
+            Total Revenue
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.5, fontFamily: 'monospace' }}>
+            ₹{totalRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#64748b' }}>
+            {deliveredCount} delivered successfully
+          </Typography>
+        </Paper>
+      </Box>
 
-      {/* Filters and Search toolbar */}
       <Paper
-        elevation={1}
+        elevation={0}
         sx={{
           p: 2,
           mb: 3,
-          borderRadius: 2.5,
-          backgroundColor: 'background.paper',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 2,
+          backgroundColor: '#ffffff',
+          border: '1px solid #e5e7eb',
         }}
       >
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={5}>
-            <TextField
-              size="small"
-              fullWidth
-              placeholder="Search by Order #, Customer, Phone, or Email..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </Grid>
-          <Grid item xs={6} md={3.5}>
-            <TextField
-              select
-              size="small"
-              fullWidth
-              label="Order Status"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <MenuItem value="ALL">All Order Statuses</MenuItem>
-              <MenuItem value="Pending">Pending</MenuItem>
-              <MenuItem value="Confirmed">Confirmed</MenuItem>
-              <MenuItem value="Processing">Processing</MenuItem>
-              <MenuItem value="Shipped">Shipped</MenuItem>
-              <MenuItem value="Delivered">Delivered</MenuItem>
-              <MenuItem value="Cancelled">Cancelled</MenuItem>
-            </TextField>
-          </Grid>
-          <Grid item xs={6} md={3.5}>
-            <TextField
-              select
-              size="small"
-              fullWidth
-              label="Payment Status"
-              value={paymentFilter}
-              onChange={(e) => setPaymentFilter(e.target.value)}
-            >
-              <MenuItem value="ALL">All Payment Statuses</MenuItem>
-              <MenuItem value="Pending">Pending</MenuItem>
-              <MenuItem value="Paid">Paid</MenuItem>
-              <MenuItem value="Partially Paid">Partially Paid</MenuItem>
-              <MenuItem value="Failed">Failed</MenuItem>
-            </TextField>
-          </Grid>
-        </Grid>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '5fr 3.5fr 3.5fr' },
+            gap: 2,
+            alignItems: 'center',
+          }}
+        >
+          <TextField
+            size="small"
+            fullWidth
+            placeholder="Search by Order #, Customer, Phone, or Email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <TextField
+            select
+            size="small"
+            fullWidth
+            label="Order Status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <MenuItem value="ALL">All Order Statuses</MenuItem>
+            <MenuItem value="Pending">Pending</MenuItem>
+            <MenuItem value="Confirmed">Confirmed</MenuItem>
+            <MenuItem value="Processing">Processing</MenuItem>
+            <MenuItem value="Shipped">Shipped</MenuItem>
+            <MenuItem value="Delivered">Delivered</MenuItem>
+            <MenuItem value="Cancelled">Cancelled</MenuItem>
+          </TextField>
+          <TextField
+            select
+            size="small"
+            fullWidth
+            label="Payment Status"
+            value={paymentFilter}
+            onChange={(e) => setPaymentFilter(e.target.value)}
+          >
+            <MenuItem value="ALL">All Payment Statuses</MenuItem>
+            <MenuItem value="Pending">Pending</MenuItem>
+            <MenuItem value="Paid">Paid</MenuItem>
+            <MenuItem value="Partially Paid">Partially Paid</MenuItem>
+            <MenuItem value="Failed">Failed</MenuItem>
+          </TextField>
+        </Box>
       </Paper>
 
       {/* Orders Table */}
       <Paper
-        elevation={2}
+        elevation={0}
         sx={{
-          borderRadius: 2.5,
+          borderRadius: 2,
           overflow: 'hidden',
-          backgroundColor: 'background.paper',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          backgroundColor: '#ffffff',
+          border: '1px solid #e5e7eb',
         }}
       >
         {isLoading ? (
@@ -564,29 +563,37 @@ const OrderManagementPage = () => {
             )}
           </Box>
         ) : (
-          <TableContainer>
-            <Table>
-              <TableHead sx={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Order Number</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Customer / Company</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Items</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Total Amount</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Payment Status</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Order Status</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
+          <TableContainer
+            sx={{
+              width: '100%',
+              overflowX: 'auto',
+              minWidth: 0,
+              '&::-webkit-scrollbar': { height: '5px' },
+              '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(148, 163, 184, 0.25)', borderRadius: '4px' },
+            }}
+          >
+            <Table sx={{ width: '100%', minWidth: 740 }}>
+              <TableHead sx={{ backgroundColor: '#f9fafb' }}>
+                <TableRow sx={{ '& th': { color: '#0f172a', fontWeight: 700, borderBottom: '1px solid #e5e7eb' } }}>
+                  <TableCell>Order Number</TableCell>
+                  <TableCell>Customer / Company</TableCell>
+                  <TableCell>Items</TableCell>
+                  <TableCell>Total Amount</TableCell>
+                  <TableCell>Payment Status</TableCell>
+                  <TableCell>Order Status</TableCell>
+                  <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {filteredOrders.map((order) => {
                   const orderColor = ORDER_STATUS_COLORS[order.order_status] || {
-                    bg: 'rgba(255, 255, 255, 0.05)',
-                    text: '#FFF',
-                    border: 'rgba(255, 255, 255, 0.1)',
+                    bg: '#f9fafb',
+                    text: '#0f172a',
+                    border: '#e5e7eb',
                   };
                   const payColor = PAYMENT_STATUS_COLORS[order.payment_status] || {
-                    bg: 'rgba(255, 255, 255, 0.05)',
-                    text: '#FFF',
+                    bg: '#f9fafb',
+                    text: '#0f172a',
                   };
                   const itemsCount = order.total_items_count || order.items?.reduce((s, i) => s + Number(i.quantity || 0), 0) || 0;
 
@@ -623,7 +630,7 @@ const OrderManagementPage = () => {
 
                       <TableCell>
                         <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'monospace' }}>
-                          ${Number(order.total_amount || 0).toFixed(2)}
+                          ₹{Number(order.total_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </Typography>
                         <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                           {order.payment_method || 'Bank Transfer'}
@@ -724,7 +731,7 @@ const OrderManagementPage = () => {
                   </Typography>
                   <Typography variant="body2">Status: <strong>{viewOrder.order_status}</strong></Typography>
                   <Typography variant="body2">Payment: <strong>{viewOrder.payment_status}</strong> ({viewOrder.payment_method})</Typography>
-                  <Typography variant="body2">Amount Paid: <strong>${Number(viewOrder.payment_amount || 0).toFixed(2)}</strong> / ${Number(viewOrder.total_amount || 0).toFixed(2)}</Typography>
+                  <Typography variant="body2">Amount Paid: <strong>₹{Number(viewOrder.payment_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> / ₹{Number(viewOrder.total_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Typography>
                 </Grid>
               </Grid>
 
@@ -739,8 +746,8 @@ const OrderManagementPage = () => {
               </Typography>
               <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
                 <Table size="small">
-                  <TableHead sx={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}>
-                    <TableRow>
+                  <TableHead sx={{ backgroundColor: '#f9fafb' }}>
+                    <TableRow sx={{ '& th': { color: '#0f172a', fontWeight: 700, borderBottom: '1px solid #e5e7eb' } }}>
                       <TableCell sx={{ fontWeight: 700 }}>Product</TableCell>
                       <TableCell align="center" sx={{ fontWeight: 700 }}>Qty</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 700 }}>Unit Price</TableCell>
@@ -763,10 +770,10 @@ const OrderManagementPage = () => {
                             <Chip label={item.quantity} size="small" />
                           </TableCell>
                           <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
-                            ${Number(item.unit_price || 0).toFixed(2)}
+                            ₹{Number(item.unit_price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </TableCell>
                           <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 700 }}>
-                            ${Number(item.total_price || 0).toFixed(2)}
+                            ₹{Number(item.total_price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </TableCell>
                         </TableRow>
                       ))
@@ -777,12 +784,12 @@ const OrderManagementPage = () => {
                         </TableCell>
                       </TableRow>
                     )}
-                    <TableRow sx={{ backgroundColor: 'rgba(255, 255, 255, 0.02)' }}>
-                      <TableCell colSpan={3} sx={{ fontWeight: 700, textAlign: 'right' }}>
+                    <TableRow sx={{ backgroundColor: '#f9fafb', '& td': { borderTop: '1px solid #e5e7eb' } }}>
+                      <TableCell colSpan={3} sx={{ fontWeight: 700, textAlign: 'right', color: '#0f172a' }}>
                         Grand Total:
                       </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 800, color: 'primary.light', fontFamily: 'monospace' }}>
-                        ${Number(viewOrder.total_amount || 0).toFixed(2)}
+                      <TableCell align="right" sx={{ fontWeight: 800, color: '#2563eb', fontFamily: 'monospace' }}>
+                        ₹{Number(viewOrder.total_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </TableCell>
                     </TableRow>
                   </TableBody>
@@ -880,12 +887,12 @@ const OrderManagementPage = () => {
             <TextField
               fullWidth
               size="small"
-              label="Payment Amount ($)"
+              label="Payment Amount (₹)"
               type="number"
               inputProps={{ min: 0, step: 'any' }}
               value={newPaymentAmount}
               onChange={(e) => setNewPaymentAmount(e.target.value)}
-              helperText={`Order total is $${Number(paymentDialogOrder?.total_amount || 0).toFixed(2)}`}
+              helperText={`Order total is ₹${Number(paymentDialogOrder?.total_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             />
           </Stack>
         </DialogContent>
@@ -916,57 +923,50 @@ const OrderManagementPage = () => {
               onChange={(e) => setDeliveryAddress(e.target.value)}
             />
 
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  label="Recipient Name"
-                  value={recipientName}
-                  onChange={(e) => setRecipientName(e.target.value)}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  label="Recipient Phone"
-                  value={recipientPhone}
-                  onChange={(e) => setRecipientPhone(e.target.value)}
-                />
-              </Grid>
-            </Grid>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Recipient Name"
+                value={recipientName}
+                onChange={(e) => setRecipientName(e.target.value)}
+              />
+              <TextField
+                fullWidth
+                size="small"
+                label="Recipient Phone"
+                value={recipientPhone}
+                onChange={(e) => setRecipientPhone(e.target.value)}
+              />
+            </Box>
 
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  label="Expected Delivery Date"
-                  type="date"
-                  InputLabelProps={{ shrink: true }}
-                  value={expectedDate}
-                  onChange={(e) => setExpectedDate(e.target.value)}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  select
-                  fullWidth
-                  size="small"
-                  label="Assign Delivery Staff"
-                  value={deliveryStaffId}
-                  onChange={(e) => setDeliveryStaffId(e.target.value)}
-                >
-                  <MenuItem value="">Unassigned (Schedule for later)</MenuItem>
-                  {staffList.map((st) => (
-                    <MenuItem key={st.id} value={st.id}>
-                      {st.first_name} {st.last_name} ({st.email})
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-            </Grid>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Expected Delivery Date"
+                type="date"
+                InputLabelProps={{ shrink: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
+                value={expectedDate}
+                onChange={(e) => setExpectedDate(e.target.value)}
+              />
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Assign Delivery Staff"
+                value={deliveryStaffId}
+                onChange={(e) => setDeliveryStaffId(e.target.value)}
+              >
+                <MenuItem value="">Unassigned (Schedule for later)</MenuItem>
+                {staffList.map((st) => (
+                  <MenuItem key={st.id} value={st.id}>
+                    {st.first_name} {st.last_name} ({st.email})
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Box>
 
             <TextField
               fullWidth
@@ -1008,8 +1008,8 @@ const OrderManagementPage = () => {
                   sx={{
                     p: 2,
                     borderRadius: 2,
-                    backgroundColor: 'rgba(245, 158, 11, 0.05)',
-                    borderColor: 'rgba(245, 158, 11, 0.3)',
+                    backgroundColor: '#eff6ff',
+                    borderColor: '#bfdbfe',
                   }}
                 >
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1017,7 +1017,7 @@ const OrderManagementPage = () => {
                       Active Cart Items Found ({cart.items.length} unique, {activeCartCount} total)
                     </Typography>
                     <Typography variant="subtitle2" sx={{ fontWeight: 800, fontFamily: 'monospace' }}>
-                      ${Number(cart.total || 0).toFixed(2)}
+                      ₹{Number(cart.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </Typography>
                   </Box>
                   <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.5 }}>

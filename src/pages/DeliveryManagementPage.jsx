@@ -33,12 +33,12 @@ import { getStaff } from '../services/staffService';
 import { DeliveriesIcon, OrdersIcon, StaffIcon } from '../components/Icons';
 
 const DELIVERY_STATUS_COLORS = {
-  Pending: { bg: 'rgba(245, 158, 11, 0.15)', text: '#F59E0B', border: 'rgba(245, 158, 11, 0.3)' },
-  Preparing: { bg: 'rgba(59, 130, 246, 0.15)', text: '#3B82F6', border: 'rgba(59, 130, 246, 0.3)' },
-  'In Transit': { bg: 'rgba(168, 85, 247, 0.15)', text: '#A855F7', border: 'rgba(168, 85, 247, 0.3)' },
-  Delivered: { bg: 'rgba(16, 185, 129, 0.15)', text: '#10B981', border: 'rgba(16, 185, 129, 0.3)' },
-  Failed: { bg: 'rgba(239, 68, 68, 0.15)', text: '#EF4444', border: 'rgba(239, 68, 68, 0.3)' },
-  Cancelled: { bg: 'rgba(148, 163, 184, 0.15)', text: '#94A3B8', border: 'rgba(148, 163, 184, 0.3)' },
+  Pending: { bg: '#fffbeb', text: '#b45309', border: '#fde68a' },
+  Preparing: { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' },
+  'In Transit': { bg: '#fffbeb', text: '#b45309', border: '#fde68a' },
+  Delivered: { bg: '#f0fdf4', text: '#15803d', border: '#bbf7d0' },
+  Failed: { bg: '#fef2f2', text: '#b91c1c', border: '#fecaca' },
+  Cancelled: { bg: '#f8fafc', text: '#475569', border: '#e2e8f0' },
 };
 
 const DeliveryManagementPage = () => {
@@ -349,146 +349,148 @@ const DeliveryManagementPage = () => {
       )}
 
       {/* KPI Stats */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase' }}>
-              Total Shipments
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary', mt: 0.5 }}>
-              {totalDeliveries}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              All recorded dispatches
-            </Typography>
-          </Paper>
-        </Grid>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Total Shipments
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#111827', mt: 0.5 }}>
+            {totalDeliveries}
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            All recorded dispatches
+          </Typography>
+        </Paper>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'warning.light', fontWeight: 700, textTransform: 'uppercase' }}>
-              Pending / Preparing
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'warning.main', mt: 0.5 }}>
-              {preparingCount}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Warehouse staging & packing
-            </Typography>
-          </Paper>
-        </Grid>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Pending / Preparing
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#b45309', mt: 0.5 }}>
+            {preparingCount}
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            Warehouse staging & packing
+          </Typography>
+        </Paper>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'primary.light', fontWeight: 700, textTransform: 'uppercase' }}>
-              In Transit
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'primary.main', mt: 0.5 }}>
-              {inTransitCount}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Out for active delivery
-            </Typography>
-          </Paper>
-        </Grid>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            In Transit
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#2563eb', mt: 0.5 }}>
+            {inTransitCount}
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            Out for active delivery
+          </Typography>
+        </Paper>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'success.light', fontWeight: 700, textTransform: 'uppercase' }}>
-              Delivered Safely
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'success.main', mt: 0.5 }}>
-              {deliveredCount}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Customer verified deliveries
-            </Typography>
-          </Paper>
-        </Grid>
-      </Grid>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Delivered Safely
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#15803d', mt: 0.5 }}>
+            {deliveredCount}
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            Customer verified deliveries
+          </Typography>
+        </Paper>
+      </Box>
 
       {/* Filter toolbar */}
       <Paper
-        elevation={1}
+        elevation={0}
         sx={{
           p: 2,
           mb: 3,
-          borderRadius: 2.5,
-          backgroundColor: 'background.paper',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 2,
+          backgroundColor: '#ffffff',
+          border: '1px solid #e5e7eb',
         }}
       >
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={7}>
-            <TextField
-              size="small"
-              fullWidth
-              placeholder="Search by Tracking #, Order #, Recipient, Driver, Address..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </Grid>
-          <Grid item xs={12} md={5}>
-            <TextField
-              select
-              size="small"
-              fullWidth
-              label="Delivery Status"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <MenuItem value="ALL">All Delivery Statuses</MenuItem>
-              <MenuItem value="Pending">Pending</MenuItem>
-              <MenuItem value="Preparing">Preparing</MenuItem>
-              <MenuItem value="In Transit">In Transit</MenuItem>
-              <MenuItem value="Delivered">Delivered</MenuItem>
-              <MenuItem value="Failed">Failed</MenuItem>
-              <MenuItem value="Cancelled">Cancelled</MenuItem>
-            </TextField>
-          </Grid>
-        </Grid>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '7fr 5fr' },
+            gap: 2,
+            alignItems: 'center',
+          }}
+        >
+          <TextField
+            size="small"
+            fullWidth
+            placeholder="Search by Tracking #, Order #, Recipient, Driver, Address..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <TextField
+            select
+            size="small"
+            fullWidth
+            label="Delivery Status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <MenuItem value="ALL">All Delivery Statuses</MenuItem>
+            <MenuItem value="Pending">Pending</MenuItem>
+            <MenuItem value="Preparing">Preparing</MenuItem>
+            <MenuItem value="In Transit">In Transit</MenuItem>
+            <MenuItem value="Delivered">Delivered</MenuItem>
+            <MenuItem value="Failed">Failed</MenuItem>
+            <MenuItem value="Cancelled">Cancelled</MenuItem>
+          </TextField>
+        </Box>
       </Paper>
 
       {/* Deliveries Table */}
       <Paper
-        elevation={2}
+        elevation={0}
         sx={{
-          borderRadius: 2.5,
+          borderRadius: 2,
           overflow: 'hidden',
-          backgroundColor: 'background.paper',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          backgroundColor: '#ffffff',
+          border: '1px solid #e5e7eb',
         }}
       >
         {isLoading ? (
@@ -521,24 +523,31 @@ const DeliveryManagementPage = () => {
             )}
           </Box>
         ) : (
-          <TableContainer>
-            <Table>
-              <TableHead sx={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}>
+          <TableContainer
+            sx={{
+              width: '100%',
+              overflowX: 'auto',
+              '&::-webkit-scrollbar': { height: '5px' },
+              '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: '4px' },
+            }}
+          >
+            <Table sx={{ minWidth: 720 }}>
+              <TableHead sx={{ backgroundColor: '#f9fafb' }}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Tracking Number</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Order & Customer</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Destination Address</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Assigned Driver</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Delivery Status</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Tracking Number</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Order & Customer</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Destination Address</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Assigned Driver</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Delivery Status</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, color: '#111827' }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {filteredDeliveries.map((delivery) => {
                   const statusStyle = DELIVERY_STATUS_COLORS[delivery.status] || {
-                    bg: 'rgba(255, 255, 255, 0.05)',
-                    text: '#FFF',
-                    border: 'rgba(255, 255, 255, 0.1)',
+                    bg: '#f9fafb',
+                    text: '#111827',
+                    border: '#e5e7eb',
                   };
 
                   return (
@@ -583,8 +592,9 @@ const DeliveryManagementPage = () => {
                             size="small"
                             onClick={canEdit ? () => handleOpenAssignDialog(delivery) : undefined}
                             sx={{
-                              backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                              color: 'text.primary',
+                              backgroundColor: '#f3f4f6',
+                              color: '#111827',
+                              border: '1px solid #e5e7eb',
                               fontWeight: 600,
                               cursor: canEdit ? 'pointer' : 'default',
                             }}
@@ -595,10 +605,10 @@ const DeliveryManagementPage = () => {
                             size="small"
                             onClick={canEdit ? () => handleOpenAssignDialog(delivery) : undefined}
                             sx={{
-                              backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                              color: 'warning.light',
-                              border: '1px dashed rgba(245, 158, 11, 0.4)',
-                              fontWeight: 700,
+                              backgroundColor: '#fffbeb',
+                              color: '#b45309',
+                              border: '1px dashed #fde68a',
+                              fontWeight: 600,
                               cursor: canEdit ? 'pointer' : 'default',
                             }}
                           />
@@ -815,7 +825,7 @@ const DeliveryManagementPage = () => {
                   .filter((o) => o.order_status !== 'Cancelled' && o.order_status !== 'Delivered')
                   .map((ord) => (
                     <MenuItem key={ord.id} value={ord.id}>
-                      {ord.order_number} — {ord.customer_name} (${Number(ord.total_amount || 0).toFixed(2)}) [{ord.order_status}]
+                      {ord.order_number} — {ord.customer_name} (₹{Number(ord.total_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}) [{ord.order_status}]
                     </MenuItem>
                   ))}
               </TextField>
@@ -830,57 +840,50 @@ const DeliveryManagementPage = () => {
                 onChange={(e) => setNewDeliveryAddress(e.target.value)}
               />
 
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Recipient Name"
-                    value={newRecipientName}
-                    onChange={(e) => setNewRecipientName(e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Recipient Phone"
-                    value={newRecipientPhone}
-                    onChange={(e) => setNewRecipientPhone(e.target.value)}
-                  />
-                </Grid>
-              </Grid>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Recipient Name"
+                  value={newRecipientName}
+                  onChange={(e) => setNewRecipientName(e.target.value)}
+                />
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Recipient Phone"
+                  value={newRecipientPhone}
+                  onChange={(e) => setNewRecipientPhone(e.target.value)}
+                />
+              </Box>
 
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Expected Delivery Date"
-                    type="date"
-                    InputLabelProps={{ shrink: true }}
-                    value={newExpectedDate}
-                    onChange={(e) => setNewExpectedDate(e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    select
-                    fullWidth
-                    size="small"
-                    label="Assign Delivery Staff"
-                    value={newDeliveryStaffId}
-                    onChange={(e) => setNewDeliveryStaffId(e.target.value)}
-                  >
-                    <MenuItem value="">Unassigned</MenuItem>
-                    {staffList.map((st) => (
-                      <MenuItem key={st.id} value={st.id}>
-                        {st.first_name} {st.last_name} ({st.email})
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-              </Grid>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Expected Delivery Date"
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  value={newExpectedDate}
+                  onChange={(e) => setNewExpectedDate(e.target.value)}
+                />
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  label="Assign Delivery Staff"
+                  value={newDeliveryStaffId}
+                  onChange={(e) => setNewDeliveryStaffId(e.target.value)}
+                >
+                  <MenuItem value="">Unassigned</MenuItem>
+                  {staffList.map((st) => (
+                    <MenuItem key={st.id} value={st.id}>
+                      {st.first_name} {st.last_name} ({st.email})
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Box>
 
               <TextField
                 fullWidth

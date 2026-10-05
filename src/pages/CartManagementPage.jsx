@@ -129,9 +129,9 @@ const CartManagementPage = () => {
               sx={{
                 width: 44,
                 height: 44,
-                borderRadius: 2,
-                backgroundColor: 'rgba(245, 158, 11, 0.12)',
-                color: 'primary.main',
+                borderRadius: 1.5,
+                backgroundColor: '#eff6ff',
+                color: '#2563eb',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -140,10 +140,10 @@ const CartManagementPage = () => {
               <CartIcon sx={{ fontSize: 26 }} />
             </Box>
             <Box>
-              <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary' }}>
+              <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a' }}>
                 B2B Hardware Cart
               </Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              <Typography variant="caption" sx={{ color: '#64748b' }}>
                 Order Preparation & Quotation Builder (GET /api/cart, PUT /api/cart/:id, DELETE /api/cart/:id)
               </Typography>
             </Box>
@@ -156,7 +156,7 @@ const CartManagementPage = () => {
               color="error"
               onClick={handleClearCart}
               disabled={isLoading}
-              sx={{ textTransform: 'none' }}
+              sx={{ textTransform: 'none', borderColor: '#fecaca', color: '#dc2626', '&:hover': { backgroundColor: '#fef2f2', borderColor: '#b91c1c' } }}
             >
               Clear Cart
             </Button>
@@ -170,9 +170,9 @@ const CartManagementPage = () => {
         sx={{
           p: 1.5,
           mb: 3,
-          borderRadius: 2,
-          backgroundColor: 'rgba(255, 255, 255, 0.02)',
-          border: '1px solid rgba(255, 255, 255, 0.06)',
+          borderRadius: 1.5,
+          backgroundColor: '#ffffff',
+          border: '1px solid #e2e8f0',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -180,12 +180,12 @@ const CartManagementPage = () => {
           gap: 1,
         }}
       >
-        <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
-          ROLE: <Box component="span" sx={{ color: 'primary.light' }}>{role?.name || role?.slug || 'Staff'}</Box> • ACTIVE RBAC ACTIONS:
+        <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
+          ROLE: <Box component="span" sx={{ color: '#0f172a', fontWeight: 700 }}>{role?.name || role?.slug || 'Staff'}</Box> • ACTIVE RBAC ACTIONS:
         </Typography>
         <Stack direction="row" spacing={1} flexWrap="wrap">
           <Chip label="cart.view (View Cart)" size="small" color="success" variant="outlined" sx={{ height: 22, fontSize: '0.7rem' }} />
-          {canEdit && <Chip label="cart.edit (Manage Items & Quantity)" size="small" color="primary" sx={{ height: 22, fontSize: '0.7rem' }} />}
+          {canEdit && <Chip label="cart.edit (Manage Items & Quantity)" size="small" sx={{ height: 22, fontSize: '0.7rem', backgroundColor: '#2563eb', color: '#ffffff' }} />}
         </Stack>
       </Paper>
 
@@ -209,32 +209,40 @@ const CartManagementPage = () => {
           <CircularProgress color="primary" />
         </Box>
       ) : cartItems.length === 0 ? (
-        <Paper elevation={2} sx={{ p: 6, textAlign: 'center', borderRadius: 2.5 }}>
-          <Typography variant="h6" sx={{ color: 'text.primary', mb: 1, fontWeight: 700 }}>
+        <Paper elevation={0} sx={{ p: 6, textAlign: 'center', borderRadius: 2, backgroundColor: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)' }}>
+          <Typography variant="h6" sx={{ color: '#0f172a', mb: 1, fontWeight: 700 }}>
             Your Cart is Currently Empty
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
+          <Typography variant="body2" sx={{ color: '#64748b', mb: 3 }}>
             Browse the product catalog to add hardware items to your B2B order cart.
           </Typography>
-          <Button variant="contained" color="primary" onClick={() => navigate('/products')} sx={{ fontWeight: 700 }}>
+          <Button variant="contained" onClick={() => navigate('/products')} sx={{ fontWeight: 600, backgroundColor: '#2563eb', '&:hover': { backgroundColor: '#1d4ed8' } }}>
             Browse Product Catalog →
           </Button>
         </Paper>
       ) : (
         <Stack spacing={3}>
           <Paper
-            elevation={2}
+            elevation={0}
             sx={{
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: 2,
+              backgroundColor: '#ffffff',
+              border: '1px solid #e2e8f0',
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
               overflow: 'hidden',
             }}
           >
-            <TableContainer>
-              <Table size="small">
-                <TableHead>
-                  <TableRow sx={{ '& th': { color: 'text.secondary', fontWeight: 700, fontSize: '0.75rem', py: 1.5 } }}>
+            <TableContainer
+              sx={{
+                width: '100%',
+                overflowX: 'auto',
+                '&::-webkit-scrollbar': { height: '5px' },
+                '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: '4px' },
+              }}
+            >
+              <Table size="small" sx={{ minWidth: 560 }}>
+                <TableHead sx={{ backgroundColor: '#f8fafc' }}>
+                  <TableRow sx={{ '& th': { color: '#0f172a', fontWeight: 700, fontSize: '0.75rem', py: 1.5, borderBottom: '1px solid #e2e8f0' } }}>
                     <TableCell>Product Item</TableCell>
                     <TableCell>Unit Price</TableCell>
                     <TableCell align="center">Quantity</TableCell>
@@ -253,23 +261,23 @@ const CartManagementPage = () => {
                       <TableRow
                         key={item.id}
                         sx={{
-                          '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.02)' },
-                          '& td': { borderColor: 'rgba(255, 255, 255, 0.06)', py: 1.5 },
+                          '&:hover': { backgroundColor: '#f8fafc' },
+                          '& td': { borderColor: '#f1f5f9', py: 1.5 },
                         }}
                       >
                         <TableCell>
-                          <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>
                             {item.product_name || item.product?.name || `Product #${item.product_id}`}
                           </Typography>
                           {item.product?.type && (
-                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            <Typography variant="caption" sx={{ color: '#64748b' }}>
                               {item.product.type}
                             </Typography>
                           )}
                         </TableCell>
                         <TableCell>
-                          <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                            ${price.toFixed(2)}
+                          <Typography variant="body2" sx={{ fontFamily: 'monospace', color: '#0f172a' }}>
+                            ₹{price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </Typography>
                         </TableCell>
                         <TableCell align="center">
@@ -279,31 +287,31 @@ const CartManagementPage = () => {
                                 size="small"
                                 disabled={isBusy || qty <= 1}
                                 onClick={() => handleUpdateQuantity(item.id, qty - 1)}
-                                sx={{ border: '1px solid rgba(255, 255, 255, 0.15)', p: 0.5 }}
+                                sx={{ border: '1px solid #d1d5db', p: 0.5, '&:hover': { backgroundColor: '#f1f5f9' } }}
                               >
                                 <MinusIcon />
                               </IconButton>
-                              <Typography variant="body2" sx={{ fontWeight: 700, minWidth: 28, textAlign: 'center' }}>
+                              <Typography variant="body2" sx={{ fontWeight: 700, minWidth: 28, textAlign: 'center', color: '#0f172a' }}>
                                 {isBusy ? <CircularProgress size={14} /> : qty}
                               </Typography>
                               <IconButton
                                 size="small"
                                 disabled={isBusy}
                                 onClick={() => handleUpdateQuantity(item.id, qty + 1)}
-                                sx={{ border: '1px solid rgba(255, 255, 255, 0.15)', p: 0.5 }}
+                                sx={{ border: '1px solid #d1d5db', p: 0.5, '&:hover': { backgroundColor: '#f1f5f9' } }}
                               >
                                 <PlusIcon />
                               </IconButton>
                             </Stack>
                           ) : (
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a' }}>
                               {qty}
                             </Typography>
                           )}
                         </TableCell>
                         <TableCell align="right">
-                          <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'monospace', color: 'primary.light' }}>
-                            ${lineTotal.toFixed(2)}
+                          <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'monospace', color: '#0f172a' }}>
+                            ₹{lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </Typography>
                         </TableCell>
                         {canEdit && (
@@ -328,39 +336,40 @@ const CartManagementPage = () => {
 
           {/* Cart Summary Card */}
           <Paper
-            elevation={2}
+            elevation={0}
             sx={{
               p: 3,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              maxWidth: 420,
-              alignSelf: 'flex-end',
+              borderRadius: 2,
+              backgroundColor: '#ffffff',
+              border: '1px solid #e2e8f0',
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
+              maxWidth: { xs: '100%', sm: 420 },
+              alignSelf: { xs: 'stretch', sm: 'flex-end' },
               width: '100%',
             }}
           >
-            <Typography variant="h6" sx={{ fontWeight: 800, mb: 2, color: 'text.primary' }}>
+            <Typography variant="h6" sx={{ fontWeight: 800, mb: 2, color: '#0f172a' }}>
               Order Summary
             </Typography>
 
             <Stack spacing={1.5}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                <Typography variant="body2" sx={{ color: '#64748b' }}>
                   Total Items:
                 </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a' }}>
                   {cartItems.reduce((acc, curr) => acc + Number(curr.quantity || 1), 0)} units
                 </Typography>
               </Box>
 
-              <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.08)' }} />
+              <Divider sx={{ borderColor: '#e2e8f0' }} />
 
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#0f172a' }}>
                   Estimated Total:
                 </Typography>
-                <Typography variant="h5" sx={{ fontWeight: 800, color: 'primary.main', fontFamily: 'monospace' }}>
-                  ${totalAmount.toFixed(2)}
+                <Typography variant="h5" sx={{ fontWeight: 800, color: '#2563eb', fontFamily: 'monospace' }}>
+                  ₹{totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Typography>
               </Box>
 
@@ -370,7 +379,7 @@ const CartManagementPage = () => {
                 fullWidth
                 size="large"
                 onClick={() => navigate('/orders')}
-                sx={{ mt: 2, fontWeight: 700, py: 1.2 }}
+                sx={{ mt: 2, fontWeight: 600, py: 1.2, backgroundColor: '#2563eb', '&:hover': { backgroundColor: '#1d4ed8' } }}
               >
                 Proceed to Orders →
               </Button>

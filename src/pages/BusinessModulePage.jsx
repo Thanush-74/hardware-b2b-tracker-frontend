@@ -146,9 +146,9 @@ const BusinessModulePage = ({ slug, title, endpointName }) => {
               sx={{
                 width: 44,
                 height: 44,
-                borderRadius: 2,
-                backgroundColor: 'rgba(245, 158, 11, 0.12)',
-                color: 'primary.main',
+                borderRadius: 1.5,
+                backgroundColor: '#eff6ff',
+                color: '#2563eb',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -157,10 +157,10 @@ const BusinessModulePage = ({ slug, title, endpointName }) => {
               {getScreenIcon(slug, { sx: { fontSize: 26 } })}
             </Box>
             <Box>
-              <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary' }}>
+              <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a' }}>
                 {currentScreen?.name || title}
               </Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'monospace' }}>
+              <Typography variant="caption" sx={{ color: '#64748b', fontFamily: 'monospace' }}>
                 Endpoint: GET /api/{endpointName || slug} • Route: {currentScreen?.route || `/${slug}`}
               </Typography>
             </Box>
@@ -171,7 +171,7 @@ const BusinessModulePage = ({ slug, title, endpointName }) => {
             variant="outlined"
             onClick={fetchModuleData}
             disabled={isLoading}
-            sx={{ textTransform: 'none' }}
+            sx={{ textTransform: 'none', borderColor: '#d1d5db', color: '#0f172a' }}
           >
             Refresh Data
           </Button>
@@ -184,9 +184,9 @@ const BusinessModulePage = ({ slug, title, endpointName }) => {
         sx={{
           p: 1.5,
           mb: 3,
-          borderRadius: 2,
-          backgroundColor: 'rgba(255, 255, 255, 0.02)',
-          border: '1px solid rgba(255, 255, 255, 0.06)',
+          borderRadius: 1.5,
+          backgroundColor: '#ffffff',
+          border: '1px solid #e2e8f0',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -194,8 +194,8 @@ const BusinessModulePage = ({ slug, title, endpointName }) => {
           gap: 1,
         }}
       >
-        <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
-          ROLE: <Box component="span" sx={{ color: 'primary.light' }}>{role?.name || role?.slug || 'Staff'}</Box> • BACKEND ACTIONS:
+        <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
+          ROLE: <Box component="span" sx={{ color: '#0f172a', fontWeight: 700 }}>{role?.name || role?.slug || 'Staff'}</Box> • BACKEND ACTIONS:
         </Typography>
         <Stack direction="row" spacing={0.8} flexWrap="wrap">
           {relevantPermissions.length > 0 ? (
@@ -207,13 +207,14 @@ const BusinessModulePage = ({ slug, title, endpointName }) => {
                 sx={{
                   height: 20,
                   fontSize: '0.68rem',
-                  backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                  color: 'primary.light',
+                  backgroundColor: '#eff6ff',
+                  color: '#1d4ed8',
+                  border: '1px solid #bfdbfe',
                 }}
               />
             ))
           ) : (
-            <Chip label="Read Access" size="small" sx={{ height: 20, fontSize: '0.68rem' }} />
+            <Chip label="Read Access" size="small" sx={{ height: 20, fontSize: '0.68rem', backgroundColor: '#f1f5f9', color: '#334155' }} />
           )}
         </Stack>
       </Paper>
@@ -224,18 +225,18 @@ const BusinessModulePage = ({ slug, title, endpointName }) => {
           {Object.entries(summary).slice(0, 4).map(([key, val]) => (
             <Grid item xs={6} sm={3} key={key}>
               <Paper
-                elevation={1}
+                elevation={0}
                 sx={{
                   p: 2,
                   borderRadius: 2,
-                  backgroundColor: 'background.paper',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e5e7eb',
                 }}
               >
-                <Typography variant="caption" sx={{ color: 'text.secondary', textTransform: 'capitalize' }}>
+                <Typography variant="caption" sx={{ color: '#64748b', textTransform: 'capitalize', fontWeight: 600 }}>
                   {key.replace(/_/g, ' ')}
                 </Typography>
-                <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary', mt: 0.5 }}>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.5 }}>
                   {typeof val === 'number' ? val.toLocaleString() : String(val)}
                 </Typography>
               </Paper>
@@ -253,16 +254,16 @@ const BusinessModulePage = ({ slug, title, endpointName }) => {
 
       {/* Data Table */}
       <Paper
-        elevation={2}
+        elevation={0}
         sx={{
-          borderRadius: 2.5,
-          backgroundColor: 'background.paper',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 2,
+          backgroundColor: '#ffffff',
+          border: '1px solid #e5e7eb',
           overflow: 'hidden',
         }}
       >
-        <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+        <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e5e7eb' }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a' }}>
             Live Records ({totalCount})
           </Typography>
           <Chip label="Real Backend Data" size="small" color="success" variant="outlined" sx={{ fontSize: '0.68rem', height: 20 }} />
@@ -274,10 +275,10 @@ const BusinessModulePage = ({ slug, title, endpointName }) => {
           </Box>
         ) : data.length === 0 ? (
           <Box sx={{ p: 5, textAlign: 'center' }}>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+            <Typography variant="body2" sx={{ color: '#64748b', mb: 1 }}>
               No records currently exist in this database table.
             </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+            <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
               Connected to live backend endpoint: <code>/api/{endpointName || slug}</code>
             </Typography>
           </Box>
@@ -285,7 +286,7 @@ const BusinessModulePage = ({ slug, title, endpointName }) => {
           <TableContainer sx={{ maxHeight: 500 }}>
             <Table size="small">
               <TableHead>
-                <TableRow sx={{ '& th': { color: 'text.secondary', fontWeight: 700, fontSize: '0.75rem' } }}>
+                <TableRow sx={{ backgroundColor: '#f9fafb', '& th': { color: '#0f172a', fontWeight: 700, fontSize: '0.75rem', borderBottom: '1px solid #e5e7eb' } }}>
                   {columns.map((col) => (
                     <TableCell key={col} sx={{ textTransform: 'capitalize' }}>
                       {col.replace(/_/g, ' ')}
@@ -298,8 +299,8 @@ const BusinessModulePage = ({ slug, title, endpointName }) => {
                   <TableRow
                     key={row.id || idx}
                     sx={{
-                      '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.02)' },
-                      '& td': { borderColor: 'rgba(255, 255, 255, 0.06)' },
+                      '&:hover': { backgroundColor: '#f9fafb' },
+                      '& td': { borderColor: '#f3f4f6' },
                     }}
                   >
                     {columns.map((col) => {

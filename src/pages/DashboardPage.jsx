@@ -1,118 +1,134 @@
-import React from 'react';
-import { Box, Typography, Grid, Paper, Stack, Chip, Button } from '@mui/material';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Box, CircularProgress } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { getScreenIcon } from '../components/Icons';
+import { getDashboardData } from '../services/dashboardService';
+
+import DashboardHeader from '../components/dashboard/DashboardHeader';
+import KPISummary from '../components/dashboard/KPISummary';
+import AttentionRequired from '../components/dashboard/AttentionRequired';
+import OrdersOverview from '../components/dashboard/OrdersOverview';
+import ProductionOverview from '../components/dashboard/ProductionOverview';
+import InventoryAlerts from '../components/dashboard/InventoryAlerts';
+import ReturnsOverview from '../components/dashboard/ReturnsOverview';
+import QualityInspectionOverview from '../components/dashboard/QualityInspectionOverview';
+import DeliveryOverview from '../components/dashboard/DeliveryOverview';
+import RecentActivity from '../components/dashboard/RecentActivity';
 
 const DashboardPage = () => {
-  const { user, role, screens } = useAuth();
-  const navigate = useNavigate();
+  const { user, role } = useAuth();
+  const [data, setData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchMetrics = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const result = await getDashboardData();
+      setData(result);
+    } catch (err) {
+      console.error('Failed to load dashboard data:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMetrics();
+  }, [fetchMetrics]);
 
   return (
-    <Box>
-      {/* Welcome Header */}
-      <Box sx={{ mb: 4 }}>
-        <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={1}>
-          <Box>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary', letterSpacing: '-0.02em' }}>
-              Welcome, {user?.first_name || 'User'}
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
-              Hardware B2B Tracker • Role: <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>{role?.name || role?.slug || 'Staff'}</Box>
-            </Typography>
-          </Box>
-          <Chip
-            label={`${screens?.length || 0} Modules Accessible`}
-            color="primary"
-            variant="outlined"
-            sx={{ fontWeight: 700, borderColor: 'primary.main' }}
+    <Box sx={{ width: '100%', maxWidth: '100%', minWidth: 0, pb: 4 }}>
+      {/* 1. Dashboard Header (Full Width) */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', mb: 3 }}>
+        <Box sx={{ minWidth: 0 }}>
+          <DashboardHeader
+            user={user}
+            role={role}
+            isLive={data?.isLive}
+            lastUpdated={data?.lastUpdated}
+            onRefresh={fetchMetrics}
+            isLoading={isLoading}
           />
-        </Stack>
+        </Box>
       </Box>
 
-      {/* Accessible Quick Access Modules */}
-      <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: 'text.primary' }}>
-        Permitted Operational Modules
-      </Typography>
+      {isLoading && !data ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+          <CircularProgress size={36} color="primary" />
+        </Box>
+      ) : (
+        <>
+          {/* 2. KPI Summary (Full Width) */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', mb: 3 }}>
+            <Box sx={{ minWidth: 0 }}>
+              <KPISummary data={data?.kpiSummary} />
+            </Box>
+          </Box>
 
-      <Grid container spacing={2.5}>
-        {screens && screens.length > 0 ? (
-          screens.map((screen) => (
-            <Grid item xs={12} sm={6} md={4} key={screen.id || screen.slug}>
-              <Paper
-                elevation={2}
-                sx={{
-                  p: 2.5,
-                  borderRadius: 2.5,
-                  backgroundColor: 'background.paper',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  height: '100%',
-                  transition: 'transform 0.15s ease, border-color 0.15s ease',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    borderColor: 'primary.main',
-                  },
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-                  <Box
-                    sx={{
-                      width: 42,
-                      height: 42,
-                      borderRadius: 2,
-                      backgroundColor: 'rgba(245, 158, 11, 0.12)',
-                      color: 'primary.main',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {getScreenIcon(screen.slug, { fontSize: 'medium' })}
-                  </Box>
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                      {screen.name}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'monospace' }}>
-                      {screen.route}
-                    </Typography>
-                  </Box>
-                </Box>
+          {/* 3. Attention Required (Full Width) */}
+          {data?.attentionRequired && data.attentionRequired.length > 0 && (
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', mb: 3 }}>
+              <Box sx={{ minWidth: 0 }}>
+                <AttentionRequired items={data?.attentionRequired} />
+              </Box>
+            </Box>
+          )}
 
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => navigate(screen.route)}
-                  sx={{
-                    alignSelf: 'flex-start',
-                    fontWeight: 600,
-                    textTransform: 'none',
-                    borderColor: 'rgba(255, 255, 255, 0.15)',
-                    color: 'text.primary',
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                      color: 'primary.main',
-                    },
-                  }}
-                >
-                  Open {screen.name} →
-                </Button>
-              </Paper>
-            </Grid>
-          ))
-        ) : (
-          <Grid item xs={12}>
-            <Paper sx={{ p: 4, textAlign: 'center', borderRadius: 2 }}>
-              <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                No accessible screens found for your account. Please contact an administrator.
-              </Typography>
-            </Paper>
-          </Grid>
-        )}
-      </Grid>
+          {/* 4. Recent & Active Orders (FULL WIDTH) */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', mb: 3 }}>
+            <Box sx={{ minWidth: 0 }}>
+              <OrdersOverview orders={data?.recentOrders} />
+            </Box>
+          </Box>
+
+          {/* 5. Production & PC Assembly (FULL WIDTH) */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', mb: 3 }}>
+            <Box sx={{ minWidth: 0 }}>
+              <ProductionOverview data={data?.productionOverview} />
+            </Box>
+          </Box>
+
+          {/* 6. Low Stock & Inventory Alerts (FULL WIDTH) */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', mb: 3 }}>
+            <Box sx={{ minWidth: 0 }}>
+              <InventoryAlerts items={data?.inventoryAlerts} />
+            </Box>
+          </Box>
+
+          {/* 7. Returns & Replacement Traceability (FULL WIDTH) */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', mb: 3 }}>
+            <Box sx={{ minWidth: 0 }}>
+              <ReturnsOverview items={data?.returnsOverview} />
+            </Box>
+          </Box>
+
+          {/* 8. Quality / Delivery (BALANCED TWO-COLUMN SECTION) */}
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: 'minmax(0, 1fr)',
+                md: 'minmax(0, 1fr) minmax(0, 1fr)',
+              },
+              gap: 3,
+              mb: 3,
+            }}
+          >
+            <Box sx={{ minWidth: 0, height: '100%' }}>
+              <QualityInspectionOverview data={data?.qualityOverview} />
+            </Box>
+            <Box sx={{ minWidth: 0, height: '100%' }}>
+              <DeliveryOverview data={data?.deliveryOverview} />
+            </Box>
+          </Box>
+
+          {/* 9. Recent Factory Activity (FULL WIDTH) */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)' }}>
+            <Box sx={{ minWidth: 0 }}>
+              <RecentActivity items={data?.recentActivity} />
+            </Box>
+          </Box>
+        </>
+      )}
     </Box>
   );
 };

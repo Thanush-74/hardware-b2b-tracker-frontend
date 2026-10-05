@@ -257,9 +257,9 @@ const ProductManagementPage = () => {
               sx={{
                 width: 44,
                 height: 44,
-                borderRadius: 2,
-                backgroundColor: 'rgba(245, 158, 11, 0.12)',
-                color: 'primary.main',
+                borderRadius: 1.5,
+                backgroundColor: '#eff6ff',
+                color: '#2563eb',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -268,10 +268,10 @@ const ProductManagementPage = () => {
               <ProductsIcon sx={{ fontSize: 26 }} />
             </Box>
             <Box>
-              <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary' }}>
+              <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a' }}>
                 Product Catalog Management
               </Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              <Typography variant="caption" sx={{ color: '#64748b' }}>
                 B2B Hardware Inventory & Stock Master (POST /api/products, PUT /api/products/:id, DELETE /api/products/:id)
               </Typography>
             </Box>
@@ -283,7 +283,7 @@ const ProductManagementPage = () => {
               variant="contained"
               color="primary"
               onClick={handleOpenCreate}
-              sx={{ fontWeight: 700, px: 2.5 }}
+              sx={{ fontWeight: 600, px: 2.5, backgroundColor: '#2563eb', '&:hover': { backgroundColor: '#1d4ed8' } }}
             >
               + Create Product
             </Button>
@@ -297,9 +297,9 @@ const ProductManagementPage = () => {
         sx={{
           p: 1.5,
           mb: 3,
-          borderRadius: 2,
-          backgroundColor: 'rgba(255, 255, 255, 0.02)',
-          border: '1px solid rgba(255, 255, 255, 0.06)',
+          borderRadius: 1.5,
+          backgroundColor: '#ffffff',
+          border: '1px solid #e2e8f0',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -307,15 +307,15 @@ const ProductManagementPage = () => {
           gap: 1,
         }}
       >
-        <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
-          ROLE: <Box component="span" sx={{ color: 'primary.light' }}>{role?.name || role?.slug || 'Staff'}</Box> • ACTIVE RBAC ACTIONS:
+        <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
+          ROLE: <Box component="span" sx={{ color: '#0f172a', fontWeight: 700 }}>{role?.name || role?.slug || 'Staff'}</Box> • ACTIVE RBAC ACTIONS:
         </Typography>
         <Stack direction="row" spacing={1} flexWrap="wrap">
           <Chip label="products.view (Read)" size="small" color="success" variant="outlined" sx={{ height: 22, fontSize: '0.7rem' }} />
-          {canCreate && <Chip label="products.create (Create)" size="small" color="primary" sx={{ height: 22, fontSize: '0.7rem' }} />}
-          {canEdit && <Chip label="products.edit (Edit / Update)" size="small" color="primary" sx={{ height: 22, fontSize: '0.7rem' }} />}
+          {canCreate && <Chip label="products.create (Create)" size="small" color="primary" sx={{ height: 22, fontSize: '0.7rem', backgroundColor: '#2563eb', color: '#ffffff' }} />}
+          {canEdit && <Chip label="products.edit (Edit / Update)" size="small" color="primary" sx={{ height: 22, fontSize: '0.7rem', backgroundColor: '#2563eb', color: '#ffffff' }} />}
           {canDelete && <Chip label="products.delete (Deactivate)" size="small" color="error" variant="outlined" sx={{ height: 22, fontSize: '0.7rem' }} />}
-          {canAddToCart && <Chip label="cart.edit (Add to Cart)" size="small" sx={{ height: 22, fontSize: '0.7rem', backgroundColor: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa' }} />}
+          {canAddToCart && <Chip label="cart.edit (Add to Cart)" size="small" sx={{ height: 22, fontSize: '0.7rem', backgroundColor: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe' }} />}
         </Stack>
       </Paper>
 
@@ -336,17 +336,18 @@ const ProductManagementPage = () => {
 
       {/* Search Bar & Stats */}
       <Paper
-        elevation={2}
+        elevation={0}
         sx={{
           p: 2,
           mb: 3,
-          borderRadius: 2.5,
-          backgroundColor: 'background.paper',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 2,
+          backgroundColor: '#ffffff',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
         }}
       >
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={6} md={4}>
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, gap: 2 }}>
+          <Box sx={{ flex: 1, maxWidth: { xs: '100%', sm: 360 } }}>
             <TextField
               size="small"
               placeholder="Search products by name or type..."
@@ -354,25 +355,24 @@ const ProductManagementPage = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-          </Grid>
-          <Grid item xs={12} sm={6} md={8}>
-            <Stack direction="row" spacing={1.5} justifyContent={{ xs: 'flex-start', sm: 'flex-end' }}>
-              <Chip label={`Total Catalog Items: ${totalCount}`} size="small" sx={{ fontWeight: 600 }} />
-              <Button size="small" variant="outlined" onClick={fetchProducts} disabled={isLoading} sx={{ textTransform: 'none' }}>
-                Refresh
-              </Button>
-            </Stack>
-          </Grid>
-        </Grid>
+          </Box>
+          <Stack direction="row" spacing={1.5} alignItems="center" justifyContent={{ xs: 'flex-start', sm: 'flex-end' }}>
+            <Chip label={`Total Catalog Items: ${totalCount}`} size="small" sx={{ fontWeight: 600, backgroundColor: '#f1f5f9', color: '#334155' }} />
+            <Button size="small" variant="outlined" onClick={fetchProducts} disabled={isLoading} sx={{ textTransform: 'none', borderColor: '#d1d5db', color: '#0f172a' }}>
+              Refresh
+            </Button>
+          </Stack>
+        </Box>
       </Paper>
 
       {/* Products Table */}
       <Paper
-        elevation={2}
+        elevation={0}
         sx={{
-          borderRadius: 2.5,
-          backgroundColor: 'background.paper',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 2,
+          backgroundColor: '#ffffff',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
           overflow: 'hidden',
         }}
       >
@@ -392,10 +392,18 @@ const ProductManagementPage = () => {
             )}
           </Box>
         ) : (
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow sx={{ '& th': { color: 'text.secondary', fontWeight: 700, fontSize: '0.75rem', py: 1.5 } }}>
+          <TableContainer
+            sx={{
+              width: '100%',
+              overflowX: 'auto',
+              minWidth: 0,
+              '&::-webkit-scrollbar': { height: '5px' },
+              '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(148, 163, 184, 0.25)', borderRadius: '4px' },
+            }}
+          >
+            <Table size="small" sx={{ width: '100%', minWidth: 680 }}>
+              <TableHead sx={{ backgroundColor: '#f8fafc' }}>
+                <TableRow sx={{ '& th': { color: '#0f172a', fontWeight: 700, fontSize: '0.75rem', py: 1.5, borderBottom: '1px solid #e2e8f0' } }}>
                   <TableCell>Product Name</TableCell>
                   <TableCell>Category / Type</TableCell>
                   <TableCell>Unit Price</TableCell>
@@ -414,8 +422,8 @@ const ProductManagementPage = () => {
                     <TableRow
                       key={product.id}
                       sx={{
-                        '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.02)' },
-                        '& td': { borderColor: 'rgba(255, 255, 255, 0.06)', py: 1.2 },
+                        '&:hover': { backgroundColor: '#f8fafc' },
+                        '& td': { borderColor: '#f1f5f9', py: 1.2 },
                       }}
                     >
                       <TableCell>
@@ -434,14 +442,15 @@ const ProductManagementPage = () => {
                           size="small"
                           sx={{
                             fontSize: '0.72rem',
-                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                            color: 'primary.light',
+                            backgroundColor: '#eff6ff',
+                            color: '#1d4ed8',
+                            border: '1px solid #bfdbfe',
                           }}
                         />
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'monospace', color: 'primary.light' }}>
-                          ${Number(product.price).toFixed(2)}
+                        <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'monospace', color: '#0f172a' }}>
+                          ₹{Number(product.price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </Typography>
                       </TableCell>
                       <TableCell>
@@ -551,39 +560,35 @@ const ProductManagementPage = () => {
                 ))}
               </TextField>
 
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Unit Price ($)"
-                    type="number"
-                    placeholder="89.99"
-                    fullWidth
-                    required
-                    value={formPrice}
-                    onChange={(e) => setFormPrice(e.target.value)}
-                    error={Boolean(formErrors.price)}
-                    helperText={formErrors.price}
-                    disabled={isSubmitting}
-                    InputProps={{
-                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Initial Available Quantity"
-                    type="number"
-                    placeholder="25"
-                    fullWidth
-                    required
-                    value={formQuantity}
-                    onChange={(e) => setFormQuantity(e.target.value)}
-                    error={Boolean(formErrors.quantity)}
-                    helperText={formErrors.quantity || 'Auto-creates warehouse stock'}
-                    disabled={isSubmitting}
-                  />
-                </Grid>
-              </Grid>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <TextField
+                  label="Unit Price (₹)"
+                  type="number"
+                  placeholder="899.00"
+                  fullWidth
+                  required
+                  value={formPrice}
+                  onChange={(e) => setFormPrice(e.target.value)}
+                  error={Boolean(formErrors.price)}
+                  helperText={formErrors.price}
+                  disabled={isSubmitting}
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                  }}
+                />
+                <TextField
+                  label="Initial Available Quantity"
+                  type="number"
+                  placeholder="25"
+                  fullWidth
+                  required
+                  value={formQuantity}
+                  onChange={(e) => setFormQuantity(e.target.value)}
+                  error={Boolean(formErrors.quantity)}
+                  helperText={formErrors.quantity || 'Auto-creates warehouse stock'}
+                  disabled={isSubmitting}
+                />
+              </Box>
 
               <TextField
                 label="Product Description"
@@ -643,37 +648,33 @@ const ProductManagementPage = () => {
                 ))}
               </TextField>
 
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Unit Price ($)"
-                    type="number"
-                    fullWidth
-                    required
-                    value={formPrice}
-                    onChange={(e) => setFormPrice(e.target.value)}
-                    error={Boolean(formErrors.price)}
-                    helperText={formErrors.price}
-                    disabled={isSubmitting}
-                    InputProps={{
-                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Available Quantity"
-                    type="number"
-                    fullWidth
-                    required
-                    value={formQuantity}
-                    onChange={(e) => setFormQuantity(e.target.value)}
-                    error={Boolean(formErrors.quantity)}
-                    helperText={formErrors.quantity}
-                    disabled={isSubmitting}
-                  />
-                </Grid>
-              </Grid>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <TextField
+                  label="Unit Price (₹)"
+                  type="number"
+                  fullWidth
+                  required
+                  value={formPrice}
+                  onChange={(e) => setFormPrice(e.target.value)}
+                  error={Boolean(formErrors.price)}
+                  helperText={formErrors.price}
+                  disabled={isSubmitting}
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                  }}
+                />
+                <TextField
+                  label="Available Quantity"
+                  type="number"
+                  fullWidth
+                  required
+                  value={formQuantity}
+                  onChange={(e) => setFormQuantity(e.target.value)}
+                  error={Boolean(formErrors.quantity)}
+                  helperText={formErrors.quantity}
+                  disabled={isSubmitting}
+                />
+              </Box>
 
               <TextField
                 label="Product Description"

@@ -11,7 +11,7 @@ const ShieldLockIcon = (props) => (
 
 const AccessDeniedPage = ({ requestedPath, message }) => {
   const navigate = useNavigate();
-  const { user, role, getDefaultRoute } = useAuth();
+  const { role, getDefaultRoute } = useAuth();
 
   return (
     <Box
@@ -24,32 +24,32 @@ const AccessDeniedPage = ({ requestedPath, message }) => {
       }}
     >
       <Paper
-        elevation={4}
+        elevation={0}
         sx={{
           p: { xs: 3, sm: 5 },
-          borderRadius: 3,
+          borderRadius: 2,
           maxWidth: 520,
           width: '100%',
           textAlign: 'center',
-          backgroundColor: 'background.paper',
-          border: '1px solid rgba(244, 63, 94, 0.25)',
-          boxShadow: '0 8px 32px rgba(244, 63, 94, 0.08)',
+          backgroundColor: '#ffffff',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
         }}
       >
         <Box
           sx={{
-            width: 58,
-            height: 58,
+            width: 52,
+            height: 52,
             borderRadius: '50%',
-            backgroundColor: 'rgba(244, 63, 94, 0.12)',
-            color: '#fb7185',
+            backgroundColor: '#fef2f2',
+            color: '#dc2626',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
             mb: 2,
           }}
         >
-          <ShieldLockIcon sx={{ fontSize: 32 }} />
+          <ShieldLockIcon sx={{ fontSize: 28 }} />
         </Box>
 
         <Chip
@@ -60,23 +60,23 @@ const AccessDeniedPage = ({ requestedPath, message }) => {
             width: 'fit-content',
             mx: 'auto',
             mb: 1.5,
-            fontWeight: 800,
+            fontWeight: 700,
             fontSize: '0.72rem',
-            backgroundColor: 'rgba(244, 63, 94, 0.15)',
-            color: '#fb7185',
-            border: '1px solid rgba(244, 63, 94, 0.3)',
+            backgroundColor: '#fef2f2',
+            color: '#b91c1c',
+            border: '1px solid #fecaca',
           }}
         />
 
-        <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', mb: 1 }}>
+        <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', mb: 1 }}>
           Access Restricted
         </Typography>
 
-        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3, lineHeight: 1.6 }}>
+        <Typography variant="body2" sx={{ color: '#64748b', mb: 3, lineHeight: 1.6 }}>
           {message || (
             <>
               Your assigned role (<strong>{role?.name || role?.slug || 'Staff'}</strong>) does not have access permissions for{' '}
-              <Box component="span" sx={{ fontFamily: 'monospace', color: 'primary.light', px: 0.5 }}>
+              <Box component="span" sx={{ fontFamily: 'monospace', color: '#2563eb', px: 0.5 }}>
                 {requestedPath || 'this screen'}
               </Box>
               . Screen access is determined strictly by your backend role permissions.
@@ -89,15 +89,14 @@ const AccessDeniedPage = ({ requestedPath, message }) => {
             variant="contained"
             color="primary"
             onClick={() => navigate(getDefaultRoute())}
-            sx={{ fontWeight: 700, px: 3 }}
+            sx={{ fontWeight: 600, px: 3, backgroundColor: '#2563eb', '&:hover': { backgroundColor: '#1d4ed8' } }}
           >
             Return to Allowed Area
           </Button>
           <Button
             variant="outlined"
-            color="inherit"
             onClick={() => navigate(-1)}
-            sx={{ fontWeight: 600, borderColor: 'rgba(255, 255, 255, 0.15)' }}
+            sx={{ fontWeight: 600, borderColor: '#d1d5db', color: '#0f172a', '&:hover': { backgroundColor: '#f8fafc', borderColor: '#9ca3af' } }}
           >
             Go Back
           </Button>

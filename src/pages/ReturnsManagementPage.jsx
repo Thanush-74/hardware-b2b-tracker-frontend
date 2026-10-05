@@ -30,13 +30,13 @@ import { returnService, orderService, productService } from '../services/busines
 import { ReturnsIcon } from '../components/Icons';
 
 const RETURN_STATUS_COLORS = {
-  Requested: { bg: 'rgba(245, 158, 11, 0.15)', text: '#F59E0B', border: 'rgba(245, 158, 11, 0.3)' },
-  Approved: { bg: 'rgba(59, 130, 246, 0.15)', text: '#3B82F6', border: 'rgba(59, 130, 246, 0.3)' },
-  Rejected: { bg: 'rgba(239, 68, 68, 0.15)', text: '#EF4444', border: 'rgba(239, 68, 68, 0.3)' },
-  Received: { bg: 'rgba(168, 85, 247, 0.15)', text: '#A855F7', border: 'rgba(168, 85, 247, 0.3)' },
-  Replaced: { bg: 'rgba(14, 165, 233, 0.15)', text: '#0EA5E9', border: 'rgba(14, 165, 233, 0.3)' },
-  Refunded: { bg: 'rgba(234, 88, 12, 0.15)', text: '#EA580C', border: 'rgba(234, 88, 12, 0.3)' },
-  Completed: { bg: 'rgba(16, 185, 129, 0.15)', text: '#10B981', border: 'rgba(16, 185, 129, 0.3)' },
+  Requested: { bg: '#fffbeb', text: '#b45309', border: '#fde68a' },
+  Approved: { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' },
+  Rejected: { bg: '#fef2f2', text: '#b91c1c', border: '#fecaca' },
+  Received: { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' },
+  Replaced: { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' },
+  Refunded: { bg: '#fffbeb', text: '#b45309', border: '#fde68a' },
+  Completed: { bg: '#f0fdf4', text: '#15803d', border: '#bbf7d0' },
 };
 
 const ReturnsManagementPage = () => {
@@ -308,163 +308,165 @@ const ReturnsManagementPage = () => {
       )}
 
       {/* KPI Stats Cards */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase' }}>
-              Total Return Requests
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary', mt: 0.5 }}>
-              {totalReturns}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Warranty & defect cases
-            </Typography>
-          </Paper>
-        </Grid>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>
+            Total Return Requests
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.5 }}>
+            {totalReturns}
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#64748b' }}>
+            Warranty & defect cases
+          </Typography>
+        </Paper>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'warning.light', fontWeight: 700, textTransform: 'uppercase' }}>
-              Pending Authorization
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'warning.main', mt: 0.5 }}>
-              {requestedCount}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Awaiting RMA approval
-            </Typography>
-          </Paper>
-        </Grid>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>
+            Pending Authorization
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.5 }}>
+            {requestedCount}
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#64748b' }}>
+            Awaiting RMA approval
+          </Typography>
+        </Paper>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'info.light', fontWeight: 700, textTransform: 'uppercase' }}>
-              Hardware Replaced
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'info.main', mt: 0.5 }}>
-              {replacedCount}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Replacement units shipped
-            </Typography>
-          </Paper>
-        </Grid>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>
+            Hardware Replaced
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.5 }}>
+            {replacedCount}
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#64748b' }}>
+            Replacement units shipped
+          </Typography>
+        </Paper>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={1}
-            sx={{
-              p: 2.5,
-              borderRadius: 2.5,
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'success.light', fontWeight: 700, textTransform: 'uppercase' }}>
-              Resolved & Refunded
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'success.main', mt: 0.5 }}>
-              {completedCount}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Closed customer cases
-            </Typography>
-          </Paper>
-        </Grid>
-      </Grid>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>
+            Resolved & Refunded
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.5 }}>
+            {completedCount}
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#64748b' }}>
+            Closed customer cases
+          </Typography>
+        </Paper>
+      </Box>
 
       {/* Filter toolbar */}
       <Paper
-        elevation={1}
+        elevation={0}
         sx={{
           p: 2,
           mb: 3,
-          borderRadius: 2.5,
-          backgroundColor: 'background.paper',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 2,
+          backgroundColor: '#ffffff',
+          border: '1px solid #e5e7eb',
         }}
       >
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={7}>
-            <TextField
-              size="small"
-              fullWidth
-              placeholder="Search by RMA #, Customer, Product, Order #, or Reason..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </Grid>
-          <Grid item xs={12} md={5}>
-            <TextField
-              select
-              size="small"
-              fullWidth
-              label="RMA Status"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <MenuItem value="ALL">All RMA Statuses</MenuItem>
-              <MenuItem value="Requested">Requested</MenuItem>
-              <MenuItem value="Approved">Approved</MenuItem>
-              <MenuItem value="Received">Received</MenuItem>
-              <MenuItem value="Replaced">Replaced</MenuItem>
-              <MenuItem value="Refunded">Refunded</MenuItem>
-              <MenuItem value="Completed">Completed</MenuItem>
-              <MenuItem value="Rejected">Rejected</MenuItem>
-            </TextField>
-          </Grid>
-        </Grid>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '7fr 5fr' },
+            gap: 2,
+            alignItems: 'center',
+          }}
+        >
+          <TextField
+            size="small"
+            fullWidth
+            placeholder="Search by RMA #, Customer, Product, Order #, or Reason..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <TextField
+            select
+            size="small"
+            fullWidth
+            label="RMA Status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <MenuItem value="ALL">All RMA Statuses</MenuItem>
+            <MenuItem value="Requested">Requested</MenuItem>
+            <MenuItem value="Approved">Approved</MenuItem>
+            <MenuItem value="Received">Received</MenuItem>
+            <MenuItem value="Replaced">Replaced</MenuItem>
+            <MenuItem value="Refunded">Refunded</MenuItem>
+            <MenuItem value="Completed">Completed</MenuItem>
+            <MenuItem value="Rejected">Rejected</MenuItem>
+          </TextField>
+        </Box>
       </Paper>
 
       {/* Returns Table */}
       <Paper
-        elevation={2}
+        elevation={0}
         sx={{
-          borderRadius: 2.5,
+          borderRadius: 2,
           overflow: 'hidden',
-          backgroundColor: 'background.paper',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          backgroundColor: '#ffffff',
+          border: '1px solid #e5e7eb',
         }}
       >
         {isLoading ? (
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 8 }}>
             <CircularProgress size={38} color="primary" />
-            <Typography variant="body2" sx={{ mt: 2, color: 'text.secondary' }}>
+            <Typography variant="body2" sx={{ mt: 2, color: '#64748b' }}>
               Loading RMA records...
             </Typography>
           </Box>
         ) : filteredList.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 8, px: 3 }}>
-            <ReturnsIcon sx={{ fontSize: 50, color: 'text.secondary', opacity: 0.4, mb: 1 }} />
-            <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.secondary' }}>
+            <ReturnsIcon sx={{ fontSize: 50, color: '#64748b', opacity: 0.4, mb: 1 }} />
+            <Typography variant="h6" sx={{ fontWeight: 700, color: '#0f172a' }}>
               No Return Records Found
             </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5, maxWidth: 450, mx: 'auto' }}>
+            <Typography variant="body2" sx={{ color: '#64748b', mt: 0.5, maxWidth: 450, mx: 'auto' }}>
               Log a return request for any delivered customer order to manage warranty replacements.
             </Typography>
             {canCreate && (
@@ -479,25 +481,32 @@ const ReturnsManagementPage = () => {
             )}
           </Box>
         ) : (
-          <TableContainer>
-            <Table>
-              <TableHead sx={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>RMA Number</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Order & Customer</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Returned Hardware</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Reason / Defect</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Replacement</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
+          <TableContainer
+            sx={{
+              width: '100%',
+              overflowX: 'auto',
+              '&::-webkit-scrollbar': { height: '5px' },
+              '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: '4px' },
+            }}
+          >
+            <Table sx={{ minWidth: 740 }}>
+              <TableHead sx={{ backgroundColor: '#f9fafb' }}>
+                <TableRow sx={{ '& th': { color: '#0f172a', fontWeight: 700, borderBottom: '1px solid #e5e7eb' } }}>
+                  <TableCell>RMA Number</TableCell>
+                  <TableCell>Order & Customer</TableCell>
+                  <TableCell>Returned Hardware</TableCell>
+                  <TableCell>Reason / Defect</TableCell>
+                  <TableCell>Replacement</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {filteredList.map((item) => {
                   const statusStyle = RETURN_STATUS_COLORS[item.status] || {
-                    bg: 'rgba(255, 255, 255, 0.05)',
-                    text: '#FFF',
-                    border: 'rgba(255, 255, 255, 0.1)',
+                    bg: '#f9fafb',
+                    text: '#0f172a',
+                    border: '#e5e7eb',
                   };
 
                   return (

@@ -1,68 +1,78 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-  /* Color Palette - Industrial Slate & Vibrant Hardware Accents */
-  --bg-main: #0B0F19;
-  --bg-card: rgba(18, 24, 38, 0.75);
-  --bg-card-solid: #131B2E;
-  --bg-card-hover: rgba(26, 35, 58, 0.85);
-  --bg-input: #0e1424;
-  --bg-input-focus: #121a30;
+  /* ==========================================================================
+     Hardware B2B Tracker — 3-Color Enterprise Theme: Black + White + Blue
+     ========================================================================== */
 
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-focus: #f59e0b;
-  --border-glow: rgba(245, 158, 11, 0.25);
+  /* Backgrounds */
+  --bg-main: #ffffff;
+  --bg-subtle: #f9fafb;
+  --bg-card: #ffffff;
+  --bg-input: #ffffff;
 
-  --text-primary: #F8FAFC;
-  --text-secondary: #94A3B8;
-  --text-muted: #64748B;
-  --text-inverse: #0B0F19;
+  /* Borders */
+  --border-subtle: #e5e7eb;
+  --border-medium: #d1d5db;
+  --border-focus: #2563eb;
+  --border-glow: rgba(37, 99, 235, 0.12);
 
-  --accent-amber: #f59e0b;
-  --accent-amber-hover: #d97706;
-  --accent-amber-glow: rgba(245, 158, 11, 0.35);
+  /* Typography Colors */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-inverse: #ffffff;
 
-  --accent-blue: #3b82f6;
-  --accent-cyan: #06b6d4;
-  --accent-emerald: #10b981;
-  --accent-rose: #f43f5e;
-  --accent-purple: #a855f7;
+  /* Accent Blue */
+  --accent-blue: #2563eb;
+  --accent-blue-hover: #1d4ed8;
+  --accent-blue-subtle: #eff6ff;
 
-  --status-success-bg: rgba(16, 185, 129, 0.12);
-  --status-success-border: rgba(16, 185, 129, 0.3);
-  --status-success-text: #34d399;
+  /* Sidebar Tokens (Clean White Enterprise) */
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #e5e7eb;
+  --sidebar-text: #0f172a;
+  --sidebar-text-muted: #64748b;
+  --sidebar-active-bg: #eff6ff;
+  --sidebar-active-text: #2563eb;
+  --sidebar-hover-bg: #f8fafc;
 
-  --status-danger-bg: rgba(244, 63, 94, 0.12);
-  --status-danger-border: rgba(244, 63, 94, 0.35);
-  --status-danger-text: #fb7185;
+  /* Small Status Badges Only */
+  --status-success-bg: #f0fdf4;
+  --status-success-border: #bbf7d0;
+  --status-success-text: #15803d;
 
-  --status-warning-bg: rgba(245, 158, 11, 0.12);
-  --status-warning-border: rgba(245, 158, 11, 0.35);
-  --status-warning-text: #fbbf24;
+  --status-danger-bg: #fef2f2;
+  --status-danger-border: #fecaca;
+  --status-danger-text: #b91c1c;
 
-  --status-info-bg: rgba(59, 130, 246, 0.12);
-  --status-info-border: rgba(59, 130, 246, 0.3);
-  --status-info-text: #60a5fa;
+  --status-warning-bg: #fffbeb;
+  --status-warning-border: #fde68a;
+  --status-warning-text: #b45309;
+
+  --status-info-bg: #eff6ff;
+  --status-info-border: #bfdbfe;
+  --status-info-text: #1d4ed8;
 
   /* Typography */
-  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* Elevation & Shadows */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 8px 24px -4px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 20px 40px -8px rgba(0, 0, 0, 0.7);
-  --shadow-glow: 0 0 25px rgba(245, 158, 11, 0.2);
+  /* Elevation & Shadows - Subtle & Clean */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  --shadow-glow: none;
 
   /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Border Radii */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
   --radius-full: 9999px;
 }
 
@@ -72,21 +82,226 @@
   padding: 0;
 }
 
+html {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-main);
   color: var(--text-primary);
   min-height: 100vh;
+  max-width: 100%;
+  overflow-x: hidden;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 a {
-  color: inherit;
+  color: var(--accent-blue);
   text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
 }
 
 button, input, select, textarea {
   font-family: inherit;
 }
+
+/* ==========================================================================
+   B2B Enterprise Overrides
+   ========================================================================== */
+
+/* Main paper / cards */
+.MuiPaper-root:not(.MuiDrawer-paper) {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+/* Cards & Elevated Containers */
+.MuiPaper-elevation1,
+.MuiPaper-elevation2,
+.MuiPaper-elevation3,
+.MuiPaper-elevation4 {
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Tables */
+.MuiTable-root {
+  background-color: #ffffff;
+}
+
+.MuiTableHead-root {
+  background-color: #f9fafb !important;
+}
+
+.MuiTableHead-root .MuiTableCell-head {
+  background-color: #f9fafb !important;
+  color: #0f172a !important;
+  font-weight: 700 !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.03em !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.MuiTableBody-root .MuiTableRow-root:hover {
+  background-color: #f9fafb !important;
+}
+
+.MuiTableCell-root {
+  border-bottom: 1px solid #f3f4f6 !important;
+  color: #0f172a;
+}
+
+/* Modals & Dialogs */
+.MuiDialog-paper {
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 8px !important;
+}
+
+.MuiDialogTitle-root {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+/* Form Inputs */
+.MuiOutlinedInput-root {
+  background-color: #ffffff !important;
+  border-radius: 6px !important;
+}
+
+.MuiOutlinedInput-input {
+  color: #0f172a !important;
+}
+
+.MuiInputLabel-root {
+  color: #64748b !important;
+}
+
+.MuiInputLabel-root.Mui-focused {
+  color: #2563eb !important;
+}
+
+/* Buttons */
+.MuiButton-containedPrimary {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+  border-radius: 6px !important;
+}
+
+.MuiButton-containedPrimary:hover {
+  background-color: #1d4ed8 !important;
+  box-shadow: none !important;
+}
+
+.MuiButton-outlined:not(.MuiButton-colorError):not(.MuiButton-colorSuccess) {
+  background-color: #ffffff !important;
+  border-color: #d1d5db !important;
+  color: #0f172a !important;
+  border-radius: 6px !important;
+}
+
+.MuiButton-outlined:not(.MuiButton-colorError):not(.MuiButton-colorSuccess):hover {
+  background-color: #f9fafb !important;
+  border-color: #9ca3af !important;
+}
+
+/* Dividers */
+.MuiDivider-root {
+  border-color: #e5e7eb !important;
+}
+
+/* ==========================================================================
+   Global Modern Scrollbars & Custom Utilities
+   ========================================================================== */
+
+/* Universal sleek scrollbars */
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.45);
+}
+
+*::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+}
+
+/* Professional transparent sidebar scrollbar (ultra-clean, invisible until hover) */
+.sidebar-scroll {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.25s ease;
+}
+
+.sidebar-scroll:hover {
+  scrollbar-color: rgba(15, 23, 42, 0.16) transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 9999px;
+  transition: background-color 0.25s ease;
+}
+
+.sidebar-scroll:hover::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.16);
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.28);
+}
+
+.sidebar-scroll::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Completely hidden scrollbar utility (retains smooth scrolling) */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
