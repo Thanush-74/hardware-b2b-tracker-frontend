@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
@@ -24,11 +24,17 @@ import {
   Badge,
   Menu,
   MenuItem,
+  Popover,
+  CircularProgress,
+  Paper,
+  ClickAwayListener,
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
+import { notificationService, searchService } from '../services/businessService';
 import {
   DashboardIcon,
   OrdersIcon,
+  CartIcon,
   ProductionIcon,
   InventoryIcon,
   ReturnsIcon,
@@ -43,9 +49,47 @@ import {
   LogoutIcon,
   SearchIcon,
   NotificationsIcon,
+  CloseIcon,
 } from './Icons';
 
+
 const DRAWER_WIDTH = 260;
+
+const getNotificationRoute = (type) => {
+  switch (type) {
+    case 'order_created':
+    case 'order_status':
+    case 'payment_status':
+      return '/orders';
+    case 'low_stock':
+      return '/inventory';
+    case 'delivery_status':
+      return '/deliveries';
+    case 'product_return':
+      return '/returns';
+    case 'inspection_result':
+      return '/inspection';
+    case 'production_completed':
+      return '/production';
+    default:
+      return null;
+  }
+};
+
+const formatNotificationTime = (dateStr) => {
+  if (!dateStr) return '';
+  try {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now - date) / 1000);
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return dateStr;
+  }
+};
 
 const AppLayout = () => {
   const { user, role, screens, logout, hasScreen, hasScreenRoute } = useAuth();
@@ -56,6 +100,141 @@ const AppLayout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuAnchor, setUserMenuAnchor] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState(null);
+  const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
+  const [notificationAnchor, setNotificationAnchor] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+
+  // Debounced search effect
+  useEffect(() => {
+    const query = searchQuery.trim();
+    if (!query) {
+      setSearchResults(null);
+      setIsSearching(false);
+      setSearchError(null);
+      setSearchDropdownOpen(false);
+      return;
+    }
+
+    setIsSearching(true);
+    setSearchError(null);
+    setSearchDropdownOpen(true);
+
+    const debounceTimer = setTimeout(async () => {
+      try {
+        const data = await searchService.search(query);
+        setSearchResults(data || {
+          products: [],
+          staff: [],
+          orders: [],
+          deliveries: [],
+          returns: [],
+          inventory: [],
+        });
+      } catch (err) {
+        console.error('Search API request failed:', err);
+        setSearchError('Unable to search right now.');
+        setSearchResults(null);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery]);
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setSearchResults(null);
+    setIsSearching(false);
+    setSearchError(null);
+    setSearchDropdownOpen(false);
+  };
+
+  const handleSelectSearchResult = (route) => {
+    setSearchDropdownOpen(false);
+    if (route) {
+      navigate(route);
+    }
+  };
+
+  const totalResults = searchResults
+    ? (searchResults.products?.length || 0) +
+      (searchResults.orders?.length || 0) +
+      (searchResults.staff?.length || 0) +
+      (searchResults.deliveries?.length || 0) +
+      (searchResults.returns?.length || 0) +
+      (searchResults.inventory?.length || 0)
+    : 0;
+
+  const fetchUnreadCount = async () => {
+    try {
+      const data = await notificationService.getUnreadCount();
+      setUnreadCount(typeof data?.count === 'number' ? data.count : 0);
+    } catch (err) {
+      console.error('Failed to fetch unread notification count:', err);
+    }
+  };
+
+
+  useEffect(() => {
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleOpenNotifications = async (event) => {
+    setNotificationAnchor(event.currentTarget);
+    setIsLoadingNotifications(true);
+    try {
+      const data = await notificationService.getAll({ limit: 20 });
+      const list = Array.isArray(data) ? data : data?.notifications || [];
+      setNotifications(list);
+      fetchUnreadCount();
+    } catch (err) {
+      console.error('Failed to load notifications:', err);
+    } finally {
+      setIsLoadingNotifications(false);
+    }
+  };
+
+  const handleCloseNotifications = () => {
+    setNotificationAnchor(null);
+  };
+
+  const handleMarkAsRead = async (notification) => {
+    try {
+      if (!notification.is_read) {
+        await notificationService.markAsRead(notification.id);
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === notification.id ? { ...n, is_read: true } : n))
+        );
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      }
+    } catch (err) {
+      console.error('Failed to mark notification as read:', err);
+    }
+
+    const targetRoute = getNotificationRoute(notification.type);
+    handleCloseNotifications();
+    if (targetRoute) {
+      navigate(targetRoute);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await notificationService.markAllAsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+      setUnreadCount(0);
+    } catch (err) {
+      console.error('Failed to mark all notifications as read:', err);
+    }
+  };
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -103,6 +282,12 @@ const AppLayout = () => {
     {
       groupTitle: 'OPERATIONS',
       items: [
+        {
+          name: 'Cart',
+          route: '/cart',
+          slug: 'cart',
+          icon: <CartIcon fontSize="small" />,
+        },
         {
           name: 'Orders',
           route: '/orders',
@@ -457,36 +642,434 @@ const AppLayout = () => {
           </Stack>
 
           {/* Center: Global Search Bar */}
-          <Box sx={{ flexGrow: 1, maxWidth: 420, mx: { xs: 1, sm: 3 }, display: { xs: 'none', sm: 'block' } }}>
-            <TextField
-              size="small"
-              fullWidth
-              placeholder="Search orders, products, customers..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ color: '#94a3b8', fontSize: 18 }} />
-                  </InputAdornment>
-                ),
-                sx: {
-                  height: 38,
-                  fontSize: '0.85rem',
-                  backgroundColor: '#f8fafc',
-                  borderRadius: 1.5,
-                  '& fieldset': {
-                    borderColor: '#e2e8f0',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: '#cbd5e1',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#2563eb',
-                  },
-                },
-              }}
-            />
+          <Box
+            sx={{
+              flexGrow: 1,
+              maxWidth: 460,
+              mx: { xs: 1, sm: 3 },
+              position: 'relative',
+              display: { xs: 'none', sm: 'block' },
+            }}
+          >
+            <ClickAwayListener onClickAway={() => setSearchDropdownOpen(false)}>
+              <Box sx={{ width: '100%' }}>
+                <TextField
+                  size="small"
+                  fullWidth
+                  placeholder="Search orders, products, customers..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => {
+                    if (searchQuery.trim().length > 0) {
+                      setSearchDropdownOpen(true);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      setSearchDropdownOpen(false);
+                    }
+                  }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon sx={{ color: '#94a3b8', fontSize: 18 }} />
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        {isSearching ? (
+                          <CircularProgress size={16} sx={{ color: '#2563eb' }} />
+                        ) : searchQuery.trim().length > 0 ? (
+                          <IconButton
+                            size="small"
+                            onClick={handleClearSearch}
+                            edge="end"
+                            sx={{ p: 0.5, color: '#94a3b8', '&:hover': { color: '#0f172a' } }}
+                          >
+                            <CloseIcon sx={{ fontSize: 16 }} />
+                          </IconButton>
+                        ) : null}
+                      </InputAdornment>
+                    ),
+                    sx: {
+                      height: 38,
+                      fontSize: '0.85rem',
+                      backgroundColor: '#f8fafc',
+                      borderRadius: 1.5,
+                      '& fieldset': {
+                        borderColor: '#e2e8f0',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#cbd5e1',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#2563eb',
+                      },
+                    },
+                  }}
+                />
+
+                {/* Search Results Dropdown */}
+                {searchDropdownOpen && searchQuery.trim().length > 0 && (
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      mt: 1,
+                      maxHeight: 460,
+                      overflowY: 'auto',
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: 2,
+                      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+                      zIndex: 1300,
+                    }}
+                  >
+                    {isSearching ? (
+                      <Box sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
+                        <CircularProgress size={18} sx={{ color: '#2563eb' }} />
+                        <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.85rem', fontWeight: 500 }}>
+                          Searching...
+                        </Typography>
+                      </Box>
+                    ) : searchError ? (
+                      <Box sx={{ p: 3, textAlign: 'center' }}>
+                        <Typography variant="body2" sx={{ color: '#dc2626', fontSize: '0.85rem', fontWeight: 600 }}>
+                          {searchError}
+                        </Typography>
+                      </Box>
+                    ) : totalResults === 0 ? (
+                      <Box sx={{ p: 3, textAlign: 'center' }}>
+                        <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.85rem' }}>
+                          No results found
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <Box sx={{ py: 1 }}>
+                        {/* Products Section */}
+                        {searchResults?.products?.length > 0 && (
+                          <Box sx={{ mb: 1 }}>
+                            <Box sx={{ px: 2, py: 0.8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#f8fafc' }}>
+                              <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: '0.72rem' }}>
+                                Products
+                              </Typography>
+                              <Chip label={searchResults.products.length} size="small" sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700, backgroundColor: '#eff6ff', color: '#2563eb' }} />
+                            </Box>
+                            <List disablePadding>
+                              {searchResults.products.map((item) => (
+                                <ListItemButton
+                                  key={`prod-${item.id}`}
+                                  onClick={() => handleSelectSearchResult(item.route || '/products')}
+                                  sx={{
+                                    px: 2,
+                                    py: 1,
+                                    '&:hover': { backgroundColor: '#f1f5f9' },
+                                  }}
+                                >
+                                  <ListItemIcon sx={{ minWidth: 32, color: '#2563eb' }}>
+                                    <ProductsIcon sx={{ fontSize: 18 }} />
+                                  </ListItemIcon>
+                                  <ListItemText
+                                    primary={
+                                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a', fontSize: '0.84rem' }}>
+                                        {item.name || item.title}
+                                      </Typography>
+                                    }
+                                    secondary={
+                                      <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 0.2 }}>
+                                        {item.type && (
+                                          <Typography variant="caption" sx={{ color: '#64748b', fontSize: '0.72rem' }}>
+                                            {item.type}
+                                          </Typography>
+                                        )}
+                                        <Typography variant="caption" sx={{ color: '#059669', fontWeight: 600, fontSize: '0.72rem' }}>
+                                          ₹{Number(item.price || 0).toLocaleString()}
+                                        </Typography>
+                                        {item.available_quantity !== undefined && (
+                                          <Typography variant="caption" sx={{ color: '#64748b', fontSize: '0.72rem' }}>
+                                            Stock: {item.available_quantity}
+                                          </Typography>
+                                        )}
+                                      </Box>
+                                    }
+                                  />
+                                </ListItemButton>
+                              ))}
+                            </List>
+                          </Box>
+                        )}
+
+                        {/* Orders Section */}
+                        {searchResults?.orders?.length > 0 && (
+                          <Box sx={{ mb: 1 }}>
+                            <Box sx={{ px: 2, py: 0.8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#f8fafc' }}>
+                              <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: '0.72rem' }}>
+                                Orders
+                              </Typography>
+                              <Chip label={searchResults.orders.length} size="small" sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700, backgroundColor: '#eff6ff', color: '#2563eb' }} />
+                            </Box>
+                            <List disablePadding>
+                              {searchResults.orders.map((item) => (
+                                <ListItemButton
+                                  key={`ord-${item.id}`}
+                                  onClick={() => handleSelectSearchResult(item.route || '/orders')}
+                                  sx={{
+                                    px: 2,
+                                    py: 1,
+                                    '&:hover': { backgroundColor: '#f1f5f9' },
+                                  }}
+                                >
+                                  <ListItemIcon sx={{ minWidth: 32, color: '#2563eb' }}>
+                                    <OrdersIcon sx={{ fontSize: 18 }} />
+                                  </ListItemIcon>
+                                  <ListItemText
+                                    primary={
+                                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a', fontSize: '0.84rem' }}>
+                                        {item.order_number || item.title}
+                                      </Typography>
+                                    }
+                                    secondary={
+                                      <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 0.2 }}>
+                                        {item.customer_name && (
+                                          <Typography variant="caption" sx={{ color: '#64748b', fontSize: '0.72rem' }}>
+                                            {item.customer_name}
+                                          </Typography>
+                                        )}
+                                        {item.total_amount !== undefined && (
+                                          <Typography variant="caption" sx={{ color: '#059669', fontWeight: 600, fontSize: '0.72rem' }}>
+                                            ₹{Number(item.total_amount).toLocaleString()}
+                                          </Typography>
+                                        )}
+                                        {item.order_status && (
+                                          <Chip
+                                            label={item.order_status}
+                                            size="small"
+                                            sx={{ height: 16, fontSize: '0.62rem', fontWeight: 600 }}
+                                          />
+                                        )}
+                                      </Box>
+                                    }
+                                  />
+                                </ListItemButton>
+                              ))}
+                            </List>
+                          </Box>
+                        )}
+
+                        {/* Staff Section */}
+                        {searchResults?.staff?.length > 0 && (
+                          <Box sx={{ mb: 1 }}>
+                            <Box sx={{ px: 2, py: 0.8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#f8fafc' }}>
+                              <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: '0.72rem' }}>
+                                Staff
+                              </Typography>
+                              <Chip label={searchResults.staff.length} size="small" sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700, backgroundColor: '#eff6ff', color: '#2563eb' }} />
+                            </Box>
+                            <List disablePadding>
+                              {searchResults.staff.map((item) => (
+                                <ListItemButton
+                                  key={`staff-${item.id}`}
+                                  onClick={() => handleSelectSearchResult(item.route || '/staff')}
+                                  sx={{
+                                    px: 2,
+                                    py: 1,
+                                    '&:hover': { backgroundColor: '#f1f5f9' },
+                                  }}
+                                >
+                                  <ListItemIcon sx={{ minWidth: 32, color: '#2563eb' }}>
+                                    <StaffIcon sx={{ fontSize: 18 }} />
+                                  </ListItemIcon>
+                                  <ListItemText
+                                    primary={
+                                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a', fontSize: '0.84rem' }}>
+                                        {item.name || item.title}
+                                      </Typography>
+                                    }
+                                    secondary={
+                                      <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 0.2 }}>
+                                        {item.email && (
+                                          <Typography variant="caption" sx={{ color: '#64748b', fontSize: '0.72rem' }}>
+                                            {item.email}
+                                          </Typography>
+                                        )}
+                                        {item.role && (
+                                          <Chip
+                                            label={item.role}
+                                            size="small"
+                                            sx={{ height: 16, fontSize: '0.62rem', fontWeight: 600, backgroundColor: '#f1f5f9' }}
+                                          />
+                                        )}
+                                      </Box>
+                                    }
+                                  />
+                                </ListItemButton>
+                              ))}
+                            </List>
+                          </Box>
+                        )}
+
+                        {/* Deliveries Section */}
+                        {searchResults?.deliveries?.length > 0 && (
+                          <Box sx={{ mb: 1 }}>
+                            <Box sx={{ px: 2, py: 0.8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#f8fafc' }}>
+                              <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: '0.72rem' }}>
+                                Deliveries
+                              </Typography>
+                              <Chip label={searchResults.deliveries.length} size="small" sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700, backgroundColor: '#eff6ff', color: '#2563eb' }} />
+                            </Box>
+                            <List disablePadding>
+                              {searchResults.deliveries.map((item) => (
+                                <ListItemButton
+                                  key={`del-${item.id}`}
+                                  onClick={() => handleSelectSearchResult(item.route || '/deliveries')}
+                                  sx={{
+                                    px: 2,
+                                    py: 1,
+                                    '&:hover': { backgroundColor: '#f1f5f9' },
+                                  }}
+                                >
+                                  <ListItemIcon sx={{ minWidth: 32, color: '#2563eb' }}>
+                                    <DeliveriesIcon sx={{ fontSize: 18 }} />
+                                  </ListItemIcon>
+                                  <ListItemText
+                                    primary={
+                                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a', fontSize: '0.84rem' }}>
+                                        {item.title || item.delivery_number}
+                                      </Typography>
+                                    }
+                                    secondary={
+                                      <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 0.2 }}>
+                                        {item.recipient_name && (
+                                          <Typography variant="caption" sx={{ color: '#64748b', fontSize: '0.72rem' }}>
+                                            Recipient: {item.recipient_name}
+                                          </Typography>
+                                        )}
+                                        {item.status && (
+                                          <Chip
+                                            label={item.status}
+                                            size="small"
+                                            sx={{ height: 16, fontSize: '0.62rem', fontWeight: 600 }}
+                                          />
+                                        )}
+                                      </Box>
+                                    }
+                                  />
+                                </ListItemButton>
+                              ))}
+                            </List>
+                          </Box>
+                        )}
+
+                        {/* Returns Section */}
+                        {searchResults?.returns?.length > 0 && (
+                          <Box sx={{ mb: 1 }}>
+                            <Box sx={{ px: 2, py: 0.8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#f8fafc' }}>
+                              <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: '0.72rem' }}>
+                                Returns
+                              </Typography>
+                              <Chip label={searchResults.returns.length} size="small" sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700, backgroundColor: '#eff6ff', color: '#2563eb' }} />
+                            </Box>
+                            <List disablePadding>
+                              {searchResults.returns.map((item) => (
+                                <ListItemButton
+                                  key={`ret-${item.id}`}
+                                  onClick={() => handleSelectSearchResult(item.route || '/returns')}
+                                  sx={{
+                                    px: 2,
+                                    py: 1,
+                                    '&:hover': { backgroundColor: '#f1f5f9' },
+                                  }}
+                                >
+                                  <ListItemIcon sx={{ minWidth: 32, color: '#2563eb' }}>
+                                    <ReturnsIcon sx={{ fontSize: 18 }} />
+                                  </ListItemIcon>
+                                  <ListItemText
+                                    primary={
+                                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a', fontSize: '0.84rem' }}>
+                                        {item.title || item.return_number}
+                                      </Typography>
+                                    }
+                                    secondary={
+                                      <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 0.2 }}>
+                                        {item.reason && (
+                                          <Typography variant="caption" sx={{ color: '#64748b', fontSize: '0.72rem' }}>
+                                            Reason: {item.reason}
+                                          </Typography>
+                                        )}
+                                        {item.status && (
+                                          <Chip
+                                            label={item.status}
+                                            size="small"
+                                            sx={{ height: 16, fontSize: '0.62rem', fontWeight: 600 }}
+                                          />
+                                        )}
+                                      </Box>
+                                    }
+                                  />
+                                </ListItemButton>
+                              ))}
+                            </List>
+                          </Box>
+                        )}
+
+                        {/* Inventory Section */}
+                        {searchResults?.inventory?.length > 0 && (
+                          <Box sx={{ mb: 1 }}>
+                            <Box sx={{ px: 2, py: 0.8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#f8fafc' }}>
+                              <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: '0.72rem' }}>
+                                Inventory
+                              </Typography>
+                              <Chip label={searchResults.inventory.length} size="small" sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700, backgroundColor: '#eff6ff', color: '#2563eb' }} />
+                            </Box>
+                            <List disablePadding>
+                              {searchResults.inventory.map((item) => (
+                                <ListItemButton
+                                  key={`inv-${item.id}`}
+                                  onClick={() => handleSelectSearchResult(item.route || '/inventory')}
+                                  sx={{
+                                    px: 2,
+                                    py: 1,
+                                    '&:hover': { backgroundColor: '#f1f5f9' },
+                                  }}
+                                >
+                                  <ListItemIcon sx={{ minWidth: 32, color: '#2563eb' }}>
+                                    <InventoryIcon sx={{ fontSize: 18 }} />
+                                  </ListItemIcon>
+                                  <ListItemText
+                                    primary={
+                                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a', fontSize: '0.84rem' }}>
+                                        {item.title || item.product_name}
+                                      </Typography>
+                                    }
+                                    secondary={
+                                      <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 0.2 }}>
+                                        {item.location && (
+                                          <Typography variant="caption" sx={{ color: '#64748b', fontSize: '0.72rem' }}>
+                                            Location: {item.location}
+                                          </Typography>
+                                        )}
+                                        {item.quantity !== undefined && (
+                                          <Typography variant="caption" sx={{ color: '#059669', fontWeight: 600, fontSize: '0.72rem' }}>
+                                            Qty: {item.quantity}
+                                          </Typography>
+                                        )}
+                                      </Box>
+                                    }
+                                  />
+                                </ListItemButton>
+                              ))}
+                            </List>
+                          </Box>
+                        )}
+                      </Box>
+                    )}
+                  </Paper>
+                )}
+              </Box>
+            </ClickAwayListener>
           </Box>
 
           {/* Right: Notifications, Profile, Dropdown */}
@@ -494,22 +1077,199 @@ const AppLayout = () => {
             {/* Notifications Button */}
             <IconButton
               size="small"
+              onClick={handleOpenNotifications}
+              aria-label="notifications"
               sx={{
                 color: '#64748b',
                 p: 0.8,
                 borderRadius: 1.5,
                 border: '1px solid #e2e8f0',
-                backgroundColor: '#ffffff',
+                backgroundColor: Boolean(notificationAnchor) ? '#f1f5f9' : '#ffffff',
                 '&:hover': {
                   backgroundColor: '#f8fafc',
                   color: '#0f172a',
                 },
               }}
             >
-              <Badge badgeContent={4} color="error" sx={{ '& .MuiBadge-badge': { fontSize: '0.65rem', height: 16, minWidth: 16 } }}>
+              <Badge
+                badgeContent={unreadCount}
+                color="error"
+                invisible={unreadCount === 0}
+                sx={{ '& .MuiBadge-badge': { fontSize: '0.65rem', height: 16, minWidth: 16, fontWeight: 700 } }}
+              >
                 <NotificationsIcon sx={{ fontSize: 18 }} />
               </Badge>
             </IconButton>
+
+            {/* Notifications Popover */}
+            <Popover
+              open={Boolean(notificationAnchor)}
+              anchorEl={notificationAnchor}
+              onClose={handleCloseNotifications}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+              PaperProps={{
+                elevation: 0,
+                sx: {
+                  mt: 1.5,
+                  width: { xs: 320, sm: 380 },
+                  maxHeight: 480,
+                  borderRadius: 2,
+                  border: '1px solid #e2e8f0',
+                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column',
+                },
+              }}
+            >
+              {/* Notification Popover Header */}
+              <Box sx={{ p: 2, pb: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a', fontSize: '0.92rem' }}>
+                    Notifications
+                  </Typography>
+                  {unreadCount > 0 && (
+                    <Chip
+                      label={`${unreadCount} new`}
+                      size="small"
+                      sx={{
+                        height: 20,
+                        fontSize: '0.68rem',
+                        fontWeight: 700,
+                        backgroundColor: '#eff6ff',
+                        color: '#2563eb',
+                      }}
+                    />
+                  )}
+                </Box>
+                {unreadCount > 0 && (
+                  <Button
+                    size="small"
+                    onClick={handleMarkAllAsRead}
+                    sx={{
+                      fontSize: '0.75rem',
+                      textTransform: 'none',
+                      color: '#2563eb',
+                      p: 0,
+                      minWidth: 0,
+                      fontWeight: 600,
+                      '&:hover': {
+                        backgroundColor: 'transparent',
+                        textDecoration: 'underline',
+                      },
+                    }}
+                  >
+                    Mark all as read
+                  </Button>
+                )}
+              </Box>
+
+              {/* Notification List Body */}
+              <Box sx={{ overflowY: 'auto', flexGrow: 1, maxHeight: 380 }}>
+                {isLoadingNotifications ? (
+                  <Box sx={{ p: 4, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <CircularProgress size={24} sx={{ color: '#2563eb' }} />
+                  </Box>
+                ) : notifications.length === 0 ? (
+                  <Box sx={{ p: 4, textAlign: 'center' }}>
+                    <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.85rem' }}>
+                      No notifications at this time
+                    </Typography>
+                  </Box>
+                ) : (
+                  <List disablePadding>
+                    {notifications.map((notif, index) => {
+                      const isUnread = !notif.is_read;
+                      return (
+                        <React.Fragment key={notif.id || index}>
+                          <ListItemButton
+                            onClick={() => handleMarkAsRead(notif)}
+                            sx={{
+                              py: 1.5,
+                              px: 2,
+                              backgroundColor: isUnread ? '#f8fafc' : '#ffffff',
+                              borderLeft: isUnread ? '3px solid #2563eb' : '3px solid transparent',
+                              transition: 'all 0.15s ease',
+                              '&:hover': {
+                                backgroundColor: isUnread ? '#f1f5f9' : '#f8fafc',
+                              },
+                            }}
+                          >
+                            <ListItemText
+                              primary={
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.3 }}>
+                                  <Typography
+                                    variant="body2"
+                                    sx={{
+                                      fontWeight: isUnread ? 700 : 500,
+                                      color: '#0f172a',
+                                      fontSize: '0.84rem',
+                                    }}
+                                  >
+                                    {notif.title}
+                                  </Typography>
+                                  {isUnread && (
+                                    <Box
+                                      sx={{
+                                        width: 6,
+                                        height: 6,
+                                        borderRadius: '50%',
+                                        backgroundColor: '#2563eb',
+                                        flexShrink: 0,
+                                        ml: 1,
+                                      }}
+                                    />
+                                  )}
+                                </Box>
+                              }
+                              secondary={
+                                <Box component="span" sx={{ display: 'block' }}>
+                                  <Typography
+                                    variant="caption"
+                                    component="span"
+                                    sx={{
+                                      color: '#475569',
+                                      fontSize: '0.78rem',
+                                      display: '-webkit-box',
+                                      WebkitLineClamp: 2,
+                                      WebkitBoxOrient: 'vertical',
+                                      overflow: 'hidden',
+                                      lineHeight: 1.35,
+                                    }}
+                                  >
+                                    {notif.message}
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    component="span"
+                                    sx={{
+                                      display: 'block',
+                                      color: '#94a3b8',
+                                      fontSize: '0.7rem',
+                                      mt: 0.5,
+                                    }}
+                                  >
+                                    {formatNotificationTime(notif.created_at)}
+                                  </Typography>
+                                </Box>
+                              }
+                            />
+                          </ListItemButton>
+                          {index < notifications.length - 1 && <Divider component="li" sx={{ borderColor: '#f1f5f9' }} />}
+                        </React.Fragment>
+                      );
+                    })}
+                  </List>
+                )}
+              </Box>
+            </Popover>
 
             {/* User Profile Trigger */}
             <Box

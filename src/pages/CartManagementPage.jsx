@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -117,7 +117,19 @@ const CartManagementPage = () => {
   };
 
   const cartItems = cart?.items || cart?.cart_items || [];
-  const totalAmount = Number(cart?.total || cart?.total_amount || 0);
+
+  // Calculate overall total dynamically from ALL cart items: sum(unit_price * quantity)
+  const totalAmount = useMemo(() => {
+    return cartItems.reduce((acc, item) => {
+      const price = Number(item.unit_price ?? item.product?.price ?? item.price ?? 0);
+      const qty = Number(item.quantity ?? 1);
+      return acc + (price * qty);
+    }, 0);
+  }, [cartItems]);
+
+  const totalUnits = useMemo(() => {
+    return cartItems.reduce((acc, curr) => acc + Number(curr.quantity || 1), 0);
+  }, [cartItems]);
 
   return (
     <Box>
@@ -358,7 +370,7 @@ const CartManagementPage = () => {
                   Total Items:
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a' }}>
-                  {cartItems.reduce((acc, curr) => acc + Number(curr.quantity || 1), 0)} units
+                  {totalUnits} units
                 </Typography>
               </Box>
 

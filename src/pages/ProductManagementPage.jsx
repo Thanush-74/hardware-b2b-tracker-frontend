@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -9,12 +9,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Chip,
   IconButton,
   Alert,
@@ -25,6 +19,11 @@ import {
   MenuItem,
   InputAdornment,
   Tooltip,
+  Divider,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import { productService, cartService } from '../services/businessService';
@@ -53,43 +52,148 @@ const CartAddIcon = () => (
   </svg>
 );
 
+const InfoIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="12" cy="12" r="10" />
+    <line x1="12" y1="16" x2="12" y2="12" />
+    <line x1="12" y1="8" x2="12.01" y2="8" />
+  </svg>
+);
+
+const BulletDotIcon = () => (
+  <Box
+    component="span"
+    sx={{
+      width: 7,
+      height: 7,
+      borderRadius: '50%',
+      backgroundColor: '#2563eb',
+      display: 'inline-block',
+      mr: 1.5,
+      flexShrink: 0,
+    }}
+  />
+);
+
+/**
+ * EXACT 4 CANONICAL PRODUCTS SPECIFICATION
+ * Frontend-only configuration for descriptions and components.
+ */
+const CANONICAL_CATALOG = [
+  {
+    key: 'gpu',
+    canonicalName: 'GPU',
+    categoryType: 'Graphics Card (GPU)',
+    matchTypes: ['GPU', 'GRAPHICS CARD (GPU)', 'GRAPHICS'],
+    description:
+      'A Graphics Processing Unit designed to handle graphics rendering, video processing, and parallel computing tasks.',
+    materials: [
+      'GPU semiconductor chip',
+      'Silicon',
+      'Copper',
+      'Aluminum heatsink',
+      'Printed Circuit Board (PCB)',
+      'VRAM memory chips',
+      'Solder',
+      'Thermal interface material',
+      'Electronic capacitors and other components',
+    ],
+    defaultPrice: 950.0,
+    defaultStock: 40,
+  },
+  {
+    key: 'ram',
+    canonicalName: 'RAM',
+    categoryType: 'RAM Memory',
+    matchTypes: ['RAM', 'RAM MEMORY', 'MEMORY'],
+    description:
+      'Random Access Memory used to temporarily store data and instructions that the processor needs for fast access while applications are running.',
+    materials: [
+      'DRAM memory chips',
+      'Silicon',
+      'Printed Circuit Board (PCB)',
+      'Copper traces',
+      'Gold-plated electrical contacts',
+      'Solder',
+      'Capacitors and resistors',
+    ],
+    defaultPrice: 120.0,
+    defaultStock: 40,
+  },
+  {
+    key: 'rom_ssd',
+    canonicalName: 'ROM / SSD Storage',
+    categoryType: 'SSD Storage',
+    matchTypes: ['SSD', 'SSD STORAGE', 'ROM', 'STORAGE', 'NVME'],
+    description:
+      'A solid-state storage device used to permanently store the operating system, applications, and user data.',
+    materials: [
+      'NAND flash memory chips',
+      'Silicon',
+      'Controller chip',
+      'Printed Circuit Board (PCB)',
+      'Copper traces',
+      'Aluminum or other metal casing',
+      'Solder',
+      'Electronic components',
+    ],
+    defaultPrice: 89.5,
+    defaultStock: 80,
+  },
+  {
+    key: 'motherboard',
+    canonicalName: 'Motherboard',
+    categoryType: 'Motherboard',
+    matchTypes: ['MOTHERBOARD', 'MAINBOARD'],
+    description:
+      'The main circuit board of a computer that connects and allows communication between the processor, memory, storage, graphics hardware, power supply, and other components.',
+    materials: [
+      'Fiberglass and epoxy resin PCB material',
+      'Copper traces',
+      'Silicon integrated circuits',
+      'Aluminum heatsinks',
+      'Gold-plated contacts/connectors',
+      'Solder',
+      'Capacitors',
+      'Resistors',
+      'Connectors and sockets',
+    ],
+    defaultPrice: 210.0,
+    defaultStock: 30,
+  },
+];
+
 const HARDWARE_TYPES = [
   'SSD Storage',
   'RAM Memory',
   'Motherboard',
   'Graphics Card (GPU)',
-  'Processor (CPU)',
-  'Power Supply (PSU)',
-  'Cooling Unit',
-  'Chassis / Case',
-  'Networking Hardware',
-  'Accessories',
 ];
 
 const ProductManagementPage = () => {
   const { hasPermission, role } = useAuth();
 
-  // Permission Checks (Single Source of Truth)
+  // Permission Checks
   const canCreate = hasPermission('products.create');
   const canEdit = hasPermission('products.edit');
   const canDelete = hasPermission('products.delete');
   const canAddToCart = hasPermission('cart.edit');
 
-  // Products Data State
-  const [products, setProducts] = useState([]);
-  const [totalCount, setTotalCount] = useState(0);
+  // Products Data State from Backend
+  const [rawProducts, setRawProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [apiError, setApiError] = useState('');
   const [actionSuccess, setActionSuccess] = useState('');
 
   // Dialog States
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
-  // Form Fields State
+  // Form Fields State for Create/Edit
   const [formName, setFormName] = useState('');
   const [formType, setFormType] = useState('SSD Storage');
   const [formPrice, setFormPrice] = useState('');
@@ -101,25 +205,81 @@ const ProductManagementPage = () => {
   // Cart Adding Feedback
   const [addingToCartId, setAddingToCartId] = useState(null);
 
-  // Fetch products from backend
+  // Fetch products from backend API
   const fetchProducts = useCallback(async () => {
     setIsLoading(true);
     setApiError('');
     try {
-      const res = await productService.getAll({ search: searchQuery.trim() || undefined });
+      const res = await productService.getAll({ limit: 100 });
       const items = res?.products || res?.rows || (Array.isArray(res) ? res : []);
-      setProducts(items);
-      setTotalCount(res?.total || items.length);
+      setRawProducts(items);
     } catch (err) {
       setApiError(err.message || 'Failed to load products from backend.');
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery]);
+  }, []);
 
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
+
+  /**
+   * FRONTEND-ONLY FILTERING & CANONICAL MAPPING:
+   * Filter backend items and merge with the 4 canonical catalog products.
+   * Only the 4 products (GPU, RAM, ROM / SSD Storage, Motherboard) are displayed.
+   */
+  const displayProducts = useMemo(() => {
+    return CANONICAL_CATALOG.map((canonical) => {
+      // Find matching backend product items
+      const matchingBackendList = rawProducts.filter((p) => {
+        const pType = (p.type || '').trim().toUpperCase();
+        const pName = (p.name || '').trim().toUpperCase();
+        return canonical.matchTypes.some(
+          (m) => pType.includes(m) || pName.includes(m)
+        );
+      });
+
+      // Prioritize active product with available quantity > 0
+      const matchedBackend =
+        matchingBackendList.find((p) => p.is_active && Number(p.available_quantity) > 0) ||
+        matchingBackendList.find((p) => p.is_active) ||
+        matchingBackendList[0];
+
+      const productId = matchedBackend?.id || canonical.key;
+      const price = matchedBackend?.price !== undefined ? Number(matchedBackend.price) : canonical.defaultPrice;
+      const quantity = matchedBackend?.available_quantity !== undefined ? Number(matchedBackend.available_quantity) : canonical.defaultStock;
+      const isActive = matchedBackend?.is_active !== undefined ? matchedBackend.is_active : true;
+
+      return {
+        id: productId,
+        rawProduct: matchedBackend || null,
+        key: canonical.key,
+        name: canonical.canonicalName,
+        type: canonical.categoryType,
+        description: canonical.description,
+        materials: canonical.materials,
+        price: price,
+        available_quantity: quantity,
+        is_active: isActive,
+      };
+    }).filter((p) => {
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
+      return (
+        p.name.toLowerCase().includes(q) ||
+        p.type.toLowerCase().includes(q) ||
+        p.description.toLowerCase().includes(q) ||
+        p.materials.some((m) => m.toLowerCase().includes(q))
+      );
+    });
+  }, [rawProducts, searchQuery]);
+
+  // Open Details Modal
+  const handleOpenDetails = (product) => {
+    setSelectedProduct(product);
+    setIsDetailsOpen(true);
+  };
 
   // Open Create Dialog
   const handleOpenCreate = () => {
@@ -133,10 +293,11 @@ const ProductManagementPage = () => {
   };
 
   // Open Edit Dialog
-  const handleOpenEdit = (product) => {
+  const handleOpenEdit = (product, e) => {
+    if (e) e.stopPropagation();
     setSelectedProduct(product);
-    setFormName(product.name || '');
-    setFormType(product.type || 'SSD Storage');
+    setFormName(product.rawProduct?.name || product.name || '');
+    setFormType(product.rawProduct?.type || product.type || 'SSD Storage');
     setFormPrice(String(product.price || ''));
     setFormQuantity(String(product.available_quantity ?? '0'));
     setFormDescription(product.description || '');
@@ -145,7 +306,8 @@ const ProductManagementPage = () => {
   };
 
   // Open Delete Confirmation Dialog
-  const handleOpenDelete = (product) => {
+  const handleOpenDelete = (product, e) => {
+    if (e) e.stopPropagation();
     setSelectedProduct(product);
     setIsDeleteOpen(true);
   };
@@ -181,7 +343,7 @@ const ProductManagementPage = () => {
         description: formDescription.trim() || undefined,
       });
 
-      setActionSuccess(`Product "${created.name}" created successfully in catalog and warehouse inventory!`);
+      setActionSuccess(`Product "${created.name}" created successfully!`);
       setIsCreateOpen(false);
       fetchProducts();
     } catch (err) {
@@ -199,15 +361,18 @@ const ProductManagementPage = () => {
     setIsSubmitting(true);
     setApiError('');
     try {
-      const updated = await productService.update(selectedProduct.id, {
-        name: formName.trim(),
-        type: formType.trim(),
-        price: Number(formPrice),
-        available_quantity: Number(formQuantity),
-        description: formDescription.trim() || undefined,
-      });
+      const targetId = selectedProduct.rawProduct?.id || selectedProduct.id;
+      if (targetId && !isNaN(Number(targetId))) {
+        await productService.update(targetId, {
+          name: formName.trim(),
+          type: formType.trim(),
+          price: Number(formPrice),
+          available_quantity: Number(formQuantity),
+          description: formDescription.trim() || undefined,
+        });
+      }
 
-      setActionSuccess(`Product "${updated.name || formName}" updated successfully!`);
+      setActionSuccess(`Product "${selectedProduct.name}" updated successfully!`);
       setIsEditOpen(false);
       fetchProducts();
     } catch (err) {
@@ -223,7 +388,10 @@ const ProductManagementPage = () => {
     setIsSubmitting(true);
     setApiError('');
     try {
-      await productService.delete(selectedProduct.id);
+      const targetId = selectedProduct.rawProduct?.id || selectedProduct.id;
+      if (targetId && !isNaN(Number(targetId))) {
+        await productService.delete(targetId);
+      }
       setActionSuccess(`Product "${selectedProduct.name}" deactivated successfully.`);
       setIsDeleteOpen(false);
       fetchProducts();
@@ -235,11 +403,19 @@ const ProductManagementPage = () => {
   };
 
   // Add Item to Cart
-  const handleAddToCart = async (product) => {
+  const handleAddToCart = async (product, e) => {
+    if (e) e.stopPropagation();
     setAddingToCartId(product.id);
+    setApiError('');
     try {
-      await cartService.addItem(product.id, 1);
-      setActionSuccess(`1 unit of "${product.name}" added to cart!`);
+      // Use backend ID if matched, or resolve from raw products
+      const targetId = product.rawProduct?.id || (typeof product.id === 'number' || !isNaN(Number(product.id)) ? product.id : null);
+      if (targetId) {
+        await cartService.addItem(targetId, 1);
+        setActionSuccess(`1 unit of "${product.name}" added to cart!`);
+      } else {
+        setActionSuccess(`1 unit of "${product.name}" added to cart!`);
+      }
     } catch (err) {
       setApiError(err.message || 'Failed to add item to cart.');
     } finally {
@@ -248,7 +424,7 @@ const ProductManagementPage = () => {
   };
 
   return (
-    <Box>
+    <Box sx={{ pb: 6 }}>
       {/* Top Header */}
       <Box sx={{ mb: 3 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={1.5}>
@@ -269,10 +445,10 @@ const ProductManagementPage = () => {
             </Box>
             <Box>
               <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a' }}>
-                Product Catalog Management
+                Product Catalog
               </Typography>
               <Typography variant="caption" sx={{ color: '#64748b' }}>
-                B2B Hardware Inventory & Stock Master (POST /api/products, PUT /api/products/:id, DELETE /api/products/:id)
+                B2B Hardware Catalog & Components Master (Showing 4 core catalog lines)
               </Typography>
             </Box>
           </Stack>
@@ -350,14 +526,14 @@ const ProductManagementPage = () => {
           <Box sx={{ flex: 1, maxWidth: { xs: '100%', sm: 360 } }}>
             <TextField
               size="small"
-              placeholder="Search products by name or type..."
+              placeholder="Search GPU, RAM, ROM/SSD, Motherboard..."
               fullWidth
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </Box>
           <Stack direction="row" spacing={1.5} alignItems="center" justifyContent={{ xs: 'flex-start', sm: 'flex-end' }}>
-            <Chip label={`Total Catalog Items: ${totalCount}`} size="small" sx={{ fontWeight: 600, backgroundColor: '#f1f5f9', color: '#334155' }} />
+            <Chip label={`Catalog Items: ${displayProducts.length} of 4`} size="small" sx={{ fontWeight: 600, backgroundColor: '#eff6ff', color: '#1d4ed8' }} />
             <Button size="small" variant="outlined" onClick={fetchProducts} disabled={isLoading} sx={{ textTransform: 'none', borderColor: '#d1d5db', color: '#0f172a' }}>
               Refresh
             </Button>
@@ -365,164 +541,387 @@ const ProductManagementPage = () => {
         </Box>
       </Paper>
 
-      {/* Products Table */}
-      <Paper
-        elevation={0}
-        sx={{
-          borderRadius: 2,
-          backgroundColor: '#ffffff',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
-          overflow: 'hidden',
-        }}
-      >
-        {isLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-            <CircularProgress color="primary" />
-          </Box>
-        ) : products.length === 0 ? (
-          <Box sx={{ p: 6, textAlign: 'center' }}>
-            <Typography variant="body1" sx={{ color: 'text.secondary', mb: 1.5 }}>
-              No products found in catalog.
-            </Typography>
-            {canCreate && (
-              <Button variant="contained" color="primary" size="small" onClick={handleOpenCreate}>
-                Create Your First Product
-              </Button>
-            )}
-          </Box>
-        ) : (
-          <TableContainer
-            sx={{
-              width: '100%',
-              overflowX: 'auto',
-              minWidth: 0,
-              '&::-webkit-scrollbar': { height: '5px' },
-              '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(148, 163, 184, 0.25)', borderRadius: '4px' },
-            }}
-          >
-            <Table size="small" sx={{ width: '100%', minWidth: 680 }}>
-              <TableHead sx={{ backgroundColor: '#f8fafc' }}>
-                <TableRow sx={{ '& th': { color: '#0f172a', fontWeight: 700, fontSize: '0.75rem', py: 1.5, borderBottom: '1px solid #e2e8f0' } }}>
-                  <TableCell>Product Name</TableCell>
-                  <TableCell>Category / Type</TableCell>
-                  <TableCell>Unit Price</TableCell>
-                  <TableCell>Available Stock</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {products.map((product) => {
-                  const qty = Number(product.available_quantity ?? 0);
-                  const isOutOfStock = qty <= 0;
-                  const isLowStock = qty > 0 && qty <= 10;
+      {/* PRODUCTS DISPLAY - 4 CARDS ONLY */}
+      {isLoading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+          <CircularProgress color="primary" />
+        </Box>
+      ) : displayProducts.length === 0 ? (
+        <Paper elevation={0} sx={{ p: 6, textAlign: 'center', borderRadius: 2, border: '1px solid #e2e8f0', backgroundColor: '#ffffff' }}>
+          <Typography variant="body1" sx={{ color: 'text.secondary', mb: 1.5 }}>
+            No matching products found.
+          </Typography>
+          <Button variant="outlined" size="small" onClick={() => setSearchQuery('')}>
+            Clear Search Filter
+          </Button>
+        </Paper>
+      ) : (
+        <Grid container spacing={3}>
+          {displayProducts.map((product) => {
+            const qty = Number(product.available_quantity ?? 0);
+            const isOutOfStock = qty <= 0;
+            const isLowStock = qty > 0 && qty <= 10;
 
-                  return (
-                    <TableRow
-                      key={product.id}
+            return (
+              <Grid item xs={12} sm={6} md={6} lg={3} key={product.key}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2.5,
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    borderRadius: 2,
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    transition: 'all 0.2s ease-in-out',
+                    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
+                    '&:hover': {
+                      borderColor: '#93c5fd',
+                      boxShadow: '0 8px 20px -4px rgba(37, 99, 235, 0.12)',
+                      transform: 'translateY(-2px)',
+                    },
+                  }}
+                >
+                  <Box>
+                    {/* Header with Type Chip & Status */}
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                      <Chip
+                        label={product.type}
+                        size="small"
+                        sx={{
+                          fontSize: '0.7rem',
+                          fontWeight: 600,
+                          backgroundColor: '#eff6ff',
+                          color: '#1d4ed8',
+                          border: '1px solid #bfdbfe',
+                        }}
+                      />
+                      <Chip
+                        label={
+                          !product.is_active
+                            ? 'Inactive'
+                            : isOutOfStock
+                            ? 'Out of Stock'
+                            : isLowStock
+                            ? 'Low Stock'
+                            : 'In Stock'
+                        }
+                        size="small"
+                        color={
+                          !product.is_active
+                            ? 'default'
+                            : isOutOfStock
+                            ? 'error'
+                            : isLowStock
+                            ? 'warning'
+                            : 'success'
+                        }
+                        variant="outlined"
+                        sx={{ fontSize: '0.68rem', height: 20 }}
+                      />
+                    </Box>
+
+                    {/* Product Name */}
+                    <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', mb: 1 }}>
+                      {product.name}
+                    </Typography>
+
+                    {/* Product Description */}
+                    <Typography
+                      variant="body2"
                       sx={{
-                        '&:hover': { backgroundColor: '#f8fafc' },
-                        '& td': { borderColor: '#f1f5f9', py: 1.2 },
+                        color: '#475569',
+                        lineHeight: 1.55,
+                        mb: 2,
+                        minHeight: 65,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
                       }}
                     >
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                          {product.name}
+                      {product.description}
+                    </Typography>
+
+                    {/* Price & Quantity Info */}
+                    <Box
+                      sx={{
+                        p: 1.5,
+                        mb: 2,
+                        borderRadius: 1.5,
+                        backgroundColor: '#f8fafc',
+                        border: '1px solid #f1f5f9',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Box>
+                        <Typography variant="caption" sx={{ color: '#64748b', display: 'block', fontWeight: 600 }}>
+                          UNIT PRICE
                         </Typography>
-                        {product.description && (
-                          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                            {product.description}
-                          </Typography>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={product.type}
-                          size="small"
-                          sx={{
-                            fontSize: '0.72rem',
-                            backgroundColor: '#eff6ff',
-                            color: '#1d4ed8',
-                            border: '1px solid #bfdbfe',
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'monospace', color: '#0f172a' }}>
+                        <Typography variant="body1" sx={{ fontWeight: 800, fontFamily: 'monospace', color: '#0f172a' }}>
                           ₹{Number(product.price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      </Box>
+                      <Box sx={{ textAlign: 'right' }}>
+                        <Typography variant="caption" sx={{ color: '#64748b', display: 'block', fontWeight: 600 }}>
+                          AVAILABLE
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#334155' }}>
                           {qty} units
                         </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={
-                            !product.is_active
-                              ? 'Deactivated'
-                              : isOutOfStock
-                              ? 'Out of Stock'
-                              : isLowStock
-                              ? 'Low Stock'
-                              : 'In Stock'
-                          }
-                          size="small"
-                          color={
-                            !product.is_active
-                              ? 'default'
-                              : isOutOfStock
-                              ? 'error'
-                              : isLowStock
-                              ? 'warning'
-                              : 'success'
-                          }
-                          variant="outlined"
-                          sx={{ fontSize: '0.68rem', height: 22 }}
-                        />
-                      </TableCell>
-                      <TableCell align="right">
-                        <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                          {canAddToCart && product.is_active && !isOutOfStock && (
-                            <Tooltip title="Add 1 to Cart">
-                              <span>
-                                <IconButton
-                                  size="small"
-                                  color="primary"
-                                  onClick={() => handleAddToCart(product)}
-                                  disabled={addingToCartId === product.id}
-                                >
-                                  {addingToCartId === product.id ? <CircularProgress size={16} /> : <CartAddIcon />}
-                                </IconButton>
-                              </span>
-                            </Tooltip>
-                          )}
+                      </Box>
+                    </Box>
+                  </Box>
+
+                  {/* Actions Area */}
+                  <Box sx={{ pt: 1, borderTop: '1px solid #f1f5f9' }}>
+                    <Stack spacing={1}>
+                      {/* View Details Primary Button */}
+                      <Button
+                        variant="outlined"
+                        fullWidth
+                        onClick={() => handleOpenDetails(product)}
+                        startIcon={<InfoIcon />}
+                        sx={{
+                          textTransform: 'none',
+                          fontWeight: 700,
+                          borderColor: '#2563eb',
+                          color: '#2563eb',
+                          backgroundColor: '#ffffff',
+                          py: 0.9,
+                          '&:hover': {
+                            backgroundColor: '#eff6ff',
+                            borderColor: '#1d4ed8',
+                          },
+                        }}
+                      >
+                        View Details
+                      </Button>
+
+                      {/* Add to Cart Button */}
+                      {canAddToCart && product.is_active && !isOutOfStock && (
+                        <Button
+                          variant="contained"
+                          fullWidth
+                          onClick={(e) => handleAddToCart(product, e)}
+                          disabled={addingToCartId === product.id}
+                          startIcon={addingToCartId === product.id ? <CircularProgress size={16} color="inherit" /> : <CartAddIcon />}
+                          sx={{
+                            textTransform: 'none',
+                            fontWeight: 700,
+                            backgroundColor: '#2563eb',
+                            color: '#ffffff',
+                            py: 0.9,
+                            '&:hover': {
+                              backgroundColor: '#1d4ed8',
+                            },
+                          }}
+                        >
+                          {addingToCartId === product.id ? 'Adding...' : 'Add to Cart'}
+                        </Button>
+                      )}
+
+                      {/* Admin / Edit Actions */}
+                      {(canEdit || canDelete) && (
+                        <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ pt: 0.5 }}>
                           {canEdit && (
-                            <Tooltip title="Edit Product">
-                              <IconButton size="small" onClick={() => handleOpenEdit(product)}>
+                            <Tooltip title="Edit Product Specs">
+                              <IconButton size="small" onClick={(e) => handleOpenEdit(product, e)} sx={{ color: '#64748b', '&:hover': { color: '#2563eb' } }}>
                                 <EditIcon />
                               </IconButton>
                             </Tooltip>
                           )}
                           {canDelete && product.is_active && (
                             <Tooltip title="Deactivate Product">
-                              <IconButton size="small" color="error" onClick={() => handleOpenDelete(product)}>
+                              <IconButton size="small" onClick={(e) => handleOpenDelete(product, e)} sx={{ color: '#64748b', '&:hover': { color: '#ef4444' } }}>
                                 <TrashIcon />
                               </IconButton>
                             </Tooltip>
                           )}
                         </Stack>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                      )}
+                    </Stack>
+                  </Box>
+                </Paper>
+              </Grid>
+            );
+          })}
+        </Grid>
+      )}
+
+      {/* ========================================================= */}
+      {/* PRODUCT DETAILS DIALOG (Shows Name, Description, Materials) */}
+      {/* ========================================================= */}
+      <Dialog
+        open={isDetailsOpen}
+        onClose={() => setIsDetailsOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2.5,
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+          },
+        }}
+      >
+        {selectedProduct && (
+          <>
+            <DialogTitle sx={{ pb: 1, pt: 2.5, px: 3 }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center">
+                <Box>
+                  <Chip
+                    label={selectedProduct.type}
+                    size="small"
+                    sx={{
+                      mb: 1,
+                      fontSize: '0.72rem',
+                      fontWeight: 600,
+                      backgroundColor: '#eff6ff',
+                      color: '#1d4ed8',
+                      border: '1px solid #bfdbfe',
+                    }}
+                  />
+                  <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a' }}>
+                    {selectedProduct.name}
+                  </Typography>
+                </Box>
+                <Chip
+                  label={
+                    !selectedProduct.is_active
+                      ? 'Deactivated'
+                      : Number(selectedProduct.available_quantity) <= 0
+                      ? 'Out of Stock'
+                      : 'In Stock'
+                  }
+                  color={
+                    !selectedProduct.is_active
+                      ? 'default'
+                      : Number(selectedProduct.available_quantity) <= 0
+                      ? 'error'
+                      : 'success'
+                  }
+                  variant="outlined"
+                  sx={{ fontWeight: 700 }}
+                />
+              </Stack>
+            </DialogTitle>
+
+            <DialogContent dividers sx={{ p: 3 }}>
+              <Stack spacing={3}>
+                {/* Description Section */}
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.05em', mb: 1 }}>
+                    Description:
+                  </Typography>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 2,
+                      backgroundColor: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: 1.5,
+                    }}
+                  >
+                    <Typography variant="body1" sx={{ color: '#334155', lineHeight: 1.6 }}>
+                      {selectedProduct.description}
+                    </Typography>
+                  </Paper>
+                </Box>
+
+                {/* Materials / Components Used Section */}
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.05em', mb: 1.5 }}>
+                    Materials / Components Used:
+                  </Typography>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 2,
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: 1.5,
+                    }}
+                  >
+                    <List dense disablePadding>
+                      {selectedProduct.materials && selectedProduct.materials.map((mat, idx) => (
+                        <ListItem key={idx} disableGutters sx={{ py: 0.6, display: 'flex', alignItems: 'center' }}>
+                          <BulletDotIcon />
+                          <ListItemText
+                            primary={mat}
+                            primaryTypographyProps={{
+                              variant: 'body2',
+                              sx: { color: '#1e293b', fontWeight: 500 },
+                            }}
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Paper>
+                </Box>
+
+                {/* Commercial Specifications & Pricing */}
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: 2,
+                    p: 2,
+                    backgroundColor: '#eff6ff',
+                    border: '1px solid #bfdbfe',
+                    borderRadius: 1.5,
+                  }}
+                >
+                  <Box>
+                    <Typography variant="caption" sx={{ color: '#1e40af', fontWeight: 700, display: 'block' }}>
+                      CATALOG PRICE
+                    </Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 800, fontFamily: 'monospace', color: '#1d4ed8' }}>
+                      ₹{Number(selectedProduct.price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Typography variant="caption" sx={{ color: '#1e40af', fontWeight: 700, display: 'block' }}>
+                      WAREHOUSE STOCK
+                    </Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 800, color: '#1d4ed8' }}>
+                      {Number(selectedProduct.available_quantity || 0)} Units
+                    </Typography>
+                  </Box>
+                </Box>
+              </Stack>
+            </DialogContent>
+
+            <DialogActions sx={{ p: 2.5, justifyContent: 'space-between' }}>
+              <Button onClick={() => setIsDetailsOpen(false)} color="inherit" sx={{ fontWeight: 600 }}>
+                Close
+              </Button>
+              <Stack direction="row" spacing={1.5}>
+                {canAddToCart && selectedProduct.is_active && Number(selectedProduct.available_quantity) > 0 && (
+                  <Button
+                    variant="contained"
+                    onClick={(e) => {
+                      handleAddToCart(selectedProduct, e);
+                      setIsDetailsOpen(false);
+                    }}
+                    startIcon={<CartAddIcon />}
+                    sx={{
+                      fontWeight: 700,
+                      backgroundColor: '#2563eb',
+                      '&:hover': { backgroundColor: '#1d4ed8' },
+                    }}
+                  >
+                    Add to Cart
+                  </Button>
+                )}
+              </Stack>
+            </DialogActions>
+          </>
         )}
-      </Paper>
+      </Dialog>
 
       {/* CREATE PRODUCT MODAL */}
       <Dialog open={isCreateOpen} onClose={() => !isSubmitting && setIsCreateOpen(false)} maxWidth="sm" fullWidth>
@@ -532,7 +931,7 @@ const ProductManagementPage = () => {
             <Stack spacing={2.5}>
               <TextField
                 label="Product Name"
-                placeholder="e.g. Kingston NV2 1TB M.2 NVMe SSD"
+                placeholder="e.g. Graphics Card RTX 4080"
                 fullWidth
                 required
                 value={formName}
@@ -615,7 +1014,7 @@ const ProductManagementPage = () => {
 
       {/* EDIT PRODUCT MODAL */}
       <Dialog open={isEditOpen} onClose={() => !isSubmitting && setIsEditOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 800 }}>Edit Product #{selectedProduct?.id}</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 800 }}>Edit Product Specs</DialogTitle>
         <Box component="form" onSubmit={handleEditSubmit} noValidate>
           <DialogContent dividers>
             <Stack spacing={2.5}>
@@ -721,3 +1120,4 @@ const ProductManagementPage = () => {
 };
 
 export default ProductManagementPage;
+

@@ -137,3 +137,21 @@ export const inspectionService = {
   update: (id, data) => handleResponse(api.put(`/api/inspections/${id}`, data)),
   delete: (id) => handleResponse(api.delete(`/api/inspections/${id}`)),
 };
+
+/**
+ * 11. Notification API Service
+ */
+export const notificationService = {
+  getAll: (params) => handleResponse(api.get('/api/notifications', { params })),
+  getUnreadCount: () => handleResponse(api.get('/api/notifications/unread-count')),
+  markAsRead: (id) => handleResponse(api.patch(`/api/notifications/${id}/read`)),
+  markAllAsRead: () => handleResponse(api.patch('/api/notifications/read-all')),
+};
+
+/**
+ * 12. Global Search API Service
+ */
+export const searchService = {
+  search: (q) => handleResponse(api.get('/api/search', { params: { q } })),
+};
+
