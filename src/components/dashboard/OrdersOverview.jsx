@@ -49,7 +49,7 @@ const getPaymentStatusStyle = (status) => {
   }
 };
 
-const OrdersOverview = ({ data }) => {
+const OrdersOverview = ({ data, hideHeader = false }) => {
   const navigate = useNavigate();
 
   const totalOrders = data?.totalOrders ?? 0;
@@ -64,55 +64,46 @@ const OrdersOverview = ({ data }) => {
 
   const recentOrders = data?.recentOrders || [];
 
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        borderRadius: 2,
-        backgroundColor: '#ffffff',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.04)',
-        p: { xs: 2, sm: 2.5 },
-        width: '100%',
-      }}
-    >
-      {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <Box
-            sx={{
-              width: 32,
-              height: 32,
-              borderRadius: 1.5,
-              backgroundColor: '#eff6ff',
-              color: '#2563eb',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <OrdersIcon sx={{ fontSize: 18 }} />
-          </Box>
-          <Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
-              Orders & Payment Summary
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#64748b' }}>
-              B2B order fulfillment tracking and settlement breakdown
-            </Typography>
-          </Box>
-        </Stack>
+  const innerContent = (
+    <Box sx={{ width: '100%' }}>
+      {!hideHeader && (
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: 1.5,
+                backgroundColor: '#eff6ff',
+                color: '#2563eb',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <OrdersIcon sx={{ fontSize: 18 }} />
+            </Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
+                Orders & Payment Summary
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#64748b' }}>
+                B2B order fulfillment tracking and settlement breakdown
+              </Typography>
+            </Box>
+          </Stack>
 
-        <Button
-          size="small"
-          variant="text"
-          onClick={() => navigate('/orders')}
-          endIcon={<ArrowRightIcon sx={{ fontSize: 16 }} />}
-          sx={{ fontWeight: 600, fontSize: '0.8rem', color: '#2563eb' }}
-        >
-          View All Orders
-        </Button>
-      </Box>
+          <Button
+            size="small"
+            variant="text"
+            onClick={() => navigate('/orders')}
+            endIcon={<ArrowRightIcon sx={{ fontSize: 16 }} />}
+            sx={{ fontWeight: 600, fontSize: '0.8rem', color: '#2563eb' }}
+          >
+            View All Orders
+          </Button>
+        </Box>
+      )}
 
       {/* Status & Payment Metrics Grid */}
       <Box
@@ -312,6 +303,26 @@ const OrdersOverview = ({ data }) => {
           </TableBody>
         </Table>
       </TableContainer>
+    </Box>
+  );
+
+  if (hideHeader) {
+    return innerContent;
+  }
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        borderRadius: 2,
+        backgroundColor: '#ffffff',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.04)',
+        p: { xs: 2, sm: 2.5 },
+        width: '100%',
+      }}
+    >
+      {innerContent}
     </Paper>
   );
 };

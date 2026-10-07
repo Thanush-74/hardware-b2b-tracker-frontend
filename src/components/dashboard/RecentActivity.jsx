@@ -28,47 +28,35 @@ const getActivityIcon = (type) => {
   }
 };
 
-const RecentActivity = ({ items = [] }) => {
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        borderRadius: 2,
-        backgroundColor: '#ffffff',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.04)',
-        p: { xs: 2, sm: 2.5 },
-        height: '100%',
-        width: '100%',
-        minWidth: 0,
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }}>
-        <Box
-          sx={{
-            width: 32,
-            height: 32,
-            borderRadius: 1.5,
-            backgroundColor: '#eff6ff',
-            color: '#2563eb',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <ClockIcon sx={{ fontSize: 18 }} />
-        </Box>
-        <Box>
-          <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
-            Recent Activity
-          </Typography>
-          <Typography variant="caption" sx={{ color: '#64748b' }}>
-            Chronological audit of real orders, production, deliveries, inspections & RMA events
-          </Typography>
-        </Box>
-      </Stack>
+const RecentActivity = ({ items = [], hideHeader = false }) => {
+  const innerContent = (
+    <Box sx={{ width: '100%' }}>
+      {!hideHeader && (
+        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }}>
+          <Box
+            sx={{
+              width: 32,
+              height: 32,
+              borderRadius: 1.5,
+              backgroundColor: '#eff6ff',
+              color: '#2563eb',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <ClockIcon sx={{ fontSize: 18 }} />
+          </Box>
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
+              Recent Activity
+            </Typography>
+            <Typography variant="caption" sx={{ color: '#64748b' }}>
+              Chronological audit of real orders, production, deliveries, inspections & RMA events
+            </Typography>
+          </Box>
+        </Stack>
+      )}
 
       {items && items.length > 0 ? (
         <Stack spacing={2} sx={{ flexGrow: 1, position: 'relative', pt: 0.5 }}>
@@ -138,13 +126,36 @@ const RecentActivity = ({ items = [] }) => {
             No Recent Activity
           </Typography>
           <Typography variant="caption" sx={{ color: '#64748b' }}>
-            Activity will automatically appear as orders, production runs, and deliveries are processed.
+            System events and audit transactions will appear here in real-time.
           </Typography>
         </Box>
       )}
+    </Box>
+  );
+
+  if (hideHeader) {
+    return innerContent;
+  }
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        borderRadius: 2,
+        backgroundColor: '#ffffff',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.04)',
+        p: { xs: 2, sm: 2.5 },
+        height: '100%',
+        width: '100%',
+        minWidth: 0,
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      {innerContent}
     </Paper>
   );
 };
 
 export default RecentActivity;
-

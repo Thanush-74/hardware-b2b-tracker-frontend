@@ -164,11 +164,11 @@ const AppLayout = () => {
 
   const totalResults = searchResults
     ? (searchResults.products?.length || 0) +
-      (searchResults.orders?.length || 0) +
-      (searchResults.staff?.length || 0) +
-      (searchResults.deliveries?.length || 0) +
-      (searchResults.returns?.length || 0) +
-      (searchResults.inventory?.length || 0)
+    (searchResults.orders?.length || 0) +
+    (searchResults.staff?.length || 0) +
+    (searchResults.deliveries?.length || 0) +
+    (searchResults.returns?.length || 0) +
+    (searchResults.inventory?.length || 0)
     : 0;
 
   const fetchUnreadCount = async () => {
@@ -392,15 +392,15 @@ const AppLayout = () => {
           }}
         >
           <Typography variant="body2" sx={{ fontWeight: 800, color: '#ffffff', letterSpacing: '0.05em' }}>
-            DX
+            HB
           </Typography>
         </Box>
         <Box>
           <Typography variant="subtitle1" sx={{ fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.01em', color: '#0f172a' }}>
-            DEXWOX <Box component="span" sx={{ color: '#2563eb', fontWeight: 600 }}>/ TITANCORE</Box>
+            HARDWARE
+            <Box component="span" sx={{ color: '#2563eb', fontWeight: 600 }}>/ B2B TRACKER</Box>
           </Typography>
           <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, letterSpacing: '0.06em', fontSize: '0.68rem', display: 'block' }}>
-            HARDWARE B2B TRACKER
           </Typography>
         </Box>
       </Box>
@@ -617,7 +617,7 @@ const AppLayout = () => {
           zIndex: (theme) => theme.zIndex.drawer + 1,
         }}
       >
-        <Toolbar sx={{ justifyContent: 'space-between', minHeight: '64px', px: { xs: 2, sm: 3 } }}>
+        <Toolbar sx={{ justifyContent: 'start', minHeight: '64px', px: { xs: 2, sm: 3 } }}>
           {/* Left: Mobile Toggle & Context */}
           <Stack direction="row" spacing={1.5} alignItems="center">
             {isMobile && (
@@ -631,14 +631,14 @@ const AppLayout = () => {
                 <MenuIcon />
               </IconButton>
             )}
-            <Box>
+            {/* <Box>
               <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#0f172a', letterSpacing: '-0.01em', lineHeight: 1.2 }}>
                 DEXWOX <Box component="span" sx={{ color: '#2563eb' }}>Operations</Box>
               </Typography>
               <Typography variant="caption" sx={{ color: '#64748b', fontSize: '0.72rem', display: { xs: 'none', sm: 'block' } }}>
                 Hardware Assembly & B2B Tracker
               </Typography>
-            </Box>
+            </Box> */}
           </Stack>
 
           {/* Center: Global Search Bar */}
@@ -1073,7 +1073,7 @@ const AppLayout = () => {
           </Box>
 
           {/* Right: Notifications, Profile, Dropdown */}
-          <Stack direction="row" spacing={1.5} alignItems="center">
+          <Stack direction="row" spacing={1.5} alignItems="center" sx={{ ml: 'auto' }}>
             {/* Notifications Button */}
             <IconButton
               size="small"
@@ -1301,9 +1301,9 @@ const AppLayout = () => {
                 {user?.first_name ? user.first_name.charAt(0).toUpperCase() : 'R'}
               </Avatar>
 
-              <Box sx={{ textAlign: 'left', display: { xs: 'none', sm: 'block' } }}>
+              <Box sx={{ justifyContent: 'space-evenly', textAlign: 'left', display: { xs: 'none', sm: 'block' } }}>
                 <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2, fontSize: '0.84rem' }}>
-                  Admin (rohin)
+                  Admin (RS)
                 </Typography>
                 <Typography variant="caption" sx={{ color: '#64748b', fontSize: '0.72rem' }}>
                   {role?.name || 'Administrator'}

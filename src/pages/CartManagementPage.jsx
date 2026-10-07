@@ -24,24 +24,141 @@ import { cartService } from '../services/businessService';
 import { CartIcon } from '../components/Icons';
 
 const TrashIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ pointerEvents: 'none' }}>
     <polyline points="3 6 5 6 21 6" />
     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
   </svg>
 );
 
 const PlusIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ pointerEvents: 'none' }}>
     <line x1="12" y1="5" x2="12" y2="19" />
     <line x1="5" y1="12" x2="19" y2="12" />
   </svg>
 );
 
 const MinusIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ pointerEvents: 'none' }}>
     <line x1="5" y1="12" x2="19" y2="12" />
   </svg>
 );
+
+/**
+ * QuantityControl component for typing and +/- buttons
+ */
+const QuantityControl = ({ item, isBusy, onUpdateQuantity }) => {
+  const currentQty = parseInt(item.quantity, 10) || 1;
+  const [inputValue, setInputValue] = useState(currentQty);
+
+  useEffect(() => {
+    setInputValue(currentQty);
+  }, [currentQty]);
+
+  const handleMinus = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (currentQty > 1 && !isBusy) {
+      onUpdateQuantity(item.id, currentQty - 1);
+    }
+  };
+
+  const handlePlus = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isBusy) {
+      onUpdateQuantity(item.id, currentQty + 1);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    setInputValue(e.target.value);
+  };
+
+  const handleInputBlur = () => {
+    const parsed = parseInt(inputValue, 10);
+    if (isNaN(parsed) || parsed < 1) {
+      setInputValue(currentQty);
+    } else if (parsed !== currentQty) {
+      onUpdateQuantity(item.id, parsed);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.target.blur();
+    }
+  };
+
+  return (
+    <Stack direction="row" spacing={0.75} alignItems="center" justifyContent="center">
+      <IconButton
+        type="button"
+        size="small"
+        aria-label="Decrease quantity"
+        disabled={isBusy || currentQty <= 1}
+        onClick={handleMinus}
+        sx={{
+          border: '1px solid #d1d5db',
+          borderRadius: 1,
+          p: 0.5,
+          width: 28,
+          height: 28,
+          color: '#0f172a',
+          backgroundColor: '#ffffff',
+          '&:hover': { backgroundColor: '#f1f5f9', borderColor: '#9ca3af' },
+          '&.Mui-disabled': { opacity: 0.35, borderColor: '#e5e7eb' },
+        }}
+      >
+        <MinusIcon />
+      </IconButton>
+
+      <input
+        type="number"
+        min="1"
+        value={inputValue}
+        onChange={handleInputChange}
+        onBlur={handleInputBlur}
+        onKeyDown={handleKeyDown}
+        disabled={isBusy}
+        aria-label="Item quantity"
+        style={{
+          width: '48px',
+          height: '28px',
+          textAlign: 'center',
+          fontWeight: 700,
+          fontSize: '0.85rem',
+          color: '#0f172a',
+          backgroundColor: '#ffffff',
+          border: '1px solid #d1d5db',
+          borderRadius: '4px',
+          outline: 'none',
+          MozAppearance: 'textfield',
+        }}
+      />
+
+      <IconButton
+        type="button"
+        size="small"
+        aria-label="Increase quantity"
+        disabled={isBusy}
+        onClick={handlePlus}
+        sx={{
+          border: '1px solid #d1d5db',
+          borderRadius: 1,
+          p: 0.5,
+          width: 28,
+          height: 28,
+          color: '#0f172a',
+          backgroundColor: '#ffffff',
+          '&:hover': { backgroundColor: '#f1f5f9', borderColor: '#9ca3af' },
+          '&.Mui-disabled': { opacity: 0.35, borderColor: '#e5e7eb' },
+        }}
+      >
+        <PlusIcon />
+      </IconButton>
+    </Stack>
+  );
+};
 
 const CartManagementPage = () => {
   const { hasPermission, role } = useAuth();
@@ -72,18 +189,23 @@ const CartManagementPage = () => {
   }, [fetchCart]);
 
   const handleUpdateQuantity = async (itemId, newQty) => {
-    if (newQty < 1) {
-      handleRemoveItem(itemId);
+    const parsedQty = parseInt(newQty, 10);
+    if (isNaN(parsedQty) || parsedQty < 1) {
       return;
     }
 
     setActionInProgressId(itemId);
     setApiError('');
     try {
-      await cartService.updateItem(itemId, newQty);
-      fetchCart();
+      const updatedCart = await cartService.updateItem(itemId, parsedQty);
+      if (updatedCart && (updatedCart.items || updatedCart.cart_items)) {
+        setCart(updatedCart);
+      } else {
+        await fetchCart();
+      }
     } catch (err) {
       setApiError(err.message || 'Failed to update item quantity.');
+      await fetchCart();
     } finally {
       setActionInProgressId(null);
     }
@@ -294,27 +416,11 @@ const CartManagementPage = () => {
                         </TableCell>
                         <TableCell align="center">
                           {canEdit ? (
-                            <Stack direction="row" spacing={1} alignItems="center" justifyContent="center">
-                              <IconButton
-                                size="small"
-                                disabled={isBusy || qty <= 1}
-                                onClick={() => handleUpdateQuantity(item.id, qty - 1)}
-                                sx={{ border: '1px solid #d1d5db', p: 0.5, '&:hover': { backgroundColor: '#f1f5f9' } }}
-                              >
-                                <MinusIcon />
-                              </IconButton>
-                              <Typography variant="body2" sx={{ fontWeight: 700, minWidth: 28, textAlign: 'center', color: '#0f172a' }}>
-                                {isBusy ? <CircularProgress size={14} /> : qty}
-                              </Typography>
-                              <IconButton
-                                size="small"
-                                disabled={isBusy}
-                                onClick={() => handleUpdateQuantity(item.id, qty + 1)}
-                                sx={{ border: '1px solid #d1d5db', p: 0.5, '&:hover': { backgroundColor: '#f1f5f9' } }}
-                              >
-                                <PlusIcon />
-                              </IconButton>
-                            </Stack>
+                            <QuantityControl
+                              item={item}
+                              isBusy={isBusy}
+                              onUpdateQuantity={handleUpdateQuantity}
+                            />
                           ) : (
                             <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a' }}>
                               {qty}

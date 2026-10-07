@@ -11,7 +11,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { ManufacturingIcon, ArrowRightIcon, StaffIcon } from '../Icons';
 
-const ManufacturingOverview = ({ data }) => {
+const ManufacturingOverview = ({ data, hideHeader = false }) => {
   const navigate = useNavigate();
 
   const totalAssignments = data?.totalAssignments ?? 0;
@@ -20,57 +20,48 @@ const ManufacturingOverview = ({ data }) => {
   const standbyCount = data?.standbyCount ?? 0;
   const sectors = data?.sectors || [];
 
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        borderRadius: 2,
-        backgroundColor: '#ffffff',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.04)',
-        p: { xs: 2, sm: 2.5 },
-        width: '100%',
-      }}
-    >
-      {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <Box
-            sx={{
-              width: 32,
-              height: 32,
-              borderRadius: 1.5,
-              backgroundColor: '#eff6ff',
-              color: '#2563eb',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+  const innerContent = (
+    <Box sx={{ width: '100%' }}>
+      {!hideHeader && (
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: 1.5,
+                backgroundColor: '#eff6ff',
+                color: '#2563eb',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <ManufacturingIcon sx={{ fontSize: 18 }} />
+            </Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
+                Manufacturing Overview
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#64748b' }}>
+                Line deployment & technician sector coverage for GPU, RAM, ROM/SSD & Motherboard
+              </Typography>
+            </Box>
+          </Stack>
+
+          <Button
+            size="small"
+            variant="text"
+            onClick={() => navigate('/manufacturing')}
+            endIcon={<ArrowRightIcon sx={{ fontSize: 16 }} />}
+            sx={{ fontWeight: 600, fontSize: '0.8rem', color: '#2563eb' }}
           >
-            <ManufacturingIcon sx={{ fontSize: 18 }} />
-          </Box>
-          <Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
-              Manufacturing Overview
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#64748b' }}>
-              Line deployment & technician sector coverage for GPU, RAM, ROM/SSD & Motherboard
-            </Typography>
-          </Box>
-        </Stack>
+            Manage Sectors
+          </Button>
+        </Box>
+      )}
 
-        <Button
-          size="small"
-          variant="text"
-          onClick={() => navigate('/manufacturing')}
-          endIcon={<ArrowRightIcon sx={{ fontSize: 16 }} />}
-          sx={{ fontWeight: 600, fontSize: '0.8rem', color: '#2563eb' }}
-        >
-          View Manufacturing Floor
-        </Button>
-      </Box>
-
-      {/* Top Stat Summary Strip */}
+      {/* 4 Line Status Metric Boxes */}
       <Box
         sx={{
           display: 'grid',
@@ -83,8 +74,8 @@ const ManufacturingOverview = ({ data }) => {
         }}
       >
         <Box sx={{ p: 1.25, borderRadius: 1.5, backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', textAlign: 'center' }}>
-          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.66rem', display: 'block' }}>
-            Total Station Assignments
+          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.66rem', display: 'block' }}>
+            Total Assigned
           </Typography>
           <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.25 }}>
             {totalAssignments}
@@ -92,7 +83,7 @@ const ManufacturingOverview = ({ data }) => {
         </Box>
 
         <Box sx={{ p: 1.25, borderRadius: 1.5, backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', textAlign: 'center' }}>
-          <Typography variant="caption" sx={{ color: '#15803d', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.66rem', display: 'block' }}>
+          <Typography variant="caption" sx={{ color: '#15803d', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.66rem', display: 'block' }}>
             Currently Working
           </Typography>
           <Typography variant="h6" sx={{ fontWeight: 800, color: '#15803d', mt: 0.25 }}>
@@ -101,7 +92,7 @@ const ManufacturingOverview = ({ data }) => {
         </Box>
 
         <Box sx={{ p: 1.25, borderRadius: 1.5, backgroundColor: '#fffbeb', border: '1px solid #fde68a', textAlign: 'center' }}>
-          <Typography variant="caption" sx={{ color: '#b45309', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.66rem', display: 'block' }}>
+          <Typography variant="caption" sx={{ color: '#b45309', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.66rem', display: 'block' }}>
             On Break
           </Typography>
           <Typography variant="h6" sx={{ fontWeight: 800, color: '#b45309', mt: 0.25 }}>
@@ -110,42 +101,46 @@ const ManufacturingOverview = ({ data }) => {
         </Box>
 
         <Box sx={{ p: 1.25, borderRadius: 1.5, backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', textAlign: 'center' }}>
-          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.66rem', display: 'block' }}>
-            Standby / Available
+          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.66rem', display: 'block' }}>
+            Standby / Idle
           </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.25 }}>
+          <Typography variant="h6" sx={{ fontWeight: 800, color: '#64748b', mt: 0.25 }}>
             {standbyCount}
           </Typography>
         </Box>
       </Box>
 
-      {/* 4 Canonical Product Lines Overview Cards */}
+      {/* 4 Canonical Manufacturing Line Cards */}
+      <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', mb: 1.5, display: 'block' }}>
+        Core Hardware Assembly Lines
+      </Typography>
+
       <Box
         sx={{
           display: 'grid',
           gridTemplateColumns: {
             xs: 'minmax(0, 1fr)',
             sm: 'repeat(2, minmax(0, 1fr))',
-            lg: 'repeat(4, minmax(0, 1fr))',
+            md: 'repeat(4, minmax(0, 1fr))',
           },
-          gap: 2,
+          gap: 1.5,
         }}
       >
         {sectors.map((line) => (
           <Box
-            key={line.key}
+            key={line.name}
             onClick={() => navigate('/manufacturing')}
             sx={{
               p: 2,
-              borderRadius: 1.5,
-              border: '1px solid #e2e8f0',
+              borderRadius: 2,
               backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
               cursor: 'pointer',
               transition: 'all 0.15s ease',
               '&:hover': {
                 borderColor: '#2563eb',
                 backgroundColor: '#ffffff',
-                boxShadow: '0 2px 8px rgba(37, 99, 235, 0.08)',
+                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.08)',
               },
             }}
           >
@@ -192,6 +187,26 @@ const ManufacturingOverview = ({ data }) => {
           </Box>
         ))}
       </Box>
+    </Box>
+  );
+
+  if (hideHeader) {
+    return innerContent;
+  }
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        borderRadius: 2,
+        backgroundColor: '#ffffff',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.04)',
+        p: { xs: 2, sm: 2.5 },
+        width: '100%',
+      }}
+    >
+      {innerContent}
     </Paper>
   );
 };

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Paper, Box, Typography, Stack } from '@mui/material';
+import React, { useState } from 'react';
+import { Paper, Box, Typography, Stack, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import {
   OrdersIcon,
@@ -10,6 +10,8 @@ import {
   StaffIcon,
   TrendingUpIcon,
   ProductsIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
 } from '../Icons';
 
 const SummaryMetricCard = ({ title, value, subtitle, icon, iconBg, iconColor, statusColor, route, navigate }) => {
@@ -18,7 +20,7 @@ const SummaryMetricCard = ({ title, value, subtitle, icon, iconBg, iconColor, st
       elevation={0}
       onClick={() => route && navigate(route)}
       sx={{
-        p: 2.25,
+        p: 2,
         borderRadius: 2,
         backgroundColor: '#ffffff',
         border: '1px solid #e2e8f0',
@@ -76,7 +78,7 @@ const SummaryMetricCard = ({ title, value, subtitle, icon, iconBg, iconColor, st
             lineHeight: 1.1,
             mb: 0.5,
             fontFamily: '"Plus Jakarta Sans", sans-serif',
-            fontSize: '1.65rem',
+            fontSize: '1.5rem',
           }}
         >
           {value}
@@ -97,7 +99,7 @@ const SummaryMetricCard = ({ title, value, subtitle, icon, iconBg, iconColor, st
       {route && (
         <Box
           sx={{
-            mt: 1.5,
+            mt: 1.25,
             pt: 1,
             borderTop: '1px solid #f1f5f9',
             display: 'flex',
@@ -116,6 +118,7 @@ const SummaryMetricCard = ({ title, value, subtitle, icon, iconBg, iconColor, st
 
 const KPISummary = ({ data }) => {
   const navigate = useNavigate();
+  const [showAllMetrics, setShowAllMetrics] = useState(false);
 
   const formattedRevenue = new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -123,24 +126,25 @@ const KPISummary = ({ data }) => {
     maximumFractionDigits: 0,
   }).format(data?.totalRevenue || 0);
 
-  const cards = [
+  // Core high-level 4 metrics (simple, understandable)
+  const primaryCards = [
     {
-      title: 'Total Products',
-      value: data?.totalProducts ?? 0,
-      subtitle: 'Catalogued hardware components',
-      icon: <ProductsIcon sx={{ fontSize: 18 }} />,
-      iconBg: '#eff6ff',
-      iconColor: '#2563eb',
-      route: '/products',
+      title: 'Total Revenue',
+      value: formattedRevenue,
+      subtitle: `Paid: ₹${(data?.paidRevenue || 0).toLocaleString('en-IN')}`,
+      icon: <TrendingUpIcon sx={{ fontSize: 18 }} />,
+      iconBg: '#f0fdf4',
+      iconColor: '#16a34a',
+      route: '/orders',
     },
     {
-      title: 'Total Inventory Stock',
-      value: `${(data?.totalStock ?? 0).toLocaleString()} Units`,
-      subtitle: 'Available warehouse stock',
-      icon: <InventoryIcon sx={{ fontSize: 18 }} />,
+      title: 'Total Orders',
+      value: data?.totalOrders ?? 0,
+      subtitle: 'Customer & B2B contracts',
+      icon: <OrdersIcon sx={{ fontSize: 18 }} />,
       iconBg: '#eff6ff',
       iconColor: '#2563eb',
-      route: '/inventory',
+      route: '/orders',
     },
     {
       title: 'Units in Production',
@@ -152,13 +156,26 @@ const KPISummary = ({ data }) => {
       route: '/production',
     },
     {
-      title: 'Total Orders',
-      value: data?.totalOrders ?? 0,
-      subtitle: 'Customer & B2B contracts',
-      icon: <OrdersIcon sx={{ fontSize: 18 }} />,
+      title: 'Inventory Stock',
+      value: `${(data?.totalStock ?? 0).toLocaleString()} Units`,
+      subtitle: 'Available warehouse stock',
+      icon: <InventoryIcon sx={{ fontSize: 18 }} />,
       iconBg: '#eff6ff',
       iconColor: '#2563eb',
-      route: '/orders',
+      route: '/inventory',
+    },
+  ];
+
+  // Secondary detailed metrics (shown when expanded)
+  const secondaryCards = [
+    {
+      title: 'Catalogued Products',
+      value: data?.totalProducts ?? 0,
+      subtitle: 'Core hardware component lines',
+      icon: <ProductsIcon sx={{ fontSize: 18 }} />,
+      iconBg: '#eff6ff',
+      iconColor: '#2563eb',
+      route: '/products',
     },
     {
       title: 'Pending Deliveries',
@@ -179,27 +196,49 @@ const KPISummary = ({ data }) => {
       route: '/returns',
     },
     {
-      title: 'Active Employees',
+      title: 'Active Staff',
       value: data?.activeEmployees ?? 0,
-      subtitle: 'Staff & floor technicians',
+      subtitle: 'Technicians & line operators',
       icon: <StaffIcon sx={{ fontSize: 18 }} />,
       iconBg: '#eff6ff',
       iconColor: '#2563eb',
       route: '/staff',
     },
-    {
-      title: 'Total Revenue',
-      value: formattedRevenue,
-      subtitle: `Paid: ₹${(data?.paidRevenue || 0).toLocaleString('en-IN')}`,
-      icon: <TrendingUpIcon sx={{ fontSize: 18 }} />,
-      iconBg: '#f0fdf4',
-      iconColor: '#16a34a',
-      route: '/orders',
-    },
   ];
 
+  const displayedCards = showAllMetrics ? [...primaryCards, ...secondaryCards] : primaryCards;
+
   return (
-    <Box sx={{ mb: 3 }}>
+    <Box sx={{ mb: 2 }}>
+      {/* Top Bar with Simple / Full View Toggle */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+        <Typography variant="caption" sx={{ fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          {showAllMetrics ? 'All Key Performance Indicators (8 Metrics)' : 'Core Operations Summary (Primary 4 Metrics)'}
+        </Typography>
+
+        <Button
+          size="small"
+          onClick={() => setShowAllMetrics(!showAllMetrics)}
+          endIcon={showAllMetrics ? <ChevronUpIcon sx={{ fontSize: 14 }} /> : <ChevronDownIcon sx={{ fontSize: 14 }} />}
+          sx={{
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            textTransform: 'none',
+            color: '#2563eb',
+            py: 0.25,
+            px: 1,
+            borderRadius: 1.5,
+            backgroundColor: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            '&:hover': {
+              backgroundColor: '#eff6ff',
+            },
+          }}
+        >
+          {showAllMetrics ? 'Show Core 4 Only' : 'Show All 8 Metrics'}
+        </Button>
+      </Box>
+
       <Box
         sx={{
           display: 'grid',
@@ -211,7 +250,7 @@ const KPISummary = ({ data }) => {
           gap: 2,
         }}
       >
-        {cards.map((card) => (
+        {displayedCards.map((card) => (
           <SummaryMetricCard key={card.title} {...card} navigate={navigate} />
         ))}
       </Box>
@@ -220,4 +259,3 @@ const KPISummary = ({ data }) => {
 };
 
 export default KPISummary;
-

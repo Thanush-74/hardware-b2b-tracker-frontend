@@ -31,7 +31,7 @@ const getResultStatusStyle = (result) => {
   }
 };
 
-const QualityInspectionOverview = ({ data }) => {
+const QualityInspectionOverview = ({ data, hideHeader = false }) => {
   const navigate = useNavigate();
 
   const defectiveProducts = data?.defectiveProducts ?? 0;
@@ -41,83 +41,70 @@ const QualityInspectionOverview = ({ data }) => {
   const totalPassed = data?.totalPassed ?? 0;
   const recentInspections = data?.recentInspections || [];
 
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        borderRadius: 2,
-        backgroundColor: '#ffffff',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.04)',
-        p: { xs: 2, sm: 2.5 },
-        height: '100%',
-        width: '100%',
-        minWidth: 0,
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <Box
-            sx={{
-              width: 32,
-              height: 32,
-              borderRadius: 1.5,
-              backgroundColor: '#eff6ff',
-              color: '#2563eb',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <InspectionIcon sx={{ fontSize: 18 }} />
-          </Box>
-          <Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
-              Quality & QA Inspection
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#64748b' }}>
-              First-pass yield, defect tracking & component audit records
-            </Typography>
-          </Box>
-        </Stack>
+  const innerContent = (
+    <Box sx={{ width: '100%' }}>
+      {!hideHeader && (
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: 1.5,
+                backgroundColor: '#eff6ff',
+                color: '#2563eb',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <InspectionIcon sx={{ fontSize: 18 }} />
+            </Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
+                Quality & QA Inspection
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#64748b' }}>
+                First-pass yield, defect tracking & component audit records
+              </Typography>
+            </Box>
+          </Stack>
 
-        <Button
-          size="small"
-          variant="text"
-          onClick={() => navigate('/inspection')}
-          endIcon={<ArrowRightIcon sx={{ fontSize: 16 }} />}
-          sx={{ fontWeight: 600, fontSize: '0.8rem', color: '#2563eb' }}
-        >
-          Audit Reports
-        </Button>
-      </Box>
+          <Button
+            size="small"
+            variant="text"
+            onClick={() => navigate('/inspection')}
+            endIcon={<ArrowRightIcon sx={{ fontSize: 16 }} />}
+            sx={{ fontWeight: 600, fontSize: '0.8rem', color: '#2563eb' }}
+          >
+            Audit Reports
+          </Button>
+        </Box>
+      )}
 
       {/* Pass Rate Gauge Box */}
       <Box sx={{ p: 1.5, borderRadius: 1.5, backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', mb: 2 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="flex-end" sx={{ mb: 0.75 }}>
           <Box>
-            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.68rem' }}>
-              QA Pass Rate
+            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.68rem', display: 'block' }}>
+              Quality Pass Rate
             </Typography>
-            <Typography variant="h5" sx={{ fontWeight: 800, color: passRate >= 95 ? '#15803d' : '#b45309', lineHeight: 1.1, mt: 0.25 }}>
+            <Typography variant="h5" sx={{ fontWeight: 800, color: passRate >= 95 ? '#15803d' : '#b45309' }}>
               {passRate}%
             </Typography>
           </Box>
-          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 500 }}>
-            {totalPassed} of {totalInspected} units passed
+          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
+            {totalPassed} / {totalInspected} Units Passed
           </Typography>
         </Stack>
 
         <LinearProgress
           variant="determinate"
-          value={Math.min(100, passRate)}
+          value={Number(passRate)}
           sx={{
             height: 6,
             borderRadius: 3,
-            backgroundColor: '#e5e7eb',
+            backgroundColor: '#e2e8f0',
             '& .MuiLinearProgress-bar': {
               backgroundColor: passRate >= 95 ? '#16a34a' : '#d97706',
               borderRadius: 3,
@@ -126,37 +113,37 @@ const QualityInspectionOverview = ({ data }) => {
         />
       </Box>
 
-      {/* Metrics Row */}
+      {/* 2 Quick Summary Pill Boxes */}
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: 1.5,
+          gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+          gap: 1.25,
           mb: 2,
         }}
       >
-        <Box sx={{ p: 1.25, borderRadius: 1.5, backgroundColor: defectiveProducts > 0 ? '#fef2f2' : '#f8fafc', border: `1px solid ${defectiveProducts > 0 ? '#fecaca' : '#e2e8f0'}`, textAlign: 'center' }}>
-          <Typography variant="caption" sx={{ color: defectiveProducts > 0 ? '#b91c1c' : '#64748b', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.66rem', display: 'block' }}>
-            Defective Units
+        <Box sx={{ p: 1.25, borderRadius: 1.5, backgroundColor: '#fef2f2', border: '1px solid #fecaca', textAlign: 'center' }}>
+          <Typography variant="caption" sx={{ color: '#b91c1c', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.66rem', display: 'block' }}>
+            Defects Found
           </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 800, color: defectiveProducts > 0 ? '#b91c1c' : '#0f172a' }}>
+          <Typography variant="h6" sx={{ fontWeight: 800, color: '#b91c1c', mt: 0.25 }}>
             {defectiveProducts}
           </Typography>
         </Box>
 
         <Box sx={{ p: 1.25, borderRadius: 1.5, backgroundColor: '#fffbeb', border: '1px solid #fde68a', textAlign: 'center' }}>
           <Typography variant="caption" sx={{ color: '#b45309', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.66rem', display: 'block' }}>
-            Pending Inspections
+            Pending QA
           </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 800, color: '#b45309' }}>
+          <Typography variant="h6" sx={{ fontWeight: 800, color: '#b45309', mt: 0.25 }}>
             {pendingInspections}
           </Typography>
         </Box>
       </Box>
 
-      {/* Recent Audits Table */}
+      {/* QA Inspection Audits Table */}
       <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', mb: 1, display: 'block' }}>
-        Recent Quality Audits
+        Recent Inspection Logs
       </Typography>
 
       <TableContainer
@@ -169,19 +156,19 @@ const QualityInspectionOverview = ({ data }) => {
           flexGrow: 1,
         }}
       >
-        <Table size="small" sx={{ width: '100%', minWidth: 500 }}>
+        <Table size="small" sx={{ width: '100%', minWidth: 420 }}>
           <TableHead>
             <TableRow sx={{ backgroundColor: '#f8fafc' }}>
-              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1 }}>
-                Batch / Item
+              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.72rem', py: 1 }}>
+                Product / Batch
               </TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1 }}>
-                Passed / Failed
+              <TableCell align="center" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.72rem', py: 1 }}>
+                Pass / Fail
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1 }}>
-                Defect Type
+              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.72rem', py: 1 }}>
+                Defect Notes
               </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1 }}>
+              <TableCell align="right" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.72rem', py: 1 }}>
                 Result
               </TableCell>
             </TableRow>
@@ -246,9 +233,32 @@ const QualityInspectionOverview = ({ data }) => {
           </TableBody>
         </Table>
       </TableContainer>
+    </Box>
+  );
+
+  if (hideHeader) {
+    return innerContent;
+  }
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        borderRadius: 2,
+        backgroundColor: '#ffffff',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.04)',
+        p: { xs: 2, sm: 2.5 },
+        height: '100%',
+        width: '100%',
+        minWidth: 0,
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      {innerContent}
     </Paper>
   );
 };
 
 export default QualityInspectionOverview;
-

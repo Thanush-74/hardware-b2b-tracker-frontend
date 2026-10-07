@@ -215,7 +215,7 @@ const LoginPage = () => {
                 mb: 0.75,
               }}
             >
-              Sign in to DEXWOX
+              Sign in to HARDWARE B2B TRACKER
             </Typography>
             <Typography
               variant="body2"
@@ -529,7 +529,7 @@ const LoginPage = () => {
             <Stack direction="row" spacing={0.75} alignItems="center" justifyContent="center">
               <LockIcon sx={{ fontSize: 13, color: '#9ca3af' }} />
               <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '12px' }}>
-                DEXWOX EMS • End-to-End Encrypted Session
+                HARDWARE B2B TRACKER • End-to-End Encrypted Session
               </Typography>
             </Stack>
           </Box>

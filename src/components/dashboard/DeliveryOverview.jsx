@@ -33,7 +33,7 @@ const getDeliveryStatusStyle = (status) => {
   }
 };
 
-const DeliveryOverview = ({ data }) => {
+const DeliveryOverview = ({ data, hideHeader = false }) => {
   const navigate = useNavigate();
 
   const pending = data?.pending ?? 0;
@@ -42,74 +42,61 @@ const DeliveryOverview = ({ data }) => {
   const delayed = data?.delayed ?? 0;
   const recentDeliveries = data?.recentDeliveries || [];
 
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        borderRadius: 2,
-        backgroundColor: '#ffffff',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.04)',
-        p: { xs: 2, sm: 2.5 },
-        height: '100%',
-        width: '100%',
-        minWidth: 0,
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <Box
-            sx={{
-              width: 32,
-              height: 32,
-              borderRadius: 1.5,
-              backgroundColor: '#eff6ff',
-              color: '#2563eb',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <DeliveriesIcon sx={{ fontSize: 18 }} />
-          </Box>
-          <Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
-              Delivery Status
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#64748b' }}>
-              Real-time B2B hardware shipment & dispatch tracking
-            </Typography>
-          </Box>
-        </Stack>
+  const innerContent = (
+    <Box sx={{ width: '100%' }}>
+      {!hideHeader && (
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: 1.5,
+                backgroundColor: '#f0fdf4',
+                color: '#16a34a',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <DeliveriesIcon sx={{ fontSize: 18 }} />
+            </Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
+                Delivery Status
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#64748b' }}>
+                Active shipments, transit routes & delivery logistics
+              </Typography>
+            </Box>
+          </Stack>
 
-        <Button
-          size="small"
-          variant="text"
-          onClick={() => navigate('/deliveries')}
-          endIcon={<ArrowRightIcon sx={{ fontSize: 16 }} />}
-          sx={{ fontWeight: 600, fontSize: '0.8rem', color: '#2563eb' }}
-        >
-          Track All Deliveries
-        </Button>
-      </Box>
+          <Button
+            size="small"
+            variant="text"
+            onClick={() => navigate('/deliveries')}
+            endIcon={<ArrowRightIcon sx={{ fontSize: 16 }} />}
+            sx={{ fontWeight: 600, fontSize: '0.8rem', color: '#2563eb' }}
+          >
+            Track Deliveries
+          </Button>
+        </Box>
+      )}
 
       {/* 4 Status Metric Pills */}
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)' },
-          gap: 1.5,
+          gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+          gap: 1.25,
           mb: 2.5,
         }}
       >
         <Box sx={{ p: 1.25, borderRadius: 1.5, backgroundColor: '#fffbeb', border: '1px solid #fde68a', textAlign: 'center' }}>
           <Typography variant="caption" sx={{ color: '#b45309', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.66rem', display: 'block' }}>
-            Pending
+            Preparing
           </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 800, color: '#b45309' }}>
+          <Typography variant="h6" sx={{ fontWeight: 800, color: '#b45309', mt: 0.25 }}>
             {pending}
           </Typography>
         </Box>
@@ -118,7 +105,7 @@ const DeliveryOverview = ({ data }) => {
           <Typography variant="caption" sx={{ color: '#1d4ed8', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.66rem', display: 'block' }}>
             In Transit
           </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 800, color: '#1d4ed8' }}>
+          <Typography variant="h6" sx={{ fontWeight: 800, color: '#1d4ed8', mt: 0.25 }}>
             {inTransit}
           </Typography>
         </Box>
@@ -127,24 +114,24 @@ const DeliveryOverview = ({ data }) => {
           <Typography variant="caption" sx={{ color: '#15803d', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.66rem', display: 'block' }}>
             Delivered
           </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 800, color: '#15803d' }}>
+          <Typography variant="h6" sx={{ fontWeight: 800, color: '#15803d', mt: 0.25 }}>
             {delivered}
           </Typography>
         </Box>
 
-        <Box sx={{ p: 1.25, borderRadius: 1.5, backgroundColor: delayed > 0 ? '#fef2f2' : '#f8fafc', border: `1px solid ${delayed > 0 ? '#fecaca' : '#e2e8f0'}`, textAlign: 'center' }}>
-          <Typography variant="caption" sx={{ color: delayed > 0 ? '#b91c1c' : '#64748b', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.66rem', display: 'block' }}>
-            Delayed / Failed
+        <Box sx={{ p: 1.25, borderRadius: 1.5, backgroundColor: '#fef2f2', border: '1px solid #fecaca', textAlign: 'center' }}>
+          <Typography variant="caption" sx={{ color: '#b91c1c', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.66rem', display: 'block' }}>
+            Delayed
           </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 800, color: delayed > 0 ? '#b91c1c' : '#0f172a' }}>
+          <Typography variant="h6" sx={{ fontWeight: 800, color: '#b91c1c', mt: 0.25 }}>
             {delayed}
           </Typography>
         </Box>
       </Box>
 
-      {/* Deliveries List / Table */}
+      {/* Deliveries Table */}
       <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', mb: 1, display: 'block' }}>
-        Active & Recent Shipments
+        Active Dispatches
       </Typography>
 
       <TableContainer
@@ -157,19 +144,19 @@ const DeliveryOverview = ({ data }) => {
           flexGrow: 1,
         }}
       >
-        <Table size="small" sx={{ width: '100%', minWidth: 550 }}>
+        <Table size="small" sx={{ width: '100%', minWidth: 420 }}>
           <TableHead>
             <TableRow sx={{ backgroundColor: '#f8fafc' }}>
-              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1 }}>
-                Tracking #
+              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.72rem', py: 1 }}>
+                Tracking & Order
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1 }}>
-                Recipient & Destination
+              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.72rem', py: 1 }}>
+                Recipient / Destination
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1 }}>
+              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.72rem', py: 1 }}>
                 Driver
               </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1 }}>
+              <TableCell align="right" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.72rem', py: 1 }}>
                 Status
               </TableCell>
             </TableRow>
@@ -187,16 +174,16 @@ const DeliveryOverview = ({ data }) => {
                     sx={{ cursor: 'pointer' }}
                   >
                     <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'monospace', color: '#2563eb' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a', fontFamily: 'monospace', fontSize: '0.78rem' }}>
                         {delivery.tracking_number}
                       </Typography>
                       <Typography variant="caption" sx={{ color: '#64748b' }}>
-                        {delivery.order_number}
+                        Order #{delivery.order_id}
                       </Typography>
                     </TableCell>
 
                     <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a', fontSize: '0.8rem' }}>
                         {delivery.recipient_name}
                       </Typography>
                       <Typography variant="caption" sx={{ color: '#64748b', display: 'block', maxWidth: 220, noWrap: true }}>
@@ -237,9 +224,32 @@ const DeliveryOverview = ({ data }) => {
           </TableBody>
         </Table>
       </TableContainer>
+    </Box>
+  );
+
+  if (hideHeader) {
+    return innerContent;
+  }
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        borderRadius: 2,
+        backgroundColor: '#ffffff',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.04)',
+        p: { xs: 2, sm: 2.5 },
+        height: '100%',
+        width: '100%',
+        minWidth: 0,
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      {innerContent}
     </Paper>
   );
 };
 
 export default DeliveryOverview;
-

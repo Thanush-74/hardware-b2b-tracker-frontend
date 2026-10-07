@@ -31,7 +31,7 @@ const getProductionStatusStyle = (status) => {
   }
 };
 
-const ProductionOverview = ({ data }) => {
+const ProductionOverview = ({ data, hideHeader = false }) => {
   const navigate = useNavigate();
 
   const totalBatches = data?.totalBatches ?? 0;
@@ -41,55 +41,46 @@ const ProductionOverview = ({ data }) => {
   const weeklyCapacity = data?.weeklyCapacity ?? 0;
   const batches = data?.batches || [];
 
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        borderRadius: 2,
-        backgroundColor: '#ffffff',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.04)',
-        p: { xs: 2, sm: 2.5 },
-        width: '100%',
-      }}
-    >
-      {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <Box
-            sx={{
-              width: 32,
-              height: 32,
-              borderRadius: 1.5,
-              backgroundColor: '#eff6ff',
-              color: '#2563eb',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <ProductionIcon sx={{ fontSize: 18 }} />
-          </Box>
-          <Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
-              Production Overview
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#64748b' }}>
-              Factory line assembly throughput, planned runs, and capacity
-            </Typography>
-          </Box>
-        </Stack>
+  const innerContent = (
+    <Box sx={{ width: '100%' }}>
+      {!hideHeader && (
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: 1.5,
+                backgroundColor: '#eff6ff',
+                color: '#2563eb',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <ProductionIcon sx={{ fontSize: 18 }} />
+            </Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
+                Production Overview
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#64748b' }}>
+                Factory line assembly throughput, planned runs, and capacity
+              </Typography>
+            </Box>
+          </Stack>
 
-        <Button
-          size="small"
-          variant="text"
-          onClick={() => navigate('/production')}
-          endIcon={<ArrowRightIcon sx={{ fontSize: 16 }} />}
-          sx={{ fontWeight: 600, fontSize: '0.8rem', color: '#2563eb' }}
-        >
-          Manage Production
-        </Button>
-      </Box>
+          <Button
+            size="small"
+            variant="text"
+            onClick={() => navigate('/production')}
+            endIcon={<ArrowRightIcon sx={{ fontSize: 16 }} />}
+            sx={{ fontWeight: 600, fontSize: '0.8rem', color: '#2563eb' }}
+          >
+            Manage Production
+          </Button>
+        </Box>
+      )}
 
       {/* 5 Production Summary Metric Boxes */}
       <Box
@@ -221,14 +212,14 @@ const ProductionOverview = ({ data }) => {
                     </TableCell>
 
                     <TableCell align="center">
-                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#15803d' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#15803d' }}>
                         {batch.quantity_completed}
                       </Typography>
                     </TableCell>
 
                     <TableCell>
-                      <Box sx={{ width: '100%', mr: 1 }}>
-                        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.5 }}>
+                      <Box sx={{ width: '100%' }}>
+                        <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.5 }}>
                           <Typography variant="caption" sx={{ color: '#64748b', fontSize: '0.7rem' }}>
                             {batch.quantity_completed} / {batch.quantity_planned}
                           </Typography>
@@ -279,9 +270,28 @@ const ProductionOverview = ({ data }) => {
           </TableBody>
         </Table>
       </TableContainer>
+    </Box>
+  );
+
+  if (hideHeader) {
+    return innerContent;
+  }
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        borderRadius: 2,
+        backgroundColor: '#ffffff',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.04)',
+        p: { xs: 2, sm: 2.5 },
+        width: '100%',
+      }}
+    >
+      {innerContent}
     </Paper>
   );
 };
 
 export default ProductionOverview;
-

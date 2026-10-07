@@ -36,7 +36,7 @@ const getReturnStatusStyle = (status) => {
   }
 };
 
-const ReturnsOverview = ({ data }) => {
+const ReturnsOverview = ({ data, hideHeader = false }) => {
   const navigate = useNavigate();
 
   const pendingReturns = data?.pendingReturns ?? 0;
@@ -44,83 +44,70 @@ const ReturnsOverview = ({ data }) => {
   const replacements = data?.replacements ?? 0;
   const recentReturns = data?.recentReturns || [];
 
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        borderRadius: 2,
-        backgroundColor: '#ffffff',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.04)',
-        p: { xs: 2, sm: 2.5 },
-        height: '100%',
-        width: '100%',
-        minWidth: 0,
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <Box
-            sx={{
-              width: 32,
-              height: 32,
-              borderRadius: 1.5,
-              backgroundColor: '#eff6ff',
-              color: '#2563eb',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+  const innerContent = (
+    <Box sx={{ width: '100%' }}>
+      {!hideHeader && (
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: 1.5,
+                backgroundColor: '#fef2f2',
+                color: '#dc2626',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <ReturnsIcon sx={{ fontSize: 18 }} />
+            </Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
+                Returns & RMA Overview
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#64748b' }}>
+                Hardware defect triage, customer claims & replacement tracking
+              </Typography>
+            </Box>
+          </Stack>
+
+          <Button
+            size="small"
+            variant="text"
+            onClick={() => navigate('/returns')}
+            endIcon={<ArrowRightIcon sx={{ fontSize: 16 }} />}
+            sx={{ fontWeight: 600, fontSize: '0.8rem', color: '#2563eb' }}
           >
-            <ReturnsIcon sx={{ fontSize: 18 }} />
-          </Box>
-          <Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
-              Returns & Replacements
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#64748b' }}>
-              RMA intake status, diagnostics, and component replacement tracking
-            </Typography>
-          </Box>
-        </Stack>
+            Manage Returns
+          </Button>
+        </Box>
+      )}
 
-        <Button
-          size="small"
-          variant="text"
-          onClick={() => navigate('/returns')}
-          endIcon={<ArrowRightIcon sx={{ fontSize: 16 }} />}
-          sx={{ fontWeight: 600, fontSize: '0.8rem', color: '#2563eb' }}
-        >
-          View All RMAs
-        </Button>
-      </Box>
-
-      {/* Metrics Row */}
+      {/* 3 Metric Summary Boxes */}
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 1.5,
-          mb: 2,
+          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+          gap: 1.25,
+          mb: 2.5,
         }}
       >
         <Box sx={{ p: 1.25, borderRadius: 1.5, backgroundColor: '#fffbeb', border: '1px solid #fde68a', textAlign: 'center' }}>
           <Typography variant="caption" sx={{ color: '#b45309', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.66rem', display: 'block' }}>
-            Pending Returns
+            Pending Triage
           </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 800, color: '#b45309' }}>
+          <Typography variant="h6" sx={{ fontWeight: 800, color: '#b45309', mt: 0.25 }}>
             {pendingReturns}
           </Typography>
         </Box>
 
         <Box sx={{ p: 1.25, borderRadius: 1.5, backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', textAlign: 'center' }}>
           <Typography variant="caption" sx={{ color: '#15803d', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.66rem', display: 'block' }}>
-            Approved Returns
+            Approved
           </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 800, color: '#15803d' }}>
+          <Typography variant="h6" sx={{ fontWeight: 800, color: '#15803d', mt: 0.25 }}>
             {approvedReturns}
           </Typography>
         </Box>
@@ -129,15 +116,15 @@ const ReturnsOverview = ({ data }) => {
           <Typography variant="caption" sx={{ color: '#1d4ed8', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.66rem', display: 'block' }}>
             Replacements
           </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 800, color: '#1d4ed8' }}>
+          <Typography variant="h6" sx={{ fontWeight: 800, color: '#1d4ed8', mt: 0.25 }}>
             {replacements}
           </Typography>
         </Box>
       </Box>
 
-      {/* Table */}
+      {/* Returns Table */}
       <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', mb: 1, display: 'block' }}>
-        Active RMA Requests
+        Recent Return Requests
       </Typography>
 
       <TableContainer
@@ -150,19 +137,19 @@ const ReturnsOverview = ({ data }) => {
           flexGrow: 1,
         }}
       >
-        <Table size="small" sx={{ width: '100%', minWidth: 550 }}>
+        <Table size="small" sx={{ width: '100%', minWidth: 420 }}>
           <TableHead>
             <TableRow sx={{ backgroundColor: '#f8fafc' }}>
-              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1 }}>
-                RMA #
+              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.72rem', py: 1 }}>
+                RMA Number
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1 }}>
-                Customer & Product
+              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.72rem', py: 1 }}>
+                Client / Product
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1 }}>
-                Reported Reason
+              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.72rem', py: 1 }}>
+                Reason
               </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1 }}>
+              <TableCell align="right" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.72rem', py: 1 }}>
                 Status
               </TableCell>
             </TableRow>
@@ -180,13 +167,16 @@ const ReturnsOverview = ({ data }) => {
                     sx={{ cursor: 'pointer' }}
                   >
                     <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'monospace', color: '#2563eb' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a', fontFamily: 'monospace', fontSize: '0.78rem' }}>
                         {item.return_number}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#64748b' }}>
+                        Order #{item.order_id}
                       </Typography>
                     </TableCell>
 
                     <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a', fontSize: '0.8rem' }}>
                         {item.customer_name}
                       </Typography>
                       <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
@@ -227,9 +217,32 @@ const ReturnsOverview = ({ data }) => {
           </TableBody>
         </Table>
       </TableContainer>
+    </Box>
+  );
+
+  if (hideHeader) {
+    return innerContent;
+  }
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        borderRadius: 2,
+        backgroundColor: '#ffffff',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.04)',
+        p: { xs: 2, sm: 2.5 },
+        height: '100%',
+        width: '100%',
+        minWidth: 0,
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      {innerContent}
     </Paper>
   );
 };
 
 export default ReturnsOverview;
-
