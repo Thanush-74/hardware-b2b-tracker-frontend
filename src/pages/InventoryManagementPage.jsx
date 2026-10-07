@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -21,11 +21,11 @@ import {
   AlertTitle,
   CircularProgress,
   Stack,
-  Grid,
   Tooltip,
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import { inventoryService } from '../services/businessService';
+import { getCanonicalInventory, CANONICAL_PRODUCT_SPECS } from '../utils/canonicalProducts';
 import { InventoryIcon } from '../components/Icons';
 
 const PlusIcon = () => (
@@ -46,8 +46,7 @@ const InventoryManagementPage = () => {
   const canEdit = hasPermission('inventory.edit');
 
   // Inventory State
-  const [inventoryList, setInventoryList] = useState([]);
-  const [totalCount, setTotalCount] = useState(0);
+  const [rawInventory, setRawInventory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [apiError, setApiError] = useState('');
@@ -61,25 +60,51 @@ const InventoryManagementPage = () => {
   const [adjustReason, setAdjustReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch inventory records from backend
+  // Fetch all inventory records from backend without modifying database or backend API
   const fetchInventory = useCallback(async () => {
     setIsLoading(true);
     setApiError('');
     try {
-      const res = await inventoryService.getAll({ search: searchQuery.trim() || undefined });
+      const res = await inventoryService.getAll({ limit: 100 });
       const items = res?.inventory || res?.rows || (Array.isArray(res) ? res : []);
-      setInventoryList(items);
-      setTotalCount(res?.total || items.length);
+      setRawInventory(items);
     } catch (err) {
       setApiError(err.message || 'Failed to fetch inventory from backend.');
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery]);
+  }, []);
 
   useEffect(() => {
     fetchInventory();
   }, [fetchInventory]);
+
+  /**
+   * FRONTEND FILTERING & CANONICAL MAPPING:
+   * Maps real backend inventory items to the 4 canonical catalog products:
+   * 1. GPU
+   * 2. RAM
+   * 3. ROM / SSD
+   * 4. Motherboard
+   */
+  const { displayInventory, missingProducts } = useMemo(() => {
+    const { displayInventory: canonicalItems, missingProducts: missing } = getCanonicalInventory(rawInventory);
+
+    // Apply frontend search filtering
+    const filtered = canonicalItems.filter((item) => {
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
+      return (
+        item.canonical_name?.toLowerCase().includes(q) ||
+        (item.canonical_type && item.canonical_type.toLowerCase().includes(q)) ||
+        (item.product_name && item.product_name.toLowerCase().includes(q)) ||
+        (item.product_type && item.product_type.toLowerCase().includes(q)) ||
+        (item.location && item.location.toLowerCase().includes(q))
+      );
+    });
+
+    return { displayInventory: filtered, missingProducts: missing };
+  }, [rawInventory, searchQuery]);
 
   // Open Adjust Modal
   const handleOpenAdjust = (item, type) => {
@@ -104,12 +129,13 @@ const InventoryManagementPage = () => {
     setIsSubmitting(true);
     setApiError('');
     try {
+      const displayName = selectedItem.canonical_name || selectedItem.product_name;
       if (adjustType === 'increase') {
         await inventoryService.increase(selectedItem.id, parsedQty, adjustReason.trim());
-        setActionSuccess(`Successfully increased stock by +${parsedQty} for "${selectedItem.product_name}"!`);
+        setActionSuccess(`Successfully increased stock by +${parsedQty} for "${displayName}"!`);
       } else {
         await inventoryService.decrease(selectedItem.id, parsedQty, adjustReason.trim());
-        setActionSuccess(`Successfully decreased stock by -${parsedQty} for "${selectedItem.product_name}"!`);
+        setActionSuccess(`Successfully decreased stock by -${parsedQty} for "${displayName}"!`);
       }
 
       setIsAdjustOpen(false);
@@ -146,7 +172,7 @@ const InventoryManagementPage = () => {
                 Inventory & Stock Tracking
               </Typography>
               <Typography variant="caption" sx={{ color: '#64748b' }}>
-                Warehouse Real-Time Stock Tracking (GET /api/inventory, POST /api/inventory/:id/increase, decrease)
+                Warehouse Real-Time Stock Tracking (Consistent with Product Catalog)
               </Typography>
             </Box>
           </Stack>
@@ -189,6 +215,14 @@ const InventoryManagementPage = () => {
         </Alert>
       )}
 
+      {/* Missing Products Warning (if any of the 4 is absent in backend) */}
+      {missingProducts.length > 0 && (
+        <Alert severity="warning" sx={{ mb: 2.5 }}>
+          <AlertTitle>Missing Backend Inventory Records</AlertTitle>
+          {missingProducts.map((p) => `Product "${p}" is missing from the backend inventory response.`).join(' ')}
+        </Alert>
+      )}
+
       {/* Error Alert */}
       {apiError && (
         <Alert severity="error" sx={{ mb: 2.5 }} onClose={() => setApiError('')}>
@@ -213,14 +247,18 @@ const InventoryManagementPage = () => {
           <Box sx={{ flex: 1, maxWidth: { xs: '100%', sm: 380 } }}>
             <TextField
               size="small"
-              placeholder="Filter inventory by product name or type..."
+              placeholder="Filter inventory by product name, type, or location..."
               fullWidth
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </Box>
           <Stack direction="row" spacing={1.5} justifyContent={{ xs: 'flex-start', sm: 'flex-end' }}>
-            <Chip label={`Warehouse SKUs: ${totalCount}`} size="small" sx={{ fontWeight: 600, backgroundColor: '#f1f5f9', color: '#334155' }} />
+            <Chip
+              label={`Catalog Tracked SKUs: ${displayInventory.length} of ${CANONICAL_PRODUCT_SPECS.length}`}
+              size="small"
+              sx={{ fontWeight: 600, backgroundColor: '#f1f5f9', color: '#334155' }}
+            />
           </Stack>
         </Box>
       </Paper>
@@ -240,10 +278,10 @@ const InventoryManagementPage = () => {
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
             <CircularProgress color="primary" />
           </Box>
-        ) : inventoryList.length === 0 ? (
+        ) : displayInventory.length === 0 ? (
           <Box sx={{ p: 6, textAlign: 'center' }}>
             <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-              No inventory records currently found in warehouse.
+              No inventory records matching the search criteria.
             </Typography>
           </Box>
         ) : (
@@ -269,23 +307,25 @@ const InventoryManagementPage = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {inventoryList.map((item) => (
+                {displayInventory.map((item) => (
                   <TableRow
                     key={item.id}
                     sx={{
                       '&:hover': { backgroundColor: '#f8fafc' },
-                      '& td': { borderColor: '#f1f5f9', py: 1.2 },
+                      '& td': { borderColor: '#f1f5f9', py: 1.4 },
                     }}
                   >
                     <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>
-                        {item.product_name || item.product?.name || `Product #${item.product_id}`}
-                      </Typography>
-                      {item.product_type && (
-                        <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
-                          Type: {item.product_type}
-                        </Typography>
-                      )}
+                      <Stack direction="row" spacing={1.5} alignItems="center">
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '0.92rem' }}>
+                            {item.canonical_name}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mt: 0.2 }}>
+                            {item.product_name} • <Box component="span" sx={{ color: '#2563eb', fontWeight: 600 }}>{item.canonical_type || item.product_type}</Box>
+                          </Typography>
+                        </Box>
+                      </Stack>
                     </TableCell>
                     <TableCell>
                       <Chip label={item.location || 'Main Warehouse'} size="small" sx={{ fontSize: '0.7rem', height: 20, backgroundColor: '#f1f5f9', color: '#334155' }} />
@@ -317,28 +357,28 @@ const InventoryManagementPage = () => {
                             : 'success'
                         }
                         variant="outlined"
-                        sx={{ fontSize: '0.68rem', height: 22 }}
+                        sx={{ fontSize: '0.68rem', height: 22, fontWeight: 600 }}
                       />
                     </TableCell>
                     {canEdit && (
                       <TableCell align="right">
                         <Stack direction="row" spacing={1} justifyContent="flex-end">
-                          <Tooltip title="Increase Stock (+)">
+                          <Tooltip title={`Increase ${item.canonical_name} Stock (+)`}>
                             <IconButton
                               size="small"
                               color="success"
                               onClick={() => handleOpenAdjust(item, 'increase')}
-                              sx={{ border: '1px solid rgba(16, 185, 129, 0.3)' }}
+                              sx={{ border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: 1.5 }}
                             >
                               <PlusIcon />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="Decrease Stock (-)">
+                          <Tooltip title={`Decrease ${item.canonical_name} Stock (-)`}>
                             <IconButton
                               size="small"
                               color="error"
                               onClick={() => handleOpenAdjust(item, 'decrease')}
-                              sx={{ border: '1px solid rgba(244, 63, 94, 0.3)' }}
+                              sx={{ border: '1px solid rgba(244, 63, 94, 0.3)', borderRadius: 1.5 }}
                             >
                               <MinusIcon />
                             </IconButton>
@@ -363,7 +403,7 @@ const InventoryManagementPage = () => {
           <DialogContent dividers>
             <Stack spacing={2}>
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                Item: <strong>{selectedItem?.product_name || selectedItem?.product?.name}</strong>
+                Product: <strong>{selectedItem?.canonical_name} ({selectedItem?.product_name})</strong>
               </Typography>
               <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
                 Current Available Quantity: <strong>{selectedItem?.available_quantity ?? selectedItem?.quantity}</strong>
@@ -413,3 +453,4 @@ const InventoryManagementPage = () => {
 };
 
 export default InventoryManagementPage;
+

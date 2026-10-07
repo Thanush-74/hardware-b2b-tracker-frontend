@@ -106,7 +106,7 @@ const BusinessModulePage = ({ slug, title, endpointName }) => {
         setData(result);
         setTotalCount(result.length);
       } else if (result && typeof result === 'object') {
-        const list = result.rows || result.items || result.products || result.orders || result.deliveries || result.expenses || result.inspections || result.data || result.cart_items || [];
+        const list = result.production_records || result.inventory || result.rows || result.items || result.products || result.orders || result.deliveries || result.expenses || result.inspections || result.data || result.cart_items || [];
         setData(Array.isArray(list) ? list : []);
         setTotalCount(result.total || result.count || (Array.isArray(list) ? list.length : 0));
       } else {

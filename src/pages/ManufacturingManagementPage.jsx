@@ -26,6 +26,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { manufacturingService, productService } from '../services/businessService';
 import { getStaff } from '../services/staffService';
+import { getCanonicalProducts } from '../utils/canonicalProducts';
 import { ManufacturingIcon, StaffIcon } from '../components/Icons';
 
 const WORK_STATUS_COLORS = {
@@ -101,17 +102,18 @@ const ManufacturingManagementPage = () => {
         manufacturingService.getAssignments(),
         manufacturingService.getSummary().catch(() => null),
         getStaff().catch(() => []),
-        productService.getAll().catch(() => []),
+        productService.getAll({ limit: 100 }).catch(() => []),
       ]);
 
       const list = Array.isArray(assignRes) ? assignRes : assignRes?.assignments || assignRes?.rows || [];
       const stList = staffRes?.staff || staffRes || [];
-      const pList = prodRes?.products || prodRes || [];
+      const rawProdList = Array.isArray(prodRes) ? prodRes : prodRes?.products || prodRes?.rows || [];
+      const canonicalProds = getCanonicalProducts(rawProdList);
 
       setAssignments(list);
       setSummary(summaryRes);
       setStaffList(stList);
-      setProducts(pList);
+      setProducts(canonicalProds);
     } catch (err) {
       setApiError(err.message || 'Failed to load manufacturing sector assignments.');
     } finally {

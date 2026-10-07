@@ -20,6 +20,7 @@ const getReturnStatusStyle = (status) => {
   switch (status) {
     case 'Resolved':
     case 'Completed':
+    case 'Approved':
       return { bg: '#f0fdf4', text: '#15803d', border: '#bbf7d0' };
     case 'Replacement Pending':
     case 'Replaced':
@@ -27,18 +28,21 @@ const getReturnStatusStyle = (status) => {
     case 'Under Inspection':
     case 'Received':
       return { bg: '#fffbeb', text: '#b45309', border: '#fde68a' };
-    case 'Approved for Rework':
-      return { bg: '#fef3c7', text: '#b45309', border: '#fde68a' };
     case 'Rejected':
       return { bg: '#fef2f2', text: '#b91c1c', border: '#fecaca' };
     case 'Requested':
     default:
-      return { bg: '#f8fafc', text: '#475569', border: '#e2e8f0' };
+      return { bg: '#fffbeb', text: '#b45309', border: '#fde68a' };
   }
 };
 
-const ReturnsOverview = ({ items = [] }) => {
+const ReturnsOverview = ({ data }) => {
   const navigate = useNavigate();
+
+  const pendingReturns = data?.pendingReturns ?? 0;
+  const approvedReturns = data?.approvedReturns ?? 0;
+  const replacements = data?.replacements ?? 0;
+  const recentReturns = data?.recentReturns || [];
 
   return (
     <Paper
@@ -48,11 +52,16 @@ const ReturnsOverview = ({ items = [] }) => {
         backgroundColor: '#ffffff',
         border: '1px solid #e2e8f0',
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.04)',
-        overflow: 'hidden',
+        p: { xs: 2, sm: 2.5 },
+        height: '100%',
         width: '100%',
+        minWidth: 0,
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
-      <Box sx={{ p: { xs: 2, sm: 2.5 }, pb: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* Header */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Stack direction="row" spacing={1.5} alignItems="center">
           <Box
             sx={{
@@ -70,7 +79,7 @@ const ReturnsOverview = ({ items = [] }) => {
           </Box>
           <Box>
             <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
-              Return & Replacement Traceability
+              Returns & Replacements
             </Typography>
             <Typography variant="caption" sx={{ color: '#64748b' }}>
               RMA intake status, diagnostics, and component replacement tracking
@@ -89,41 +98,78 @@ const ReturnsOverview = ({ items = [] }) => {
         </Button>
       </Box>
 
+      {/* Metrics Row */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: 1.5,
+          mb: 2,
+        }}
+      >
+        <Box sx={{ p: 1.25, borderRadius: 1.5, backgroundColor: '#fffbeb', border: '1px solid #fde68a', textAlign: 'center' }}>
+          <Typography variant="caption" sx={{ color: '#b45309', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.66rem', display: 'block' }}>
+            Pending Returns
+          </Typography>
+          <Typography variant="h6" sx={{ fontWeight: 800, color: '#b45309' }}>
+            {pendingReturns}
+          </Typography>
+        </Box>
+
+        <Box sx={{ p: 1.25, borderRadius: 1.5, backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', textAlign: 'center' }}>
+          <Typography variant="caption" sx={{ color: '#15803d', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.66rem', display: 'block' }}>
+            Approved Returns
+          </Typography>
+          <Typography variant="h6" sx={{ fontWeight: 800, color: '#15803d' }}>
+            {approvedReturns}
+          </Typography>
+        </Box>
+
+        <Box sx={{ p: 1.25, borderRadius: 1.5, backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', textAlign: 'center' }}>
+          <Typography variant="caption" sx={{ color: '#1d4ed8', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.66rem', display: 'block' }}>
+            Replacements
+          </Typography>
+          <Typography variant="h6" sx={{ fontWeight: 800, color: '#1d4ed8' }}>
+            {replacements}
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Table */}
+      <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', mb: 1, display: 'block' }}>
+        Active RMA Requests
+      </Typography>
+
       <TableContainer
         sx={{
           width: '100%',
           overflowX: 'auto',
           minWidth: 0,
-          '&::-webkit-scrollbar': { height: '5px' },
-          '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(148, 163, 184, 0.25)', borderRadius: '4px' },
+          border: '1px solid #f1f5f9',
+          borderRadius: 1.5,
+          flexGrow: 1,
         }}
       >
-        <Table size="small" sx={{ width: '100%', minWidth: 680 }}>
+        <Table size="small" sx={{ width: '100%', minWidth: 550 }}>
           <TableHead>
             <TableRow sx={{ backgroundColor: '#f8fafc' }}>
-              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1.2, whiteSpace: 'nowrap' }}>
+              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1 }}>
                 RMA #
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1.2 }}>
-                Customer & Hardware Item
+              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1 }}>
+                Customer & Product
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1.2 }}>
-                Reported Defect / Reason
+              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1 }}>
+                Reported Reason
               </TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1.2, whiteSpace: 'nowrap' }}>
-                Replacement
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1.2, whiteSpace: 'nowrap' }}>
+              <TableCell align="right" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1 }}>
                 Status
-              </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1.2, whiteSpace: 'nowrap' }}>
-                Intake Logged
               </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {items && items.length > 0 ? (
-              items.map((item) => {
+            {recentReturns && recentReturns.length > 0 ? (
+              recentReturns.map((item) => {
                 const statusStyle = getReturnStatusStyle(item.status);
 
                 return (
@@ -143,33 +189,18 @@ const ReturnsOverview = ({ items = [] }) => {
                       <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a' }}>
                         {item.customer_name}
                       </Typography>
-                      <Typography variant="caption" sx={{ color: '#64748b', display: 'block', fontSize: '0.72rem' }}>
+                      <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
                         {item.product_name}
                       </Typography>
                     </TableCell>
 
-                    <TableCell sx={{ maxWidth: 300 }}>
-                      <Typography variant="body2" sx={{ color: '#475569', fontSize: '0.78rem' }}>
+                    <TableCell sx={{ maxWidth: 180 }}>
+                      <Typography variant="caption" sx={{ color: '#475569', display: 'block', noWrap: true }}>
                         {item.return_reason}
                       </Typography>
                     </TableCell>
 
-                    <TableCell align="center">
-                      <Chip
-                        label={item.replacement_required ? 'Required' : 'Inspect Only'}
-                        size="small"
-                        sx={{
-                          height: 20,
-                          fontSize: '0.68rem',
-                          fontWeight: 600,
-                          backgroundColor: item.replacement_required ? '#eff6ff' : '#f8fafc',
-                          color: item.replacement_required ? '#2563eb' : '#64748b',
-                          border: `1px solid ${item.replacement_required ? '#bfdbfe' : '#e2e8f0'}`,
-                        }}
-                      />
-                    </TableCell>
-
-                    <TableCell>
+                    <TableCell align="right">
                       <Chip
                         label={item.status}
                         size="small"
@@ -183,18 +214,12 @@ const ReturnsOverview = ({ items = [] }) => {
                         }}
                       />
                     </TableCell>
-
-                    <TableCell align="right">
-                      <Typography variant="caption" sx={{ color: '#64748b', fontSize: '0.75rem' }}>
-                        {item.received_date}
-                      </Typography>
-                    </TableCell>
                   </TableRow>
                 );
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={6} sx={{ textAlign: 'center', py: 4, color: '#64748b' }}>
+                <TableCell colSpan={4} sx={{ textAlign: 'center', py: 3, color: '#64748b' }}>
                   No active returns pending triage.
                 </TableCell>
               </TableRow>
@@ -207,3 +232,4 @@ const ReturnsOverview = ({ items = [] }) => {
 };
 
 export default ReturnsOverview;
+

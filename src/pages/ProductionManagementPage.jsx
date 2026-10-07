@@ -26,6 +26,7 @@ import {
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import { productionService, productService } from '../services/businessService';
+import { getCanonicalProducts } from '../utils/canonicalProducts';
 import { ProductionIcon } from '../components/Icons';
 
 const PRODUCTION_STATUS_COLORS = {
@@ -84,15 +85,20 @@ const ProductionManagementPage = () => {
     setApiError('');
     try {
       const [prodRes, productsRes] = await Promise.all([
-        productionService.getAll(),
-        productService.getAll().catch(() => []),
+        productionService.getAll({ limit: 100 }),
+        productService.getAll({ limit: 100 }).catch(() => []),
       ]);
 
-      const records = Array.isArray(prodRes) ? prodRes : prodRes?.production || prodRes?.rows || [];
-      const prodList = Array.isArray(productsRes) ? productsRes : productsRes?.products || productsRes?.rows || [];
+      const records = Array.isArray(prodRes)
+        ? prodRes
+        : prodRes?.production_records || prodRes?.production || prodRes?.rows || prodRes?.data || [];
+      const rawProdList = Array.isArray(productsRes)
+        ? productsRes
+        : productsRes?.products || productsRes?.rows || productsRes?.data || [];
+      const canonicalProds = getCanonicalProducts(rawProdList);
 
       setProductionList(records);
-      setProducts(prodList);
+      setProducts(canonicalProds);
     } catch (err) {
       setApiError(err.message || 'Failed to load production batches.');
     } finally {
@@ -216,17 +222,33 @@ const ProductionManagementPage = () => {
       !q ||
       item.product_name?.toLowerCase().includes(q) ||
       item.product_type?.toLowerCase().includes(q) ||
-      item.notes?.toLowerCase().includes(q);
+      item.notes?.toLowerCase().includes(q) ||
+      String(item.id).includes(q) ||
+      item.status?.toLowerCase().includes(q);
 
-    const matchesStatus = statusFilter === 'ALL' || item.status === statusFilter;
+    const matchesStatus =
+      statusFilter === 'ALL' ||
+      item.status?.toLowerCase() === statusFilter.toLowerCase();
     return matchesSearch && matchesStatus;
   });
 
   // KPI Calculations
   const totalBatches = productionList.length;
-  const inProductionCount = productionList.filter((b) => b.status === 'In Production').length;
-  const totalUnitsPlanned = productionList.reduce((acc, curr) => acc + (Number(curr.quantity_planned) || 0), 0);
-  const totalUnitsCompleted = productionList.reduce((acc, curr) => acc + (Number(curr.quantity_completed) || 0), 0);
+  const inProductionCount = productionList.filter(
+    (b) =>
+      b.status === 'In Production' ||
+      b.status?.toLowerCase() === 'in production' ||
+      b.status?.toLowerCase() === 'in_production' ||
+      b.status?.toLowerCase() === 'running'
+  ).length;
+  const totalUnitsPlanned = productionList.reduce(
+    (acc, curr) => acc + (Number(curr.quantity_planned) || 0),
+    0
+  );
+  const totalUnitsCompleted = productionList.reduce(
+    (acc, curr) => acc + (Number(curr.quantity_completed) || 0),
+    0
+  );
 
   return (
     <Box sx={{ width: '100%', py: 1 }}>
@@ -265,16 +287,28 @@ const ProductionManagementPage = () => {
           </Box>
         </Box>
 
-        {canCreate && (
+        <Stack direction="row" spacing={1.5} alignItems="center">
           <Button
-            variant="contained"
-            color="primary"
-            onClick={handleOpenCreateModal}
-            sx={{ fontWeight: 700, px: 2.5 }}
+            variant="outlined"
+            size="small"
+            onClick={fetchData}
+            disabled={isLoading}
+            sx={{ textTransform: 'none', borderColor: '#d1d5db', color: '#0f172a', fontWeight: 600 }}
           >
-            + Plan Production Batch
+            Refresh Batches
           </Button>
-        )}
+
+          {canCreate && (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleOpenCreateModal}
+              sx={{ fontWeight: 700, px: 2.5 }}
+            >
+              + Plan Production Batch
+            </Button>
+          )}
+        </Stack>
       </Stack>
 
       {/* Notifications */}

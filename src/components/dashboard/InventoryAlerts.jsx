@@ -21,17 +21,17 @@ const getStockStatusStyle = (status) => {
     case 'Out of Stock':
       return { bg: '#fef2f2', text: '#b91c1c', border: '#fecaca' };
     case 'Low Stock':
-    case 'Low':
       return { bg: '#fffbeb', text: '#b45309', border: '#fde68a' };
-    case 'Adequate':
+    case 'In Stock':
     case 'Healthy':
     default:
       return { bg: '#f0fdf4', text: '#15803d', border: '#bbf7d0' };
   }
 };
 
-const InventoryAlerts = ({ items = [] }) => {
+const InventoryAlerts = ({ data }) => {
   const navigate = useNavigate();
+  const products = data?.products || [];
 
   return (
     <Paper
@@ -63,10 +63,10 @@ const InventoryAlerts = ({ items = [] }) => {
           </Box>
           <Box>
             <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
-              Low Stock & Inventory Alerts
+              Inventory Overview (Core Hardware)
             </Typography>
             <Typography variant="caption" sx={{ color: '#64748b' }}>
-              Components below threshold requiring purchase orders & vendor procurement
+              Real-time available stock levels for GPU, RAM, ROM/SSD & Motherboard
             </Typography>
           </Box>
         </Stack>
@@ -78,7 +78,7 @@ const InventoryAlerts = ({ items = [] }) => {
           endIcon={<ArrowRightIcon sx={{ fontSize: 16 }} />}
           sx={{ fontWeight: 600, fontSize: '0.8rem', color: '#2563eb' }}
         >
-          View All Stock
+          View Full Inventory
         </Button>
       </Box>
 
@@ -87,58 +87,60 @@ const InventoryAlerts = ({ items = [] }) => {
           width: '100%',
           overflowX: 'auto',
           minWidth: 0,
-          '&::-webkit-scrollbar': { height: '5px' },
-          '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(148, 163, 184, 0.25)', borderRadius: '4px' },
         }}
       >
         <Table size="small" sx={{ width: '100%', minWidth: 680 }}>
           <TableHead>
             <TableRow sx={{ backgroundColor: '#f8fafc' }}>
               <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1.2 }}>
-                Component Part & SKU
+                Hardware Product
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1.2, whiteSpace: 'nowrap' }}>
+              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1.2 }}>
                 Category
               </TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1.2, whiteSpace: 'nowrap' }}>
-                Available
+              <TableCell align="center" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1.2 }}>
+                Available Stock
               </TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1.2, whiteSpace: 'nowrap' }}>
-                Min Threshold
+              <TableCell align="center" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1.2 }}>
+                Total Stock
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1.2, whiteSpace: 'nowrap' }}>
+              <TableCell align="center" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1.2 }}>
+                Reserved
+              </TableCell>
+              <TableCell align="right" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1.2 }}>
+                Unit Price
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1.2 }}>
                 Status
               </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1.2, whiteSpace: 'nowrap' }}>
-                Warehouse Location
+              <TableCell align="right" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1.2 }}>
+                Location
               </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {items && items.length > 0 ? (
-              items.map((item) => {
+            {products && products.length > 0 ? (
+              products.map((item) => {
                 const statusStyle = getStockStatusStyle(item.status);
 
                 return (
                   <TableRow
-                    key={item.id}
+                    key={item.key}
                     hover
                     onClick={() => navigate('/inventory')}
                     sx={{ cursor: 'pointer' }}
                   >
                     <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a' }}>
-                        {item.part_name}
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>
+                        {item.name}
                       </Typography>
-                      {item.sku && (
-                        <Typography variant="caption" sx={{ color: '#64748b', fontFamily: 'monospace', fontSize: '0.72rem' }}>
-                          {item.sku}
-                        </Typography>
-                      )}
+                      <Typography variant="caption" sx={{ color: '#64748b', fontSize: '0.72rem', display: 'block', maxWidth: 260 }}>
+                        {item.description}
+                      </Typography>
                     </TableCell>
 
                     <TableCell>
-                      <Typography variant="caption" sx={{ color: '#475569', fontWeight: 500 }}>
+                      <Typography variant="body2" sx={{ color: '#475569', fontSize: '0.8rem' }}>
                         {item.category}
                       </Typography>
                     </TableCell>
@@ -148,17 +150,30 @@ const InventoryAlerts = ({ items = [] }) => {
                         variant="body2"
                         sx={{
                           fontWeight: 800,
+                          fontSize: '1rem',
                           fontFamily: 'monospace',
-                          color: item.available === 0 ? '#dc2626' : item.available <= item.min_threshold ? '#b45309' : '#0f172a',
+                          color: item.available_quantity === 0 ? '#dc2626' : item.available_quantity <= 10 ? '#b45309' : '#15803d',
                         }}
                       >
-                        {item.available}
+                        {item.available_quantity}
                       </Typography>
                     </TableCell>
 
                     <TableCell align="center">
-                      <Typography variant="caption" sx={{ color: '#64748b', fontFamily: 'monospace' }}>
-                        {item.min_threshold}
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#475569' }}>
+                        {item.total_quantity}
+                      </Typography>
+                    </TableCell>
+
+                    <TableCell align="center">
+                      <Typography variant="body2" sx={{ color: '#64748b' }}>
+                        {item.reserved_quantity}
+                      </Typography>
+                    </TableCell>
+
+                    <TableCell align="right">
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a', fontFamily: 'monospace' }}>
+                        ₹{Number(item.price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </Typography>
                     </TableCell>
 
@@ -179,7 +194,7 @@ const InventoryAlerts = ({ items = [] }) => {
 
                     <TableCell align="right">
                       <Typography variant="caption" sx={{ color: '#64748b', fontSize: '0.75rem' }}>
-                        {item.location || 'Warehouse'}
+                        {item.location || 'Main Warehouse'}
                       </Typography>
                     </TableCell>
                   </TableRow>
@@ -187,8 +202,8 @@ const InventoryAlerts = ({ items = [] }) => {
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={6} sx={{ textAlign: 'center', py: 4, color: '#64748b' }}>
-                  All component stock levels are healthy.
+                <TableCell colSpan={8} sx={{ textAlign: 'center', py: 4, color: '#64748b' }}>
+                  No inventory data available.
                 </TableCell>
               </TableRow>
             )}
@@ -200,3 +215,4 @@ const InventoryAlerts = ({ items = [] }) => {
 };
 
 export default InventoryAlerts;
+

@@ -27,6 +27,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { inspectionService, productService } from '../services/businessService';
 import { getStaff } from '../services/staffService';
+import { getCanonicalProducts } from '../utils/canonicalProducts';
 import { InspectionIcon } from '../components/Icons';
 
 const RESULT_COLORS = {
@@ -119,17 +120,18 @@ const InspectionManagementPage = () => {
       const [inspRes, summaryRes, prodRes, staffRes] = await Promise.all([
         inspectionService.getAll(),
         inspectionService.getSummary().catch(() => null),
-        productService.getAll().catch(() => []),
+        productService.getAll({ limit: 100 }).catch(() => []),
         getStaff().catch(() => []),
       ]);
 
       const list = Array.isArray(inspRes) ? inspRes : inspRes?.inspections || inspRes?.rows || [];
-      const pList = prodRes?.products || prodRes || [];
+      const rawProdList = Array.isArray(prodRes) ? prodRes : prodRes?.products || prodRes?.rows || [];
+      const canonicalProds = getCanonicalProducts(rawProdList);
       const stList = staffRes?.staff || staffRes || [];
 
       setInspections(list);
       setSummary(summaryRes);
-      setProducts(pList);
+      setProducts(canonicalProds);
       setStaffList(stList);
     } catch (err) {
       setApiError(err.message || 'Failed to load inspection records.');

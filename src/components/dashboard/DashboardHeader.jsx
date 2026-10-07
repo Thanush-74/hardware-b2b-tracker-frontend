@@ -7,27 +7,31 @@ import {
   ProductionIcon,
   InventoryIcon,
   StaffIcon,
-  ExpensesIcon,
+  DeliveriesIcon,
+  InspectionIcon,
+  ManufacturingIcon,
 } from '../Icons';
 
 const DashboardHeader = ({ user, role, isLive, lastUpdated, onRefresh, isLoading }) => {
   const navigate = useNavigate();
   const displayName =
     user?.first_name && user.first_name.toLowerCase() !== 'admin'
-      ? user.first_name
+      ? `${user.first_name} ${user.last_name || ''}`.trim()
       : 'Admin';
 
-  const adminActions = [
-    { label: 'New Order', route: '/orders', icon: <OrdersIcon sx={{ fontSize: 15 }} /> },
-    { label: 'New Build Batch', route: '/production', icon: <ProductionIcon sx={{ fontSize: 15 }} /> },
-    { label: 'Inventory Restock', route: '/inventory', icon: <InventoryIcon sx={{ fontSize: 15 }} /> },
-    { label: 'Staff Roster', route: '/staff', icon: <StaffIcon sx={{ fontSize: 15 }} /> },
-    { label: 'Record Expense', route: '/expenses', icon: <ExpensesIcon sx={{ fontSize: 15 }} /> },
+  const quickActions = [
+    { label: 'Create Order', route: '/orders', icon: <OrdersIcon sx={{ fontSize: 16 }} /> },
+    { label: 'Plan Production Batch', route: '/production', icon: <ProductionIcon sx={{ fontSize: 16 }} /> },
+    { label: 'View Inventory', route: '/inventory', icon: <InventoryIcon sx={{ fontSize: 16 }} /> },
+    { label: 'Manage Staff', route: '/staff', icon: <StaffIcon sx={{ fontSize: 16 }} /> },
+    { label: 'Track Deliveries', route: '/deliveries', icon: <DeliveriesIcon sx={{ fontSize: 16 }} /> },
+    { label: 'Quality Inspection', route: '/inspection', icon: <InspectionIcon sx={{ fontSize: 16 }} /> },
+    { label: 'Manufacturing Lines', route: '/manufacturing', icon: <ManufacturingIcon sx={{ fontSize: 16 }} /> },
   ];
 
   return (
     <Box sx={{ mb: 3 }}>
-      {/* Top Banner: Title + Status + Synced Toolbar */}
+      {/* Top Banner: Title + Status + Refresh Button */}
       <Box
         sx={{
           display: 'flex',
@@ -41,10 +45,10 @@ const DashboardHeader = ({ user, role, isLive, lastUpdated, onRefresh, isLoading
         <Box>
           <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" gap={1}>
             <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>
-              Dashboard
+              Hardware B2B Tracker Dashboard
             </Typography>
             <Chip
-              label={isLive ? '● Live Factory Sync' : '○ Standby Operations'}
+              label={isLive ? '● Live Backend Synced' : '○ Standby'}
               size="small"
               sx={{
                 height: 22,
@@ -56,7 +60,7 @@ const DashboardHeader = ({ user, role, isLive, lastUpdated, onRefresh, isLoading
               }}
             />
             <Chip
-              label="Admin Console"
+              label="Admin Overview"
               size="small"
               sx={{
                 height: 22,
@@ -70,15 +74,15 @@ const DashboardHeader = ({ user, role, isLive, lastUpdated, onRefresh, isLoading
           </Stack>
 
           <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#0f172a', mt: 0.5 }}>
-            Welcome back, {displayName}
+            Welcome, {displayName}
           </Typography>
 
           <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.84rem' }}>
-            Today's manufacturing & operations summary • PC assembly & hardware B2B fulfillment
+            Real-time operations summary • Production, inventory, orders, logistics & quality control
           </Typography>
         </Box>
 
-        {/* Right Toolbar: Perfectly aligned Synced indicator + Refresh Button */}
+        {/* Right Controls */}
         <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flexShrink: 0 }}>
           {lastUpdated && (
             <Box
@@ -145,18 +149,18 @@ const DashboardHeader = ({ user, role, isLive, lastUpdated, onRefresh, isLoading
         </Stack>
       </Box>
 
-      {/* Admin Quick Action Shortcuts Strip */}
+      {/* 9. Quick Actions Bar */}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
-          gap: 1.25,
+          gap: 1,
           flexWrap: 'wrap',
           p: 1.25,
           backgroundColor: '#ffffff',
           borderRadius: 2,
           border: '1px solid #e2e8f0',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
         }}
       >
         <Typography
@@ -174,7 +178,7 @@ const DashboardHeader = ({ user, role, isLive, lastUpdated, onRefresh, isLoading
           Quick Actions:
         </Typography>
 
-        {adminActions.map((action) => (
+        {quickActions.map((action) => (
           <Button
             key={action.label}
             size="small"
@@ -206,3 +210,4 @@ const DashboardHeader = ({ user, role, isLive, lastUpdated, onRefresh, isLoading
 };
 
 export default DashboardHeader;
+

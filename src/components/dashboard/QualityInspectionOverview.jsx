@@ -1,17 +1,45 @@
 import React from 'react';
-import { Paper, Box, Typography, Stack, Button, Grid, LinearProgress, Chip } from '@mui/material';
+import {
+  Paper,
+  Box,
+  Typography,
+  Stack,
+  Button,
+  LinearProgress,
+  Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { InspectionIcon, ArrowRightIcon } from '../Icons';
+
+const getResultStatusStyle = (result) => {
+  switch (result) {
+    case 'Approved':
+    case 'Passed':
+      return { bg: '#f0fdf4', text: '#15803d', border: '#bbf7d0' };
+    case 'Defective':
+    case 'Failed':
+      return { bg: '#fef2f2', text: '#b91c1c', border: '#fecaca' };
+    case 'Pending':
+    default:
+      return { bg: '#fffbeb', text: '#b45309', border: '#fde68a' };
+  }
+};
 
 const QualityInspectionOverview = ({ data }) => {
   const navigate = useNavigate();
 
-  const passRate = data?.passRate ?? 96.5;
-  const inspectedToday = data?.inspectedToday ?? 0;
-  const passedToday = data?.passedToday ?? 0;
-  const failedToday = data?.failedToday ?? 0;
-  const reworkPending = data?.reworkPending ?? 0;
-  const recentAudits = data?.recentAudits || [];
+  const defectiveProducts = data?.defectiveProducts ?? 0;
+  const pendingInspections = data?.pendingInspections ?? 0;
+  const passRate = data?.passRate ?? 100;
+  const totalInspected = data?.totalInspected ?? 0;
+  const totalPassed = data?.totalPassed ?? 0;
+  const recentInspections = data?.recentInspections || [];
 
   return (
     <Paper
@@ -29,6 +57,7 @@ const QualityInspectionOverview = ({ data }) => {
         flexDirection: 'column',
       }}
     >
+      {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Stack direction="row" spacing={1.5} alignItems="center">
           <Box
@@ -47,10 +76,10 @@ const QualityInspectionOverview = ({ data }) => {
           </Box>
           <Box>
             <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
-              Quality & Yield Control
+              Quality & QA Inspection
             </Typography>
             <Typography variant="caption" sx={{ color: '#64748b' }}>
-              SMT optical inspection & factory pass rate
+              First-pass yield, defect tracking & component audit records
             </Typography>
           </Box>
         </Stack>
@@ -67,116 +96,159 @@ const QualityInspectionOverview = ({ data }) => {
       </Box>
 
       {/* Pass Rate Gauge Box */}
-      <Box sx={{ p: 2, borderRadius: 1.5, backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', mb: 2 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="flex-end" sx={{ mb: 1 }}>
+      <Box sx={{ p: 1.5, borderRadius: 1.5, backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', mb: 2 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="flex-end" sx={{ mb: 0.75 }}>
           <Box>
             <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.68rem' }}>
-              First-Pass Factory Yield
+              QA Pass Rate
             </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: '#15803d', lineHeight: 1.1, mt: 0.25 }}>
+            <Typography variant="h5" sx={{ fontWeight: 800, color: passRate >= 95 ? '#15803d' : '#b45309', lineHeight: 1.1, mt: 0.25 }}>
               {passRate}%
             </Typography>
           </Box>
           <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 500 }}>
-            {passedToday} of {inspectedToday} units verified
+            {totalPassed} of {totalInspected} units passed
           </Typography>
         </Stack>
 
         <LinearProgress
           variant="determinate"
-          value={passRate}
+          value={Math.min(100, passRate)}
           sx={{
             height: 6,
             borderRadius: 3,
             backgroundColor: '#e5e7eb',
             '& .MuiLinearProgress-bar': {
-              backgroundColor: passRate >= 95 ? '#15803d' : '#b45309',
+              backgroundColor: passRate >= 95 ? '#16a34a' : '#d97706',
               borderRadius: 3,
             },
           }}
         />
       </Box>
 
-      {/* Small Stat Pills */}
+      {/* Metrics Row */}
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateColumns: 'repeat(2, 1fr)',
           gap: 1.5,
           mb: 2,
         }}
       >
-        <Box sx={{ p: 1.25, borderRadius: 1.5, backgroundColor: '#ffffff', border: '1px solid #e2e8f0', textAlign: 'center' }}>
-          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.68rem', display: 'block' }}>
-            Passed
+        <Box sx={{ p: 1.25, borderRadius: 1.5, backgroundColor: defectiveProducts > 0 ? '#fef2f2' : '#f8fafc', border: `1px solid ${defectiveProducts > 0 ? '#fecaca' : '#e2e8f0'}`, textAlign: 'center' }}>
+          <Typography variant="caption" sx={{ color: defectiveProducts > 0 ? '#b91c1c' : '#64748b', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.66rem', display: 'block' }}>
+            Defective Units
           </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 800, color: '#15803d' }}>
-            {passedToday}
-          </Typography>
-        </Box>
-
-        <Box sx={{ p: 1.25, borderRadius: 1.5, backgroundColor: '#ffffff', border: '1px solid #e2e8f0', textAlign: 'center' }}>
-          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.68rem', display: 'block' }}>
-            Failed
-          </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 800, color: failedToday > 0 ? '#b91c1c' : '#0f172a' }}>
-            {failedToday}
+          <Typography variant="h6" sx={{ fontWeight: 800, color: defectiveProducts > 0 ? '#b91c1c' : '#0f172a' }}>
+            {defectiveProducts}
           </Typography>
         </Box>
 
-        <Box sx={{ p: 1.25, borderRadius: 1.5, backgroundColor: '#ffffff', border: '1px solid #e2e8f0', textAlign: 'center' }}>
-          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.68rem', display: 'block' }}>
-            Rework
+        <Box sx={{ p: 1.25, borderRadius: 1.5, backgroundColor: '#fffbeb', border: '1px solid #fde68a', textAlign: 'center' }}>
+          <Typography variant="caption" sx={{ color: '#b45309', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.66rem', display: 'block' }}>
+            Pending Inspections
           </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 800, color: reworkPending > 0 ? '#b45309' : '#0f172a' }}>
-            {reworkPending}
+          <Typography variant="h6" sx={{ fontWeight: 800, color: '#b45309' }}>
+            {pendingInspections}
           </Typography>
         </Box>
       </Box>
 
-      {/* Recent Audits preview */}
-      <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', mb: 1, display: 'block' }}>
-        Recent Batch Inspections
+      {/* Recent Audits Table */}
+      <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', mb: 1, display: 'block' }}>
+        Recent Quality Audits
       </Typography>
 
-      <Stack spacing={1} sx={{ flexGrow: 1 }}>
-        {recentAudits.map((audit) => (
-          <Box
-            key={audit.id}
-            sx={{
-              p: 1.25,
-              borderRadius: 1.5,
-              border: '1px solid #e2e8f0',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Box>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a', fontSize: '0.82rem' }}>
-                {audit.product}
-              </Typography>
-              <Typography variant="caption" sx={{ color: '#64748b', fontSize: '0.72rem' }}>
-                {audit.batch_number} • {audit.inspector}
-              </Typography>
-            </Box>
-            <Chip
-              label={audit.result}
-              size="small"
-              sx={{
-                height: 20,
-                fontSize: '0.68rem',
-                fontWeight: 700,
-                backgroundColor: audit.result === 'Passed' ? '#f0fdf4' : '#fef2f2',
-                color: audit.result === 'Passed' ? '#15803d' : '#b91c1c',
-                border: `1px solid ${audit.result === 'Passed' ? '#bbf7d0' : '#fecaca'}`,
-              }}
-            />
-          </Box>
-        ))}
-      </Stack>
+      <TableContainer
+        sx={{
+          width: '100%',
+          overflowX: 'auto',
+          minWidth: 0,
+          border: '1px solid #f1f5f9',
+          borderRadius: 1.5,
+          flexGrow: 1,
+        }}
+      >
+        <Table size="small" sx={{ width: '100%', minWidth: 500 }}>
+          <TableHead>
+            <TableRow sx={{ backgroundColor: '#f8fafc' }}>
+              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1 }}>
+                Batch / Item
+              </TableCell>
+              <TableCell align="center" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1 }}>
+                Passed / Failed
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1 }}>
+                Defect Type
+              </TableCell>
+              <TableCell align="right" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.75rem', py: 1 }}>
+                Result
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {recentInspections && recentInspections.length > 0 ? (
+              recentInspections.map((audit) => {
+                const statusStyle = getResultStatusStyle(audit.result);
+
+                return (
+                  <TableRow
+                    key={audit.id}
+                    hover
+                    onClick={() => navigate('/inspection')}
+                    sx={{ cursor: 'pointer' }}
+                  >
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a' }}>
+                        {audit.product_name || audit.item_type}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#64748b', fontFamily: 'monospace' }}>
+                        {audit.batch_number}
+                      </Typography>
+                    </TableCell>
+
+                    <TableCell align="center">
+                      <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.78rem' }}>
+                        <span style={{ color: '#15803d' }}>{audit.passed_quantity}</span> / <span style={{ color: audit.failed_quantity > 0 ? '#b91c1c' : '#64748b' }}>{audit.failed_quantity}</span>
+                      </Typography>
+                    </TableCell>
+
+                    <TableCell>
+                      <Typography variant="caption" sx={{ color: '#475569' }}>
+                        {audit.defect_type || 'None (Pass)'}
+                      </Typography>
+                    </TableCell>
+
+                    <TableCell align="right">
+                      <Chip
+                        label={audit.result}
+                        size="small"
+                        sx={{
+                          height: 22,
+                          fontSize: '0.7rem',
+                          fontWeight: 700,
+                          backgroundColor: statusStyle.bg,
+                          color: statusStyle.text,
+                          border: `1px solid ${statusStyle.border}`,
+                        }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            ) : (
+              <TableRow>
+                <TableCell colSpan={4} sx={{ textAlign: 'center', py: 3, color: '#64748b' }}>
+                  No QA audits recorded.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Paper>
   );
 };
 
 export default QualityInspectionOverview;
+

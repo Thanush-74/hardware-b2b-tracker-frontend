@@ -122,7 +122,7 @@ const CANONICAL_CATALOG = [
   },
   {
     key: 'rom_ssd',
-    canonicalName: 'ROM / SSD Storage',
+    canonicalName: 'ROM / SSD',
     categoryType: 'SSD Storage',
     matchTypes: ['SSD', 'SSD STORAGE', 'ROM', 'STORAGE', 'NVME'],
     description:

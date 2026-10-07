@@ -27,6 +27,7 @@ import {
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import { returnService, orderService, productService } from '../services/businessService';
+import { getCanonicalProducts } from '../utils/canonicalProducts';
 import { ReturnsIcon } from '../components/Icons';
 
 const RETURN_STATUS_COLORS = {
@@ -88,16 +89,17 @@ const ReturnsManagementPage = () => {
       const [returnsRes, ordersRes, prodRes] = await Promise.all([
         returnService.getAll(),
         orderService.getAll().catch(() => []),
-        productService.getAll().catch(() => []),
+        productService.getAll({ limit: 100 }).catch(() => []),
       ]);
 
       const list = Array.isArray(returnsRes) ? returnsRes : returnsRes?.returns || returnsRes?.rows || [];
       const ords = Array.isArray(ordersRes) ? ordersRes : ordersRes?.orders || ordersRes?.rows || [];
-      const prods = Array.isArray(prodRes) ? prodRes : prodRes?.products || prodRes?.rows || [];
+      const rawProdList = Array.isArray(prodRes) ? prodRes : prodRes?.products || prodRes?.rows || [];
+      const canonicalProds = getCanonicalProducts(rawProdList);
 
       setReturnsList(list);
       setOrders(ords);
-      setProducts(prods);
+      setProducts(canonicalProds);
     } catch (err) {
       setApiError(err.message || 'Failed to load returns records.');
     } finally {
