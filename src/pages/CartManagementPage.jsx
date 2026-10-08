@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -44,21 +44,27 @@ const MinusIcon = () => (
 );
 
 /**
- * QuantityControl component for typing and +/- buttons
+ * Isolated, controlled QuantityControl component for independent item quantity updates
  */
 const QuantityControl = ({ item, isBusy, onUpdateQuantity }) => {
   const currentQty = parseInt(item.quantity, 10) || 1;
-  const [inputValue, setInputValue] = useState(currentQty);
+  const [inputValue, setInputValue] = useState(String(currentQty));
+  const isTypingRef = useRef(false);
 
+  // Synchronize local input state only when not actively typing
   useEffect(() => {
-    setInputValue(currentQty);
+    if (!isTypingRef.current) {
+      setInputValue(String(currentQty));
+    }
   }, [currentQty]);
 
   const handleMinus = (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (currentQty > 1 && !isBusy) {
-      onUpdateQuantity(item.id, currentQty - 1);
+      const nextQty = currentQty - 1;
+      setInputValue(String(nextQty));
+      onUpdateQuantity(item.id, nextQty);
     }
   };
 
@@ -66,26 +72,38 @@ const QuantityControl = ({ item, isBusy, onUpdateQuantity }) => {
     e.preventDefault();
     e.stopPropagation();
     if (!isBusy) {
-      onUpdateQuantity(item.id, currentQty + 1);
+      const nextQty = currentQty + 1;
+      setInputValue(String(nextQty));
+      onUpdateQuantity(item.id, nextQty);
     }
   };
 
   const handleInputChange = (e) => {
+    e.preventDefault();
+    isTypingRef.current = true;
     setInputValue(e.target.value);
   };
 
-  const handleInputBlur = () => {
+  const commitQuantity = () => {
+    isTypingRef.current = false;
     const parsed = parseInt(inputValue, 10);
     if (isNaN(parsed) || parsed < 1) {
-      setInputValue(currentQty);
+      setInputValue(String(currentQty));
     } else if (parsed !== currentQty) {
       onUpdateQuantity(item.id, parsed);
     }
   };
 
+  const handleInputBlur = (e) => {
+    e.preventDefault();
+    commitQuantity();
+  };
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
-      e.target.blur();
+      e.preventDefault();
+      commitQuantity();
+      e.currentTarget.blur();
     }
   };
 
@@ -117,16 +135,19 @@ const QuantityControl = ({ item, isBusy, onUpdateQuantity }) => {
         min="1"
         value={inputValue}
         onChange={handleInputChange}
+        onFocus={() => {
+          isTypingRef.current = true;
+        }}
         onBlur={handleInputBlur}
         onKeyDown={handleKeyDown}
         disabled={isBusy}
         aria-label="Item quantity"
         style={{
-          width: '48px',
+          width: '52px',
           height: '28px',
           textAlign: 'center',
           fontWeight: 700,
-          fontSize: '0.85rem',
+          fontSize: '0.875rem',
           color: '#0f172a',
           backgroundColor: '#ffffff',
           border: '1px solid #d1d5db',
@@ -171,8 +192,11 @@ const CartManagementPage = () => {
   const [actionSuccess, setActionSuccess] = useState('');
   const [actionInProgressId, setActionInProgressId] = useState(null);
 
-  const fetchCart = useCallback(async () => {
-    setIsLoading(true);
+  // Fetch cart data from backend without unmounting existing DOM during background updates
+  const fetchCart = useCallback(async (isInitial = false) => {
+    if (isInitial) {
+      setIsLoading(true);
+    }
     setApiError('');
     try {
       const res = await cartService.getCart();
@@ -180,12 +204,14 @@ const CartManagementPage = () => {
     } catch (err) {
       setApiError(err.message || 'Failed to fetch cart from backend.');
     } finally {
-      setIsLoading(false);
+      if (isInitial) {
+        setIsLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
-    fetchCart();
+    fetchCart(true);
   }, [fetchCart]);
 
   const handleUpdateQuantity = async (itemId, newQty) => {
@@ -198,14 +224,13 @@ const CartManagementPage = () => {
     setApiError('');
     try {
       const updatedCart = await cartService.updateItem(itemId, parsedQty);
-      if (updatedCart && (updatedCart.items || updatedCart.cart_items)) {
+      if (updatedCart && Array.isArray(updatedCart.items)) {
         setCart(updatedCart);
       } else {
-        await fetchCart();
+        await fetchCart(false);
       }
     } catch (err) {
       setApiError(err.message || 'Failed to update item quantity.');
-      await fetchCart();
     } finally {
       setActionInProgressId(null);
     }
@@ -215,9 +240,13 @@ const CartManagementPage = () => {
     setActionInProgressId(itemId);
     setApiError('');
     try {
-      await cartService.removeItem(itemId);
+      const res = await cartService.removeItem(itemId);
       setActionSuccess('Item removed from cart.');
-      fetchCart();
+      if (res && Array.isArray(res.items)) {
+        setCart(res);
+      } else {
+        await fetchCart(false);
+      }
     } catch (err) {
       setApiError(err.message || 'Failed to remove item.');
     } finally {
@@ -226,15 +255,16 @@ const CartManagementPage = () => {
   };
 
   const handleClearCart = async () => {
-    setIsLoading(true);
+    setActionInProgressId('all');
     setApiError('');
     try {
       await cartService.clear();
       setActionSuccess('Cart cleared successfully.');
-      fetchCart();
+      setCart({ items: [], total: 0 });
     } catch (err) {
       setApiError(err.message || 'Failed to clear cart.');
-      setIsLoading(false);
+    } finally {
+      setActionInProgressId(null);
     }
   };
 
@@ -245,7 +275,7 @@ const CartManagementPage = () => {
     return cartItems.reduce((acc, item) => {
       const price = Number(item.unit_price ?? item.product?.price ?? item.price ?? 0);
       const qty = Number(item.quantity ?? 1);
-      return acc + (price * qty);
+      return acc + price * qty;
     }, 0);
   }, [cartItems]);
 
@@ -285,11 +315,12 @@ const CartManagementPage = () => {
 
           {cartItems.length > 0 && canEdit && (
             <Button
+              type="button"
               size="small"
               variant="outlined"
               color="error"
               onClick={handleClearCart}
-              disabled={isLoading}
+              disabled={actionInProgressId === 'all'}
               sx={{ textTransform: 'none', borderColor: '#fecaca', color: '#dc2626', '&:hover': { backgroundColor: '#fef2f2', borderColor: '#b91c1c' } }}
             >
               Clear Cart
@@ -350,7 +381,7 @@ const CartManagementPage = () => {
           <Typography variant="body2" sx={{ color: '#64748b', mb: 3 }}>
             Browse the product catalog to add hardware items to your B2B order cart.
           </Typography>
-          <Button variant="contained" onClick={() => navigate('/products')} sx={{ fontWeight: 600, backgroundColor: '#2563eb', '&:hover': { backgroundColor: '#1d4ed8' } }}>
+          <Button type="button" variant="contained" onClick={() => navigate('/products')} sx={{ fontWeight: 600, backgroundColor: '#2563eb', '&:hover': { backgroundColor: '#1d4ed8' } }}>
             Browse Product Catalog →
           </Button>
         </Paper>
@@ -435,6 +466,7 @@ const CartManagementPage = () => {
                         {canEdit && (
                           <TableCell align="right">
                             <IconButton
+                              type="button"
                               size="small"
                               color="error"
                               disabled={isBusy}
@@ -492,6 +524,7 @@ const CartManagementPage = () => {
               </Box>
 
               <Button
+                type="button"
                 variant="contained"
                 color="primary"
                 fullWidth
