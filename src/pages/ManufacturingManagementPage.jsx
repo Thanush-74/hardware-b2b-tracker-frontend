@@ -21,13 +21,12 @@ import {
   DialogActions,
   TextField,
   MenuItem,
-  Grid,
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import { manufacturingService, productService } from '../services/businessService';
 import { getStaff } from '../services/staffService';
 import { getCanonicalProducts } from '../utils/canonicalProducts';
-import { ManufacturingIcon, StaffIcon } from '../components/Icons';
+import { ManufacturingIcon } from '../components/Icons';
 import PaginationControl from '../components/PaginationControl';
 
 const PAGE_SIZE = 10;
@@ -39,15 +38,37 @@ const WORK_STATUS_COLORS = {
   Standby: { bg: '#f8fafc', text: '#475569', border: '#e2e8f0' },
 };
 
-const COMMON_SECTORS = [
-  'PCB Assembly Line 1',
-  'PCB Assembly Line 2',
-  'SMT Surface Mount Station',
-  'Chassis & Enclosure Fabrication',
-  'Thermal & Soldering Bay',
-  'Component Testing Station',
-  'Packaging & Box Staging',
+// 4 Canonical Manufacturing Sectors / Work Stations
+export const CANONICAL_SECTORS = [
+  'RAM Assembly',
+  'GPU Assembly',
+  'Storage Assembly',
+  'PCB Assembly',
 ];
+
+// Canonical Product Name -> Sector Relationship
+export const PRODUCT_TO_SECTOR_MAP = {
+  GPU: 'GPU Assembly',
+  RAM: 'RAM Assembly',
+  'ROM / SSD': 'Storage Assembly',
+  Motherboard: 'PCB Assembly',
+};
+
+// Sector -> Canonical Product Name Relationship
+export const SECTOR_TO_PRODUCT_MAP = {
+  'GPU Assembly': 'GPU',
+  'RAM Assembly': 'RAM',
+  'Storage Assembly': 'ROM / SSD',
+  'PCB Assembly': 'Motherboard',
+  // Backward compatibility for legacy sector names
+  'PCB Assembly Line 1': 'Motherboard',
+  'PCB Assembly Line 2': 'Motherboard',
+  'SMT Surface Mount Station': 'Motherboard',
+  'Thermal & Soldering Bay': 'Motherboard',
+  'Chassis & Enclosure Fabrication': 'Motherboard',
+  'Component Testing Station': 'Motherboard',
+  'Packaging & Box Staging': 'Motherboard',
+};
 
 const SHIFTS = ['Day', 'Night', 'Swing'];
 
@@ -77,6 +98,7 @@ const ManufacturingManagementPage = () => {
 
   // Dialog: Edit assignment
   const [editItem, setEditItem] = useState(null);
+  const [editStaffId, setEditStaffId] = useState('');
   const [editSector, setEditSector] = useState('');
   const [editShift, setEditShift] = useState('Day');
   const [editStatus, setEditStatus] = useState('Working');
@@ -87,7 +109,7 @@ const ManufacturingManagementPage = () => {
   // Dialog: Create assignment
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newStaffId, setNewStaffId] = useState('');
-  const [newSector, setNewSector] = useState(COMMON_SECTORS[0]);
+  const [newSector, setNewSector] = useState(CANONICAL_SECTORS[0]);
   const [newShift, setNewShift] = useState('Day');
   const [newStatus, setNewStatus] = useState('Working');
   const [newProductId, setNewProductId] = useState('');
@@ -105,14 +127,14 @@ const ManufacturingManagementPage = () => {
     setApiError('');
     try {
       const [assignRes, summaryRes, staffRes, prodRes] = await Promise.all([
-        manufacturingService.getAssignments(),
+        manufacturingService.getAssignments({ limit: 100 }),
         manufacturingService.getSummary().catch(() => null),
-        getStaff().catch(() => []),
+        getStaff({ limit: 100 }).catch(() => []),
         productService.getAll({ limit: 100 }).catch(() => []),
       ]);
 
       const list = Array.isArray(assignRes) ? assignRes : assignRes?.assignments || assignRes?.rows || [];
-      const stList = staffRes?.staff || staffRes || [];
+      const stList = Array.isArray(staffRes) ? staffRes : staffRes?.staff || staffRes?.rows || [];
       const rawProdList = Array.isArray(prodRes) ? prodRes : prodRes?.products || prodRes?.rows || [];
       const canonicalProds = getCanonicalProducts(rawProdList);
 
@@ -131,14 +153,101 @@ const ManufacturingManagementPage = () => {
     fetchData();
   }, [fetchData]);
 
+  // Helper to resolve canonical product for an assignment
+  const resolveAssignmentProduct = useCallback(
+    (item) => {
+      if (!item) return { name: 'Motherboard', type: 'Motherboard' };
+
+      // 1. If item has product attached
+      if (item.product?.name) {
+        const prodNameUpper = item.product.name.trim().toUpperCase();
+        const matched = products.find((p) => {
+          const canonicalUpper = p.name.toUpperCase();
+          return (
+            canonicalUpper === prodNameUpper ||
+            (p.canonical_name && p.canonical_name.toUpperCase() === prodNameUpper) ||
+            prodNameUpper.includes(canonicalUpper)
+          );
+        });
+        if (matched) return matched;
+      }
+
+      // 2. If item has product_id matching canonical products
+      if (item.product_id) {
+        const matched = products.find((p) => String(p.id) === String(item.product_id));
+        if (matched) return matched;
+      }
+
+      // 3. Fallback from sector mapping
+      if (item.sector) {
+        const mappedName = SECTOR_TO_PRODUCT_MAP[item.sector];
+        if (mappedName) {
+          const matched = products.find((p) => p.name.toUpperCase() === mappedName.toUpperCase());
+          if (matched) return matched;
+          return { name: mappedName, type: `${mappedName} Assembly` };
+        }
+      }
+
+      return { name: item.product?.name || 'General Production', type: item.product?.type || '' };
+    },
+    [products]
+  );
+
+  // Sector options combining canonical sectors with any legacy sectors present
+  const availableSectors = useMemo(() => {
+    const list = [...CANONICAL_SECTORS];
+    assignments.forEach((a) => {
+      if (a.sector && !list.includes(a.sector)) {
+        list.push(a.sector);
+      }
+    });
+    return list;
+  }, [assignments]);
+
   // Open Edit Modal
   const handleOpenEdit = (item) => {
     setEditItem(item);
-    setEditSector(item.sector || '');
+    setEditStaffId(item.staff_id || item.staff?.id || '');
     setEditShift(item.shift || 'Day');
     setEditStatus(item.status || 'Working');
-    setEditProductId(item.product_id || '');
     setEditNotes(item.notes || '');
+
+    // Resolve matching product and sector
+    const resolvedProd = resolveAssignmentProduct(item);
+    const matchedCanonical = products.find((p) => p.name === resolvedProd.name);
+
+    if (matchedCanonical) {
+      setEditProductId(matchedCanonical.id);
+      setEditSector(item.sector || PRODUCT_TO_SECTOR_MAP[matchedCanonical.name] || CANONICAL_SECTORS[0]);
+    } else {
+      setEditProductId(item.product_id || '');
+      setEditSector(item.sector || CANONICAL_SECTORS[0]);
+    }
+  };
+
+  // Handle product change in edit modal (auto-sync sector)
+  const handleEditProductChange = (e) => {
+    const selectedProdId = e.target.value;
+    setEditProductId(selectedProdId);
+    if (selectedProdId) {
+      const selectedProd = products.find((p) => String(p.id) === String(selectedProdId));
+      if (selectedProd && PRODUCT_TO_SECTOR_MAP[selectedProd.name]) {
+        setEditSector(PRODUCT_TO_SECTOR_MAP[selectedProd.name]);
+      }
+    }
+  };
+
+  // Handle sector change in edit modal (auto-sync product)
+  const handleEditSectorChange = (e) => {
+    const selectedSec = e.target.value;
+    setEditSector(selectedSec);
+    const mappedProdName = SECTOR_TO_PRODUCT_MAP[selectedSec];
+    if (mappedProdName) {
+      const matchedProd = products.find((p) => p.name === mappedProdName);
+      if (matchedProd) {
+        setEditProductId(matchedProd.id);
+      }
+    }
   };
 
   const handleSaveEdit = async () => {
@@ -147,6 +256,7 @@ const ManufacturingManagementPage = () => {
     setApiError('');
     try {
       const payload = {
+        staff_id: editStaffId ? Number(editStaffId) : undefined,
         sector: editSector.trim(),
         shift: editShift,
         status: editStatus,
@@ -167,20 +277,50 @@ const ManufacturingManagementPage = () => {
 
   // Open Create Modal
   const handleOpenCreateModal = () => {
-    setNewStaffId(staffList.length > 0 ? staffList[0].id : '');
-    setNewSector(COMMON_SECTORS[0]);
+    const initialStaffId = staffList.length > 0 ? staffList[0].id : '';
+    const initialProd = products.length > 0 ? products[0] : null;
+    const initialProdId = initialProd ? initialProd.id : '';
+    const initialSector = initialProd ? PRODUCT_TO_SECTOR_MAP[initialProd.name] || CANONICAL_SECTORS[0] : CANONICAL_SECTORS[0];
+
+    setNewStaffId(initialStaffId);
+    setNewProductId(initialProdId);
+    setNewSector(initialSector);
     setNewShift('Day');
     setNewStatus('Working');
-    setNewProductId('');
     setNewStartDate(new Date().toISOString().split('T')[0]);
     setNewNotes('');
     setIsCreateModalOpen(true);
   };
 
+  // Handle product change in create modal (auto-sync sector)
+  const handleNewProductChange = (e) => {
+    const selectedProdId = e.target.value;
+    setNewProductId(selectedProdId);
+    if (selectedProdId) {
+      const selectedProd = products.find((p) => String(p.id) === String(selectedProdId));
+      if (selectedProd && PRODUCT_TO_SECTOR_MAP[selectedProd.name]) {
+        setNewSector(PRODUCT_TO_SECTOR_MAP[selectedProd.name]);
+      }
+    }
+  };
+
+  // Handle sector change in create modal (auto-sync product)
+  const handleNewSectorChange = (e) => {
+    const selectedSec = e.target.value;
+    setNewSector(selectedSec);
+    const mappedProdName = SECTOR_TO_PRODUCT_MAP[selectedSec];
+    if (mappedProdName) {
+      const matchedProd = products.find((p) => p.name === mappedProdName);
+      if (matchedProd) {
+        setNewProductId(matchedProd.id);
+      }
+    }
+  };
+
   const handleCreateAssignment = async (e) => {
     e.preventDefault();
     if (!newStaffId) {
-      setApiError('Please select a staff member for this assignment.');
+      setApiError('Please select a technician / staff member for this assignment.');
       return;
     }
     if (!newSector.trim()) {
@@ -234,15 +374,30 @@ const ManufacturingManagementPage = () => {
     return assignments.filter((item) => {
       const q = searchQuery.toLowerCase().trim();
       const staffName = `${item.staff?.first_name || ''} ${item.staff?.last_name || ''}`.toLowerCase();
-      const sectorName = item.sector?.toLowerCase() || '';
+      const staffEmail = (item.staff?.email || '').toLowerCase();
+      const sectorName = (item.sector || '').toLowerCase();
+      const resolvedProd = resolveAssignmentProduct(item);
+      const prodName = (resolvedProd?.name || '').toLowerCase();
+      const shiftName = `${item.shift || ''} shift`.toLowerCase();
+      const statusName = (item.status || '').toLowerCase();
+      const notes = (item.notes || '').toLowerCase();
 
-      const matchesSearch = !q || staffName.includes(q) || sectorName.includes(q) || item.notes?.toLowerCase().includes(q);
+      const matchesSearch =
+        !q ||
+        staffName.includes(q) ||
+        staffEmail.includes(q) ||
+        sectorName.includes(q) ||
+        prodName.includes(q) ||
+        shiftName.includes(q) ||
+        statusName.includes(q) ||
+        notes.includes(q);
+
       const matchesSector = sectorFilter === 'ALL' || item.sector === sectorFilter;
       const matchesStatus = statusFilter === 'ALL' || item.status === statusFilter;
 
       return matchesSearch && matchesSector && matchesStatus;
     });
-  }, [assignments, searchQuery, sectorFilter, statusFilter]);
+  }, [assignments, searchQuery, sectorFilter, statusFilter, resolveAssignmentProduct]);
 
   const paginatedAssignments = useMemo(() => {
     const startIndex = (page - 1) * PAGE_SIZE;
@@ -263,9 +418,6 @@ const ManufacturingManagementPage = () => {
     setStatusFilter(e.target.value);
     setPage(1);
   };
-
-  // Unique sectors from list for dropdown filter
-  const uniqueSectors = Array.from(new Set(assignments.map((a) => a.sector).filter(Boolean)));
 
   return (
     <Box sx={{ width: '100%', py: 1 }}>
@@ -298,7 +450,7 @@ const ManufacturingManagementPage = () => {
                 Manufacturing Lines & Work Orders
               </Typography>
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                Deploy assembly technicians, allocate factory floor sectors, and track shift allocations.
+                Deploy assembly technicians, allocate factory floor sectors, and track shift allocations across GPU, RAM, ROM / SSD, and Motherboard lines.
               </Typography>
             </Box>
           </Box>
@@ -412,7 +564,7 @@ const ManufacturingManagementPage = () => {
             Active Floor Sectors
           </Typography>
           <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.5 }}>
-            {uniqueSectors.length}
+            {availableSectors.length}
           </Typography>
           <Typography variant="caption" sx={{ color: '#64748b' }}>
             Operating workstations
@@ -443,7 +595,7 @@ const ManufacturingManagementPage = () => {
             <TextField
               size="small"
               fullWidth
-              placeholder="Search technician, sector, or workstation..."
+              placeholder="Search technician, sector, product, shift..."
               value={searchQuery}
               onChange={handleSearchChange}
             />
@@ -457,7 +609,7 @@ const ManufacturingManagementPage = () => {
             onChange={handleSectorFilterChange}
           >
             <MenuItem value="ALL">All Sectors</MenuItem>
-            {uniqueSectors.map((sec) => (
+            {availableSectors.map((sec) => (
               <MenuItem key={sec} value={sec}>
                 {sec}
               </MenuItem>
@@ -527,7 +679,7 @@ const ManufacturingManagementPage = () => {
                 '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: '4px' },
               }}
             >
-              <Table sx={{ minWidth: 700 }}>
+              <Table sx={{ minWidth: 750 }}>
                 <TableHead sx={{ backgroundColor: '#f9fafb' }}>
                   <TableRow sx={{ '& th': { color: '#0f172a', fontWeight: 700, borderBottom: '1px solid #e5e7eb' } }}>
                     <TableCell>Technician / Staff</TableCell>
@@ -546,21 +698,25 @@ const ManufacturingManagementPage = () => {
                       border: '#e5e7eb',
                     };
 
-                    const staffName = item.staff
-                      ? `${item.staff.first_name} ${item.staff.last_name}`
+                    const staffFullName = item.staff
+                      ? `${item.staff.first_name || ''} ${item.staff.last_name || ''}`.trim()
                       : `Staff #${item.staff_id}`;
+
+                    const resolvedProd = resolveAssignmentProduct(item);
 
                     return (
                       <TableRow key={item.id} hover>
+                        {/* 1. Technician / Staff */}
                         <TableCell>
                           <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a' }}>
-                            {staffName}
+                            {staffFullName}
                           </Typography>
                           <Typography variant="caption" sx={{ color: '#64748b' }}>
-                            {item.staff?.email || `ID #${item.staff_id}`}
+                            {item.staff?.email || (item.staff?.role?.name ? `Role: ${item.staff.role.name}` : `ID #${item.staff_id}`)}
                           </Typography>
                         </TableCell>
 
+                        {/* 2. Work Station & Sector */}
                         <TableCell>
                           <Typography variant="body2" sx={{ fontWeight: 700, color: '#2563eb' }}>
                             {item.sector}
@@ -570,6 +726,7 @@ const ManufacturingManagementPage = () => {
                           </Typography>
                         </TableCell>
 
+                        {/* 3. Shift */}
                         <TableCell>
                           <Chip
                             label={`${item.shift || 'Day'} Shift`}
@@ -578,17 +735,19 @@ const ManufacturingManagementPage = () => {
                           />
                         </TableCell>
 
+                        {/* 4. Product Line */}
                         <TableCell>
-                          <Typography variant="body2">
-                            {item.product?.name || 'General Component Assembly'}
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>
+                            {resolvedProd.name}
                           </Typography>
-                          {item.product?.type && (
-                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                              {item.product.type}
+                          {resolvedProd.type && (
+                            <Typography variant="caption" sx={{ color: '#64748b' }}>
+                              {resolvedProd.type}
                             </Typography>
                           )}
                         </TableCell>
 
+                        {/* 5. Status */}
                         <TableCell>
                           <Chip
                             label={item.status}
@@ -604,6 +763,7 @@ const ManufacturingManagementPage = () => {
                           />
                         </TableCell>
 
+                        {/* 6. Actions */}
                         <TableCell align="right">
                           <Stack direction="row" spacing={1} justifyContent="flex-end">
                             {canEdit && (
@@ -648,69 +808,92 @@ const ManufacturingManagementPage = () => {
       </Paper>
 
       {/* --- DIALOG 1: EDIT ASSIGNMENT --- */}
-      <Dialog open={Boolean(editItem)} onClose={() => setEditItem(null)} maxWidth="xs" fullWidth>
+      <Dialog open={Boolean(editItem)} onClose={() => setEditItem(null)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 700 }}>Edit Station Assignment</DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2} sx={{ mt: 1 }}>
+            {/* Staff Selection */}
             <TextField
               select
               fullWidth
               size="small"
-              label="Work Station Sector"
-              value={editSector}
-              onChange={(e) => setEditSector(e.target.value)}
+              label="Assigned Technician / Staff"
+              value={editStaffId}
+              onChange={(e) => setEditStaffId(e.target.value)}
             >
-              {COMMON_SECTORS.map((sec) => (
-                <MenuItem key={sec} value={sec}>
-                  {sec}
+              {staffList.map((st) => (
+                <MenuItem key={st.id} value={st.id}>
+                  {st.first_name} {st.last_name} ({st.email || st.role?.name || `ID #${st.id}`})
                 </MenuItem>
               ))}
             </TextField>
 
-            <TextField
-              select
-              fullWidth
-              size="small"
-              label="Shift Allocation"
-              value={editShift}
-              onChange={(e) => setEditShift(e.target.value)}
-            >
-              {SHIFTS.map((sh) => (
-                <MenuItem key={sh} value={sh}>
-                  {sh} Shift
-                </MenuItem>
-              ))}
-            </TextField>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+              {/* Product Line */}
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Product Line"
+                value={editProductId}
+                onChange={handleEditProductChange}
+              >
+                {products.map((prod) => (
+                  <MenuItem key={prod.id} value={prod.id}>
+                    {prod.name}
+                  </MenuItem>
+                ))}
+              </TextField>
 
-            <TextField
-              select
-              fullWidth
-              size="small"
-              label="Technician Status"
-              value={editStatus}
-              onChange={(e) => setEditStatus(e.target.value)}
-            >
-              <MenuItem value="Working">Working</MenuItem>
-              <MenuItem value="On Break">On Break</MenuItem>
-              <MenuItem value="Standby">Standby</MenuItem>
-              <MenuItem value="Completed">Completed</MenuItem>
-            </TextField>
+              {/* Work Station / Sector */}
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Work Station / Sector"
+                value={editSector}
+                onChange={handleEditSectorChange}
+              >
+                {availableSectors.map((sec) => (
+                  <MenuItem key={sec} value={sec}>
+                    {sec}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Box>
 
-            <TextField
-              select
-              fullWidth
-              size="small"
-              label="Associated Product (Optional)"
-              value={editProductId}
-              onChange={(e) => setEditProductId(e.target.value)}
-            >
-              <MenuItem value="">General Assembly</MenuItem>
-              {products.map((prod) => (
-                <MenuItem key={prod.id} value={prod.id}>
-                  {prod.name}
-                </MenuItem>
-              ))}
-            </TextField>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+              {/* Shift */}
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Shift Allocation"
+                value={editShift}
+                onChange={(e) => setEditShift(e.target.value)}
+              >
+                {SHIFTS.map((sh) => (
+                  <MenuItem key={sh} value={sh}>
+                    {sh} Shift
+                  </MenuItem>
+                ))}
+              </TextField>
+
+              {/* Status */}
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Technician Status"
+                value={editStatus}
+                onChange={(e) => setEditStatus(e.target.value)}
+              >
+                <MenuItem value="Working">Working</MenuItem>
+                <MenuItem value="On Break">On Break</MenuItem>
+                <MenuItem value="Standby">Standby</MenuItem>
+                <MenuItem value="Completed">Completed</MenuItem>
+              </TextField>
+            </Box>
 
             <TextField
               fullWidth
@@ -739,6 +922,7 @@ const ManufacturingManagementPage = () => {
           <DialogTitle sx={{ fontWeight: 800 }}>Assign Floor Technician to Sector</DialogTitle>
           <DialogContent dividers>
             <Stack spacing={2} sx={{ mt: 1 }}>
+              {/* Select Staff Member */}
               <TextField
                 select
                 required
@@ -750,26 +934,45 @@ const ManufacturingManagementPage = () => {
               >
                 {staffList.map((st) => (
                   <MenuItem key={st.id} value={st.id}>
-                    {st.first_name} {st.last_name} ({st.email})
+                    {st.first_name} {st.last_name} ({st.email || st.role?.name || `ID #${st.id}`})
                   </MenuItem>
                 ))}
               </TextField>
 
-              <TextField
-                select
-                required
-                fullWidth
-                size="small"
-                label="Manufacturing Sector / Line"
-                value={newSector}
-                onChange={(e) => setNewSector(e.target.value)}
-              >
-                {COMMON_SECTORS.map((sec) => (
-                  <MenuItem key={sec} value={sec}>
-                    {sec}
-                  </MenuItem>
-                ))}
-              </TextField>
+              {/* Product Line & Sector */}
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <TextField
+                  select
+                  required
+                  fullWidth
+                  size="small"
+                  label="Product Line"
+                  value={newProductId}
+                  onChange={handleNewProductChange}
+                >
+                  {products.map((prod) => (
+                    <MenuItem key={prod.id} value={prod.id}>
+                      {prod.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+
+                <TextField
+                  select
+                  required
+                  fullWidth
+                  size="small"
+                  label="Manufacturing Sector / Line"
+                  value={newSector}
+                  onChange={handleNewSectorChange}
+                >
+                  {availableSectors.map((sec) => (
+                    <MenuItem key={sec} value={sec}>
+                      {sec}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Box>
 
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
                 <TextField
@@ -795,37 +998,22 @@ const ManufacturingManagementPage = () => {
                   onChange={(e) => setNewStatus(e.target.value)}
                 >
                   <MenuItem value="Working">Working</MenuItem>
+                  <MenuItem value="On Break">On Break</MenuItem>
                   <MenuItem value="Standby">Standby</MenuItem>
+                  <MenuItem value="Completed">Completed</MenuItem>
                 </TextField>
               </Box>
 
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-                <TextField
-                  select
-                  fullWidth
-                  size="small"
-                  label="Dedicated Product (Optional)"
-                  value={newProductId}
-                  onChange={(e) => setNewProductId(e.target.value)}
-                >
-                  <MenuItem value="">General Production</MenuItem>
-                  {products.map((prod) => (
-                    <MenuItem key={prod.id} value={prod.id}>
-                      {prod.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
-                <TextField
-                  fullWidth
-                  size="small"
-                  label="Assignment Start Date"
-                  type="date"
-                  InputLabelProps={{ shrink: true }}
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  value={newStartDate}
-                  onChange={(e) => setNewStartDate(e.target.value)}
-                />
-              </Box>
+              <TextField
+                fullWidth
+                size="small"
+                label="Assignment Start Date"
+                type="date"
+                InputLabelProps={{ shrink: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
+                value={newStartDate}
+                onChange={(e) => setNewStartDate(e.target.value)}
+              />
 
               <TextField
                 fullWidth
