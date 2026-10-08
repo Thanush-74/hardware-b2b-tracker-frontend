@@ -1,9 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { login as loginApi } from '../services/authService';
+import IdleTimeoutHandler from '../components/IdleTimeoutHandler';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
+  const navigate = useNavigate();
+
   const [user, setUser] = useState(() => {
     try {
       const savedUser = localStorage.getItem('user');
@@ -51,6 +55,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(receivedUser));
       localStorage.setItem('permissions', JSON.stringify(receivedPerms || []));
       localStorage.setItem('screens', JSON.stringify(receivedScreens || []));
+      localStorage.setItem('b2b_tracker_last_activity', String(Date.now()));
 
       return data;
     } finally {
@@ -58,7 +63,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = useCallback(() => {
+  const logout = useCallback((shouldRedirect = true) => {
     setToken(null);
     setUser(null);
     setPermissions([]);
@@ -68,12 +73,17 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
     localStorage.removeItem('permissions');
     localStorage.removeItem('screens');
-  }, []);
+    localStorage.removeItem('b2b_tracker_last_activity');
+
+    if (shouldRedirect && typeof window !== 'undefined' && window.location.pathname !== '/login') {
+      navigate('/login', { replace: true });
+    }
+  }, [navigate]);
 
   // Listen for unauthorized 401 events from Axios interceptor
   useEffect(() => {
     const handleUnauthorized = () => {
-      logout();
+      logout(true);
     };
 
     window.addEventListener('auth:unauthorized', handleUnauthorized);
@@ -138,7 +148,12 @@ export const AuthProvider = ({ children }) => {
     getDefaultRoute,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+      <IdleTimeoutHandler />
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {

@@ -22,22 +22,36 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Guard to prevent repeatedly firing unauthorized events from concurrent 401 responses
+let isHandlingUnauthorized = false;
+
 // Response interceptor to handle errors cleanly
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     // Handle unauthorized (401)
     if (error.response?.status === 401) {
-      // Clear token if expired or invalid when accessing protected endpoints
+      // Exclude initial login attempts so invalid credentials don't trigger logout events
       const isLoginRequest = error.config?.url?.includes('/api/auth/login');
       if (!isLoginRequest) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         localStorage.removeItem('permissions');
         localStorage.removeItem('screens');
+        localStorage.removeItem('b2b_tracker_last_activity');
         
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new Event('auth:unauthorized'));
+        if (typeof window !== 'undefined' && !isHandlingUnauthorized) {
+          isHandlingUnauthorized = true;
+          window.dispatchEvent(
+            new CustomEvent('auth:unauthorized', {
+              detail: {
+                message: error.response?.data?.message || 'Session expired. Please log in again.',
+              },
+            })
+          );
+          setTimeout(() => {
+            isHandlingUnauthorized = false;
+          }, 1500);
         }
       }
     }
