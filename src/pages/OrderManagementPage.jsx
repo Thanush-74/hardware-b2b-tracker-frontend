@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -31,6 +31,9 @@ import { useAuth } from '../context/AuthContext';
 import { orderService, deliveryService, cartService, productService } from '../services/businessService';
 import { getStaff } from '../services/staffService';
 import { OrdersIcon, DeliveriesIcon, CartIcon } from '../components/Icons';
+import PaginationControl from '../components/PaginationControl';
+
+const PAGE_SIZE = 10;
 
 const ORDER_STATUS_COLORS = {
   Pending: { bg: '#fffbeb', text: '#b45309', border: '#fde68a' },
@@ -62,6 +65,9 @@ const OrderManagementPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [apiError, setApiError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  // Pagination state
+  const [page, setPage] = useState(1);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -111,7 +117,7 @@ const OrderManagementPage = () => {
     setApiError('');
     try {
       const [ordersRes, cartRes, staffRes] = await Promise.all([
-        orderService.getAll(),
+        orderService.getAll({ limit: 1000 }),
         cartService.getCart().catch(() => null),
         getStaff().catch(() => []),
       ]);
@@ -292,6 +298,28 @@ const OrderManagementPage = () => {
 
     return matchesSearch && matchesStatus && matchesPayment;
   });
+
+  // Paginated slice for current page
+  const paginatedOrders = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredOrders.slice(start, start + PAGE_SIZE);
+  }, [filteredOrders, page]);
+
+  // Handlers for search/filters that reset page to 1
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setPage(1);
+  };
+
+  const handleStatusFilterChange = (e) => {
+    setStatusFilter(e.target.value);
+    setPage(1);
+  };
+
+  const handlePaymentFilterChange = (e) => {
+    setPaymentFilter(e.target.value);
+    setPage(1);
+  };
 
   // KPI Calculations
   const totalRevenue = orders.reduce((acc, curr) => acc + (Number(curr.total_amount) || 0), 0);
@@ -488,7 +516,7 @@ const OrderManagementPage = () => {
             fullWidth
             placeholder="Search by Order #, Customer, Phone, or Email..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
           />
           <TextField
             select
@@ -496,7 +524,7 @@ const OrderManagementPage = () => {
             fullWidth
             label="Order Status"
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={handleStatusFilterChange}
           >
             <MenuItem value="ALL">All Order Statuses</MenuItem>
             <MenuItem value="Pending">Pending</MenuItem>
@@ -512,7 +540,7 @@ const OrderManagementPage = () => {
             fullWidth
             label="Payment Status"
             value={paymentFilter}
-            onChange={(e) => setPaymentFilter(e.target.value)}
+            onChange={handlePaymentFilterChange}
           >
             <MenuItem value="ALL">All Payment Statuses</MenuItem>
             <MenuItem value="Pending">Pending</MenuItem>
@@ -563,145 +591,156 @@ const OrderManagementPage = () => {
             )}
           </Box>
         ) : (
-          <TableContainer
-            sx={{
-              width: '100%',
-              overflowX: 'auto',
-              minWidth: 0,
-              '&::-webkit-scrollbar': { height: '5px' },
-              '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(148, 163, 184, 0.25)', borderRadius: '4px' },
-            }}
-          >
-            <Table sx={{ width: '100%', minWidth: 740 }}>
-              <TableHead sx={{ backgroundColor: '#f9fafb' }}>
-                <TableRow sx={{ '& th': { color: '#0f172a', fontWeight: 700, borderBottom: '1px solid #e5e7eb' } }}>
-                  <TableCell>Order Number</TableCell>
-                  <TableCell>Customer / Company</TableCell>
-                  <TableCell>Items</TableCell>
-                  <TableCell>Total Amount</TableCell>
-                  <TableCell>Payment Status</TableCell>
-                  <TableCell>Order Status</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredOrders.map((order) => {
-                  const orderColor = ORDER_STATUS_COLORS[order.order_status] || {
-                    bg: '#f9fafb',
-                    text: '#0f172a',
-                    border: '#e5e7eb',
-                  };
-                  const payColor = PAYMENT_STATUS_COLORS[order.payment_status] || {
-                    bg: '#f9fafb',
-                    text: '#0f172a',
-                  };
-                  const itemsCount = order.total_items_count || order.items?.reduce((s, i) => s + Number(i.quantity || 0), 0) || 0;
+          <>
+            <TableContainer
+              sx={{
+                width: '100%',
+                overflowX: 'auto',
+                minWidth: 0,
+                '&::-webkit-scrollbar': { height: '5px' },
+                '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(148, 163, 184, 0.25)', borderRadius: '4px' },
+              }}
+            >
+              <Table sx={{ width: '100%', minWidth: 740 }}>
+                <TableHead sx={{ backgroundColor: '#f9fafb' }}>
+                  <TableRow sx={{ '& th': { color: '#0f172a', fontWeight: 700, borderBottom: '1px solid #e5e7eb' } }}>
+                    <TableCell>Order Number</TableCell>
+                    <TableCell>Customer / Company</TableCell>
+                    <TableCell>Items</TableCell>
+                    <TableCell>Total Amount</TableCell>
+                    <TableCell>Payment Status</TableCell>
+                    <TableCell>Order Status</TableCell>
+                    <TableCell align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paginatedOrders.map((order) => {
+                    const orderColor = ORDER_STATUS_COLORS[order.order_status] || {
+                      bg: '#f9fafb',
+                      text: '#0f172a',
+                      border: '#e5e7eb',
+                    };
+                    const payColor = PAYMENT_STATUS_COLORS[order.payment_status] || {
+                      bg: '#f9fafb',
+                      text: '#0f172a',
+                    };
+                    const itemsCount = order.total_items_count || order.items?.reduce((s, i) => s + Number(i.quantity || 0), 0) || 0;
 
-                  return (
-                    <TableRow key={order.id} hover>
-                      <TableCell>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700, fontFamily: 'monospace', color: 'primary.light' }}>
-                          {order.order_number}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                          {order.order_date ? new Date(order.order_date).toLocaleDateString() : 'N/A'}
-                        </Typography>
-                      </TableCell>
+                    return (
+                      <TableRow key={order.id} hover>
+                        <TableCell>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontFamily: 'monospace', color: 'primary.light' }}>
+                            {order.order_number}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            {order.order_date ? new Date(order.order_date).toLocaleDateString() : 'N/A'}
+                          </Typography>
+                        </TableCell>
 
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                          {order.customer_name}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                          {order.customer_phone || order.customer_email || 'No contact specified'}
-                        </Typography>
-                      </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                            {order.customer_name}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                            {order.customer_phone || order.customer_email || 'No contact specified'}
+                          </Typography>
+                        </TableCell>
 
-                      <TableCell>
-                        <Button
-                          size="small"
-                          variant="text"
-                          onClick={() => setViewOrder(order)}
-                          sx={{ textTransform: 'none', fontWeight: 600, p: 0.5 }}
-                        >
-                          {itemsCount} {itemsCount === 1 ? 'unit' : 'units'} ({order.items?.length || 0} items)
-                        </Button>
-                      </TableCell>
-
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'monospace' }}>
-                          ₹{Number(order.total_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                          {order.payment_method || 'Bank Transfer'}
-                        </Typography>
-                      </TableCell>
-
-                      <TableCell>
-                        <Chip
-                          label={order.payment_status}
-                          size="small"
-                          onClick={canEdit ? () => handleOpenPaymentDialog(order) : undefined}
-                          sx={{
-                            backgroundColor: payColor.bg,
-                            color: payColor.text,
-                            fontWeight: 700,
-                            cursor: canEdit ? 'pointer' : 'default',
-                            '&:hover': canEdit ? { filter: 'brightness(1.2)' } : {},
-                          }}
-                        />
-                      </TableCell>
-
-                      <TableCell>
-                        <Chip
-                          label={order.order_status}
-                          size="small"
-                          onClick={canEdit ? () => handleOpenStatusDialog(order) : undefined}
-                          sx={{
-                            backgroundColor: orderColor.bg,
-                            color: orderColor.text,
-                            borderColor: orderColor.border,
-                            borderWidth: 1,
-                            borderStyle: 'solid',
-                            fontWeight: 700,
-                            cursor: canEdit ? 'pointer' : 'default',
-                            '&:hover': canEdit ? { filter: 'brightness(1.2)' } : {},
-                          }}
-                        />
-                      </TableCell>
-
-                      <TableCell align="right">
-                        <Stack direction="row" spacing={1} justifyContent="flex-end">
+                        <TableCell>
                           <Button
                             size="small"
-                            variant="outlined"
-                            color="inherit"
+                            variant="text"
                             onClick={() => setViewOrder(order)}
-                            sx={{ fontWeight: 600, fontSize: '0.75rem', py: 0.4 }}
+                            sx={{ textTransform: 'none', fontWeight: 600, p: 0.5 }}
                           >
-                            Details
+                            {itemsCount} {itemsCount === 1 ? 'unit' : 'units'} ({order.items?.length || 0} items)
                           </Button>
+                        </TableCell>
 
-                          {order.order_status !== 'Cancelled' && (
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'monospace' }}>
+                            ₹{Number(order.total_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            {order.payment_method || 'Bank Transfer'}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell>
+                          <Chip
+                            label={order.payment_status}
+                            size="small"
+                            onClick={canEdit ? () => handleOpenPaymentDialog(order) : undefined}
+                            sx={{
+                              backgroundColor: payColor.bg,
+                              color: payColor.text,
+                              fontWeight: 700,
+                              cursor: canEdit ? 'pointer' : 'default',
+                              '&:hover': canEdit ? { filter: 'brightness(1.2)' } : {},
+                            }}
+                          />
+                        </TableCell>
+
+                        <TableCell>
+                          <Chip
+                            label={order.order_status}
+                            size="small"
+                            onClick={canEdit ? () => handleOpenStatusDialog(order) : undefined}
+                            sx={{
+                              backgroundColor: orderColor.bg,
+                              color: orderColor.text,
+                              borderColor: orderColor.border,
+                              borderWidth: 1,
+                              borderStyle: 'solid',
+                              fontWeight: 700,
+                              cursor: canEdit ? 'pointer' : 'default',
+                              '&:hover': canEdit ? { filter: 'brightness(1.2)' } : {},
+                            }}
+                          />
+                        </TableCell>
+
+                        <TableCell align="right">
+                          <Stack direction="row" spacing={1} justifyContent="flex-end">
                             <Button
                               size="small"
-                              variant="contained"
-                              color="primary"
-                              startIcon={<DeliveriesIcon sx={{ fontSize: 16 }} />}
-                              onClick={() => handleOpenDeliveryDialog(order)}
+                              variant="outlined"
+                              color="inherit"
+                              onClick={() => setViewOrder(order)}
                               sx={{ fontWeight: 600, fontSize: '0.75rem', py: 0.4 }}
                             >
-                              Dispatch
+                              Details
                             </Button>
-                          )}
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
+
+                            {order.order_status !== 'Cancelled' && (
+                              <Button
+                                size="small"
+                                variant="contained"
+                                color="primary"
+                                startIcon={<DeliveriesIcon sx={{ fontSize: 16 }} />}
+                                onClick={() => handleOpenDeliveryDialog(order)}
+                                sx={{ fontWeight: 600, fontSize: '0.75rem', py: 0.4 }}
+                              >
+                                Dispatch
+                              </Button>
+                            )}
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            {/* Pagination Control */}
+            <PaginationControl
+              currentPage={page}
+              totalItems={filteredOrders.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={setPage}
+              itemLabel="orders"
+            />
+          </>
         )}
       </Paper>
 

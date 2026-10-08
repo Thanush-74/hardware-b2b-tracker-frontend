@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -27,6 +27,9 @@ import { useAuth } from '../context/AuthContext';
 import { expenseService } from '../services/businessService';
 import { getStaff } from '../services/staffService';
 import { ExpensesIcon } from '../components/Icons';
+import PaginationControl from '../components/PaginationControl';
+
+const PAGE_SIZE = 10;
 
 const CATEGORIES = [
   'Raw Materials & Silicon',
@@ -56,6 +59,9 @@ const ExpenseManagementPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [apiError, setApiError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  // Pagination state
+  const [page, setPage] = useState(1);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -97,7 +103,7 @@ const ExpenseManagementPage = () => {
     setApiError('');
     try {
       const [expensesRes, summaryRes, staffRes] = await Promise.all([
-        expenseService.getAll(),
+        expenseService.getAll({ limit: 1000 }),
         expenseService.getSummary().catch(() => null),
         getStaff().catch(() => []),
       ]);
@@ -237,20 +243,42 @@ const ExpenseManagementPage = () => {
   };
 
   // Filtered list
-  const filteredList = expenses.filter((item) => {
-    const q = searchQuery.toLowerCase().trim();
-    const matchesSearch =
-      !q ||
-      item.title?.toLowerCase().includes(q) ||
-      item.category?.toLowerCase().includes(q) ||
-      item.reference_no?.toLowerCase().includes(q) ||
-      item.notes?.toLowerCase().includes(q);
+  const filteredList = useMemo(() => {
+    return expenses.filter((item) => {
+      const q = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        item.title?.toLowerCase().includes(q) ||
+        item.category?.toLowerCase().includes(q) ||
+        item.reference_no?.toLowerCase().includes(q) ||
+        item.notes?.toLowerCase().includes(q);
 
-    const matchesType = typeFilter === 'ALL' || item.type === typeFilter;
-    const matchesCategory = categoryFilter === 'ALL' || item.category === categoryFilter;
+      const matchesType = typeFilter === 'ALL' || item.type === typeFilter;
+      const matchesCategory = categoryFilter === 'ALL' || item.category === categoryFilter;
 
-    return matchesSearch && matchesType && matchesCategory;
-  });
+      return matchesSearch && matchesType && matchesCategory;
+    });
+  }, [expenses, searchQuery, typeFilter, categoryFilter]);
+
+  const paginatedList = useMemo(() => {
+    const startIndex = (page - 1) * PAGE_SIZE;
+    return filteredList.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [filteredList, page]);
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setPage(1);
+  };
+
+  const handleTypeFilterChange = (e) => {
+    setTypeFilter(e.target.value);
+    setPage(1);
+  };
+
+  const handleCategoryFilterChange = (e) => {
+    setCategoryFilter(e.target.value);
+    setPage(1);
+  };
 
   // Financial calculations
   const totalIncome = summary?.totalIncome !== undefined
@@ -449,7 +477,7 @@ const ExpenseManagementPage = () => {
             fullWidth
             placeholder="Search title, category, reference number, or notes..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
           />
           <TextField
             select
@@ -457,7 +485,7 @@ const ExpenseManagementPage = () => {
             fullWidth
             label="Transaction Type"
             value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
+            onChange={handleTypeFilterChange}
           >
             <MenuItem value="ALL">All Types</MenuItem>
             <MenuItem value="Expense">Expense Only</MenuItem>
@@ -469,7 +497,7 @@ const ExpenseManagementPage = () => {
             fullWidth
             label="Category"
             value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
+            onChange={handleCategoryFilterChange}
           >
             <MenuItem value="ALL">All Categories</MenuItem>
             {CATEGORIES.map((cat) => (
@@ -519,120 +547,129 @@ const ExpenseManagementPage = () => {
             )}
           </Box>
         ) : (
-          <TableContainer
-            sx={{
-              width: '100%',
-              overflowX: 'auto',
-              minWidth: 0,
-              '&::-webkit-scrollbar': { height: '5px' },
-              '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(148, 163, 184, 0.25)', borderRadius: '4px' },
-            }}
-          >
-            <Table sx={{ width: '100%', minWidth: 700 }}>
-              <TableHead sx={{ backgroundColor: '#f8fafc' }}>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Description</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Type</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Category</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Amount (₹)</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Payment Method</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredList.map((item) => {
-                  const isIncome = item.type === 'Income';
+          <>
+            <TableContainer
+              sx={{
+                width: '100%',
+                overflowX: 'auto',
+                minWidth: 0,
+                '&::-webkit-scrollbar': { height: '5px' },
+                '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(148, 163, 184, 0.25)', borderRadius: '4px' },
+              }}
+            >
+              <Table sx={{ width: '100%', minWidth: 700 }}>
+                <TableHead sx={{ backgroundColor: '#f8fafc' }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700 }}>Description</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Type</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Category</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Amount (₹)</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Payment Method</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paginatedList.map((item) => {
+                    const isIncome = item.type === 'Income';
 
-                  return (
-                    <TableRow key={item.id} hover>
-                      <TableCell>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                          {item.title}
-                        </Typography>
-                        {item.reference_no && (
-                          <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'monospace' }}>
-                            Ref: {item.reference_no}
+                    return (
+                      <TableRow key={item.id} hover>
+                        <TableCell>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                            {item.title}
                           </Typography>
-                        )}
-                      </TableCell>
-
-                      <TableCell>
-                        <Chip
-                          label={item.type}
-                          size="small"
-                          sx={{
-                            backgroundColor: isIncome ? '#dcfce7' : '#fee2e2',
-                            color: isIncome ? '#15803d' : '#b91c1c',
-                            border: `1px solid ${isIncome ? '#bbf7d0' : '#fecaca'}`,
-                            fontWeight: 600,
-                          }}
-                        />
-                      </TableCell>
-
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {item.category}
-                        </Typography>
-                      </TableCell>
-
-                      <TableCell>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontWeight: 800,
-                            fontFamily: 'monospace',
-                            color: isIncome ? 'success.main' : 'error.main',
-                          }}
-                        >
-                          {isIncome ? '+' : '-'}₹{Number(item.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </Typography>
-                      </TableCell>
-
-                      <TableCell>
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                          {item.payment_method || 'Bank Transfer'}
-                        </Typography>
-                      </TableCell>
-
-                      <TableCell>
-                        <Typography variant="body2">
-                          {item.date || 'N/A'}
-                        </Typography>
-                      </TableCell>
-
-                      <TableCell align="right">
-                        <Stack direction="row" spacing={1} justifyContent="flex-end">
-                          {canEdit && (
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              color="inherit"
-                              onClick={() => handleOpenEdit(item)}
-                              sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.4 }}
-                            >
-                              Edit
-                            </Button>
+                          {item.reference_no && (
+                            <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'monospace' }}>
+                              Ref: {item.reference_no}
+                            </Typography>
                           )}
-                          {canDelete && (
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              color="error"
-                              onClick={() => setDeleteId(item.id)}
-                              sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.4 }}
-                            >
-                              Delete
-                            </Button>
-                          )}
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                        </TableCell>
+
+                        <TableCell>
+                          <Chip
+                            label={item.type}
+                            size="small"
+                            sx={{
+                              backgroundColor: isIncome ? '#dcfce7' : '#fee2e2',
+                              color: isIncome ? '#15803d' : '#b91c1c',
+                              border: `1px solid ${isIncome ? '#bbf7d0' : '#fecaca'}`,
+                              fontWeight: 600,
+                            }}
+                          />
+                        </TableCell>
+
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {item.category}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: 800,
+                              fontFamily: 'monospace',
+                              color: isIncome ? 'success.main' : 'error.main',
+                            }}
+                          >
+                            {isIncome ? '+' : '-'}₹{Number(item.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell>
+                          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                            {item.payment_method || 'Bank Transfer'}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell>
+                          <Typography variant="body2">
+                            {item.date || 'N/A'}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell align="right">
+                          <Stack direction="row" spacing={1} justifyContent="flex-end">
+                            {canEdit && (
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="inherit"
+                                onClick={() => handleOpenEdit(item)}
+                                sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.4 }}
+                              >
+                                Edit
+                              </Button>
+                            )}
+                            {canDelete && (
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="error"
+                                onClick={() => setDeleteId(item.id)}
+                                sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.4 }}
+                              >
+                                Delete
+                              </Button>
+                            )}
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <PaginationControl
+              currentPage={page}
+              totalItems={filteredList.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={setPage}
+              itemLabel="transactions"
+            />
+          </>
         )}
       </Paper>
 

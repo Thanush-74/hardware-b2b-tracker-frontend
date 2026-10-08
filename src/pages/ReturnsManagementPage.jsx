@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -29,6 +29,9 @@ import { useAuth } from '../context/AuthContext';
 import { returnService, orderService, productService } from '../services/businessService';
 import { getCanonicalProducts } from '../utils/canonicalProducts';
 import { ReturnsIcon } from '../components/Icons';
+import PaginationControl from '../components/PaginationControl';
+
+const PAGE_SIZE = 10;
 
 const RETURN_STATUS_COLORS = {
   Requested: { bg: '#fffbeb', text: '#b45309', border: '#fde68a' },
@@ -53,6 +56,9 @@ const ReturnsManagementPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [apiError, setApiError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  // Pagination state
+  const [page, setPage] = useState(1);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -87,8 +93,8 @@ const ReturnsManagementPage = () => {
     setApiError('');
     try {
       const [returnsRes, ordersRes, prodRes] = await Promise.all([
-        returnService.getAll(),
-        orderService.getAll().catch(() => []),
+        returnService.getAll({ limit: 1000 }),
+        orderService.getAll({ limit: 1000 }).catch(() => []),
         productService.getAll({ limit: 100 }).catch(() => []),
       ]);
 
@@ -226,19 +232,36 @@ const ReturnsManagementPage = () => {
   };
 
   // Filter list
-  const filteredList = returnsList.filter((item) => {
-    const q = searchQuery.toLowerCase().trim();
-    const matchesSearch =
-      !q ||
-      item.return_number?.toLowerCase().includes(q) ||
-      item.customer_name?.toLowerCase().includes(q) ||
-      item.product_name?.toLowerCase().includes(q) ||
-      item.return_reason?.toLowerCase().includes(q) ||
-      item.order_number?.toLowerCase().includes(q);
+  const filteredList = useMemo(() => {
+    return returnsList.filter((item) => {
+      const q = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        item.return_number?.toLowerCase().includes(q) ||
+        item.customer_name?.toLowerCase().includes(q) ||
+        item.product_name?.toLowerCase().includes(q) ||
+        item.return_reason?.toLowerCase().includes(q) ||
+        item.order_number?.toLowerCase().includes(q);
 
-    const matchesStatus = statusFilter === 'ALL' || item.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+      const matchesStatus = statusFilter === 'ALL' || item.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [returnsList, searchQuery, statusFilter]);
+
+  const paginatedList = useMemo(() => {
+    const startIndex = (page - 1) * PAGE_SIZE;
+    return filteredList.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [filteredList, page]);
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setPage(1);
+  };
+
+  const handleStatusFilterChange = (e) => {
+    setStatusFilter(e.target.value);
+    setPage(1);
+  };
 
   // KPI Calculations
   const totalReturns = returnsList.length;
@@ -423,7 +446,7 @@ const ReturnsManagementPage = () => {
             fullWidth
             placeholder="Search by RMA #, Customer, Product, Order #, or Reason..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
           />
           <TextField
             select
@@ -431,7 +454,7 @@ const ReturnsManagementPage = () => {
             fullWidth
             label="RMA Status"
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={handleStatusFilterChange}
           >
             <MenuItem value="ALL">All RMA Statuses</MenuItem>
             <MenuItem value="Requested">Requested</MenuItem>
@@ -483,135 +506,144 @@ const ReturnsManagementPage = () => {
             )}
           </Box>
         ) : (
-          <TableContainer
-            sx={{
-              width: '100%',
-              overflowX: 'auto',
-              '&::-webkit-scrollbar': { height: '5px' },
-              '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: '4px' },
-            }}
-          >
-            <Table sx={{ minWidth: 740 }}>
-              <TableHead sx={{ backgroundColor: '#f9fafb' }}>
-                <TableRow sx={{ '& th': { color: '#0f172a', fontWeight: 700, borderBottom: '1px solid #e5e7eb' } }}>
-                  <TableCell>RMA Number</TableCell>
-                  <TableCell>Order & Customer</TableCell>
-                  <TableCell>Returned Hardware</TableCell>
-                  <TableCell>Reason / Defect</TableCell>
-                  <TableCell>Replacement</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredList.map((item) => {
-                  const statusStyle = RETURN_STATUS_COLORS[item.status] || {
-                    bg: '#f9fafb',
-                    text: '#0f172a',
-                    border: '#e5e7eb',
-                  };
+          <>
+            <TableContainer
+              sx={{
+                width: '100%',
+                overflowX: 'auto',
+                '&::-webkit-scrollbar': { height: '5px' },
+                '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: '4px' },
+              }}
+            >
+              <Table sx={{ minWidth: 740 }}>
+                <TableHead sx={{ backgroundColor: '#f9fafb' }}>
+                  <TableRow sx={{ '& th': { color: '#0f172a', fontWeight: 700, borderBottom: '1px solid #e5e7eb' } }}>
+                    <TableCell>RMA Number</TableCell>
+                    <TableCell>Order & Customer</TableCell>
+                    <TableCell>Returned Hardware</TableCell>
+                    <TableCell>Reason / Defect</TableCell>
+                    <TableCell>Replacement</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paginatedList.map((item) => {
+                    const statusStyle = RETURN_STATUS_COLORS[item.status] || {
+                      bg: '#f9fafb',
+                      text: '#0f172a',
+                      border: '#e5e7eb',
+                    };
 
-                  return (
-                    <TableRow key={item.id} hover>
-                      <TableCell>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700, fontFamily: 'monospace', color: 'error.light' }}>
-                          {item.return_number}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                          {item.return_date || 'N/A'}
-                        </Typography>
-                      </TableCell>
-
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                          {item.customer_name}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                          {item.order_number || `Order #${item.order_id}`}
-                        </Typography>
-                      </TableCell>
-
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {item.product_name}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                          Qty: {item.quantity} unit(s)
-                        </Typography>
-                      </TableCell>
-
-                      <TableCell sx={{ maxWidth: 220 }}>
-                        <Typography variant="body2" sx={{ color: 'text.secondary', wordBreak: 'break-word' }}>
-                          {item.return_reason}
-                        </Typography>
-                      </TableCell>
-
-                      <TableCell>
-                        {item.replacement_required ? (
-                          <Chip
-                            label={item.replacement_product_name ? `${item.replacement_product_name} (${item.replacement_quantity})` : 'Replacement Required'}
-                            size="small"
-                            color="info"
-                            variant="outlined"
-                            sx={{ fontWeight: 600 }}
-                          />
-                        ) : (
-                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                            Refund / Repair
+                    return (
+                      <TableRow key={item.id} hover>
+                        <TableCell>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontFamily: 'monospace', color: 'error.light' }}>
+                            {item.return_number}
                           </Typography>
-                        )}
-                      </TableCell>
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            {item.return_date || 'N/A'}
+                          </Typography>
+                        </TableCell>
 
-                      <TableCell>
-                        <Chip
-                          label={item.status}
-                          size="small"
-                          onClick={canEdit ? () => handleOpenStatusDialog(item) : undefined}
-                          sx={{
-                            backgroundColor: statusStyle.bg,
-                            color: statusStyle.text,
-                            borderColor: statusStyle.border,
-                            borderWidth: 1,
-                            borderStyle: 'solid',
-                            fontWeight: 700,
-                            cursor: canEdit ? 'pointer' : 'default',
-                            '&:hover': canEdit ? { filter: 'brightness(1.2)' } : {},
-                          }}
-                        />
-                      </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                            {item.customer_name}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            {item.order_number || `Order #${item.order_id}`}
+                          </Typography>
+                        </TableCell>
 
-                      <TableCell align="right">
-                        <Stack direction="row" spacing={1} justifyContent="flex-end">
-                          {canEdit && (
-                            <>
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                color="inherit"
-                                onClick={() => handleOpenReplacementDialog(item)}
-                                sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.4 }}
-                              >
-                                Replacement
-                              </Button>
-                              <Button
-                                size="small"
-                                variant="contained"
-                                color="primary"
-                                onClick={() => handleOpenStatusDialog(item)}
-                                sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.4 }}
-                              >
-                                Status
-                              </Button>
-                            </>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {item.product_name}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            Qty: {item.quantity} unit(s)
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell sx={{ maxWidth: 220 }}>
+                          <Typography variant="body2" sx={{ color: 'text.secondary', wordBreak: 'break-word' }}>
+                            {item.return_reason}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell>
+                          {item.replacement_required ? (
+                            <Chip
+                              label={item.replacement_product_name ? `${item.replacement_product_name} (${item.replacement_quantity})` : 'Replacement Required'}
+                              size="small"
+                              color="info"
+                              variant="outlined"
+                              sx={{ fontWeight: 600 }}
+                            />
+                          ) : (
+                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                              Refund / Repair
+                            </Typography>
                           )}
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                        </TableCell>
+
+                        <TableCell>
+                          <Chip
+                            label={item.status}
+                            size="small"
+                            onClick={canEdit ? () => handleOpenStatusDialog(item) : undefined}
+                            sx={{
+                              backgroundColor: statusStyle.bg,
+                              color: statusStyle.text,
+                              borderColor: statusStyle.border,
+                              borderWidth: 1,
+                              borderStyle: 'solid',
+                              fontWeight: 700,
+                              cursor: canEdit ? 'pointer' : 'default',
+                              '&:hover': canEdit ? { filter: 'brightness(1.2)' } : {},
+                            }}
+                          />
+                        </TableCell>
+
+                        <TableCell align="right">
+                          <Stack direction="row" spacing={1} justifyContent="flex-end">
+                            {canEdit && (
+                              <>
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  color="inherit"
+                                  onClick={() => handleOpenReplacementDialog(item)}
+                                  sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.4 }}
+                                >
+                                  Replacement
+                                </Button>
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  color="primary"
+                                  onClick={() => handleOpenStatusDialog(item)}
+                                  sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.4 }}
+                                >
+                                  Status
+                                </Button>
+                              </>
+                            )}
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <PaginationControl
+              currentPage={page}
+              totalItems={filteredList.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={setPage}
+              itemLabel="RMA records"
+            />
+          </>
         )}
       </Paper>
 

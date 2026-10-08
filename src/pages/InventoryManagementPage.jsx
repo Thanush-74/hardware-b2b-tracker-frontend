@@ -27,6 +27,9 @@ import { useAuth } from '../context/AuthContext';
 import { inventoryService } from '../services/businessService';
 import { getCanonicalInventory, CANONICAL_PRODUCT_SPECS } from '../utils/canonicalProducts';
 import { InventoryIcon } from '../components/Icons';
+import PaginationControl from '../components/PaginationControl';
+
+const PAGE_SIZE = 10;
 
 const PlusIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -49,6 +52,7 @@ const InventoryManagementPage = () => {
   const [rawInventory, setRawInventory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
   const [apiError, setApiError] = useState('');
   const [actionSuccess, setActionSuccess] = useState('');
 
@@ -65,7 +69,7 @@ const InventoryManagementPage = () => {
     setIsLoading(true);
     setApiError('');
     try {
-      const res = await inventoryService.getAll({ limit: 100 });
+      const res = await inventoryService.getAll({ limit: 1000 });
       const items = res?.inventory || res?.rows || (Array.isArray(res) ? res : []);
       setRawInventory(items);
     } catch (err) {
@@ -105,6 +109,16 @@ const InventoryManagementPage = () => {
 
     return { displayInventory: filtered, missingProducts: missing };
   }, [rawInventory, searchQuery]);
+
+  const paginatedInventory = useMemo(() => {
+    const startIndex = (page - 1) * PAGE_SIZE;
+    return displayInventory.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [displayInventory, page]);
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setPage(1);
+  };
 
   // Open Adjust Modal
   const handleOpenAdjust = (item, type) => {
@@ -250,7 +264,7 @@ const InventoryManagementPage = () => {
               placeholder="Filter inventory by product name, type, or location..."
               fullWidth
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
             />
           </Box>
           <Stack direction="row" spacing={1.5} justifyContent={{ xs: 'flex-start', sm: 'flex-end' }}>
@@ -285,112 +299,121 @@ const InventoryManagementPage = () => {
             </Typography>
           </Box>
         ) : (
-          <TableContainer
-            sx={{
-              width: '100%',
-              overflowX: 'auto',
-              minWidth: 0,
-              '&::-webkit-scrollbar': { height: '5px' },
-              '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(148, 163, 184, 0.25)', borderRadius: '4px' },
-            }}
-          >
-            <Table size="small" sx={{ width: '100%', minWidth: 680 }}>
-              <TableHead sx={{ backgroundColor: '#f8fafc' }}>
-                <TableRow sx={{ '& th': { color: '#0f172a', fontWeight: 700, fontSize: '0.75rem', py: 1.5, borderBottom: '1px solid #e2e8f0' } }}>
-                  <TableCell>Product Item</TableCell>
-                  <TableCell>Warehouse Location</TableCell>
-                  <TableCell>Total Stock</TableCell>
-                  <TableCell>Reserved</TableCell>
-                  <TableCell>Available</TableCell>
-                  <TableCell>Status</TableCell>
-                  {canEdit && <TableCell align="right">Quick Stock Adjustment</TableCell>}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {displayInventory.map((item) => (
-                  <TableRow
-                    key={item.id}
-                    sx={{
-                      '&:hover': { backgroundColor: '#f8fafc' },
-                      '& td': { borderColor: '#f1f5f9', py: 1.4 },
-                    }}
-                  >
-                    <TableCell>
-                      <Stack direction="row" spacing={1.5} alignItems="center">
-                        <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '0.92rem' }}>
-                            {item.canonical_name}
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mt: 0.2 }}>
-                            {item.product_name} • <Box component="span" sx={{ color: '#2563eb', fontWeight: 600 }}>{item.canonical_type || item.product_type}</Box>
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      <Chip label={item.location || 'Main Warehouse'} size="small" sx={{ fontSize: '0.7rem', height: 20, backgroundColor: '#f1f5f9', color: '#334155' }} />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a' }}>
-                        {item.total_quantity ?? item.quantity} units
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ color: '#64748b' }}>
-                        {item.reserved_quantity || 0} units
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>
-                        {item.available_quantity ?? item.quantity} units
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={item.stock_status || 'In Stock'}
-                        size="small"
-                        color={
-                          item.stock_status === 'Out of Stock'
-                            ? 'error'
-                            : item.stock_status === 'Low Stock'
-                            ? 'warning'
-                            : 'success'
-                        }
-                        variant="outlined"
-                        sx={{ fontSize: '0.68rem', height: 22, fontWeight: 600 }}
-                      />
-                    </TableCell>
-                    {canEdit && (
-                      <TableCell align="right">
-                        <Stack direction="row" spacing={1} justifyContent="flex-end">
-                          <Tooltip title={`Increase ${item.canonical_name} Stock (+)`}>
-                            <IconButton
-                              size="small"
-                              color="success"
-                              onClick={() => handleOpenAdjust(item, 'increase')}
-                              sx={{ border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: 1.5 }}
-                            >
-                              <PlusIcon />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title={`Decrease ${item.canonical_name} Stock (-)`}>
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() => handleOpenAdjust(item, 'decrease')}
-                              sx={{ border: '1px solid rgba(244, 63, 94, 0.3)', borderRadius: 1.5 }}
-                            >
-                              <MinusIcon />
-                            </IconButton>
-                          </Tooltip>
+          <>
+            <TableContainer
+              sx={{
+                width: '100%',
+                overflowX: 'auto',
+                minWidth: 0,
+                '&::-webkit-scrollbar': { height: '5px' },
+                '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(148, 163, 184, 0.25)', borderRadius: '4px' },
+              }}
+            >
+              <Table size="small" sx={{ width: '100%', minWidth: 680 }}>
+                <TableHead sx={{ backgroundColor: '#f8fafc' }}>
+                  <TableRow sx={{ '& th': { color: '#0f172a', fontWeight: 700, fontSize: '0.75rem', py: 1.5, borderBottom: '1px solid #e2e8f0' } }}>
+                    <TableCell>Product Item</TableCell>
+                    <TableCell>Warehouse Location</TableCell>
+                    <TableCell>Total Stock</TableCell>
+                    <TableCell>Reserved</TableCell>
+                    <TableCell>Available</TableCell>
+                    <TableCell>Status</TableCell>
+                    {canEdit && <TableCell align="right">Quick Stock Adjustment</TableCell>}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paginatedInventory.map((item) => (
+                    <TableRow
+                      key={item.id}
+                      sx={{
+                        '&:hover': { backgroundColor: '#f8fafc' },
+                        '& td': { borderColor: '#f1f5f9', py: 1.4 },
+                      }}
+                    >
+                      <TableCell>
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <Box>
+                            <Typography variant="body2" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '0.92rem' }}>
+                              {item.canonical_name}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mt: 0.2 }}>
+                              {item.product_name} • <Box component="span" sx={{ color: '#2563eb', fontWeight: 600 }}>{item.canonical_type || item.product_type}</Box>
+                            </Typography>
+                          </Box>
                         </Stack>
                       </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                      <TableCell>
+                        <Chip label={item.location || 'Main Warehouse'} size="small" sx={{ fontSize: '0.7rem', height: 20, backgroundColor: '#f1f5f9', color: '#334155' }} />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a' }}>
+                          {item.total_quantity ?? item.quantity} units
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" sx={{ color: '#64748b' }}>
+                          {item.reserved_quantity || 0} units
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>
+                          {item.available_quantity ?? item.quantity} units
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={item.stock_status || 'In Stock'}
+                          size="small"
+                          color={
+                            item.stock_status === 'Out of Stock'
+                              ? 'error'
+                              : item.stock_status === 'Low Stock'
+                              ? 'warning'
+                              : 'success'
+                          }
+                          variant="outlined"
+                          sx={{ fontSize: '0.68rem', height: 22, fontWeight: 600 }}
+                        />
+                      </TableCell>
+                      {canEdit && (
+                        <TableCell align="right">
+                          <Stack direction="row" spacing={1} justifyContent="flex-end">
+                            <Tooltip title={`Increase ${item.canonical_name} Stock (+)`}>
+                              <IconButton
+                                size="small"
+                                color="success"
+                                onClick={() => handleOpenAdjust(item, 'increase')}
+                                sx={{ border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: 1.5 }}
+                              >
+                                <PlusIcon />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title={`Decrease ${item.canonical_name} Stock (-)`}>
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => handleOpenAdjust(item, 'decrease')}
+                                sx={{ border: '1px solid rgba(244, 63, 94, 0.3)', borderRadius: 1.5 }}
+                              >
+                                <MinusIcon />
+                              </IconButton>
+                            </Tooltip>
+                          </Stack>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <PaginationControl
+              currentPage={page}
+              totalItems={displayInventory.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={setPage}
+              itemLabel="inventory items"
+            />
+          </>
         )}
       </Paper>
 

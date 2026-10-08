@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -28,6 +28,9 @@ import {
 import { getStaff, createStaff, updateStaffStatus } from '../services/staffService';
 import { getRoles } from '../services/roleService';
 import { StaffIcon } from '../components/Icons';
+import PaginationControl from '../components/PaginationControl';
+
+const PAGE_SIZE = 10;
 
 const EyeIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -49,6 +52,10 @@ const StaffManagementPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
 
+  // Pagination & Search state
+  const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -66,7 +73,7 @@ const StaffManagementPage = () => {
     setIsLoading(true);
     setLoadError('');
     try {
-      const [staffData, rolesData] = await Promise.all([getStaff(), getRoles()]);
+      const [staffData, rolesData] = await Promise.all([getStaff({ limit: 1000 }), getRoles()]);
       setStaffList(staffData?.staff || staffData || []);
       setRoles(rolesData || []);
     } catch (err) {
@@ -79,6 +86,29 @@ const StaffManagementPage = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Filtered staff list
+  const filteredStaff = useMemo(() => {
+    if (!searchQuery.trim()) return staffList;
+    const q = searchQuery.toLowerCase().trim();
+    return staffList.filter((s) => {
+      const fullName = `${s.first_name || ''} ${s.last_name || ''}`.toLowerCase();
+      const emailMatch = s.email?.toLowerCase().includes(q);
+      const roleMatch = s.role?.name?.toLowerCase().includes(q) || s.role?.slug?.toLowerCase().includes(q);
+      return fullName.includes(q) || emailMatch || roleMatch;
+    });
+  }, [staffList, searchQuery]);
+
+  // Paginated slice
+  const paginatedStaff = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredStaff.slice(start, start + PAGE_SIZE);
+  }, [filteredStaff, page]);
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setPage(1);
+  };
 
   const validateForm = () => {
     const errors = {};
@@ -388,7 +418,7 @@ const StaffManagementPage = () => {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Box>
                 <Typography variant="h6" sx={{ fontWeight: 700, color: '#0f172a' }}>
-                  Staff Accounts ({staffList.length})
+                  Staff Accounts ({filteredStaff.length})
                 </Typography>
                 <Typography variant="caption" sx={{ color: '#64748b' }}>
                   Staff members and their assigned RBAC roles
@@ -399,91 +429,120 @@ const StaffManagementPage = () => {
               </Button>
             </Box>
 
-            <TableContainer
-              sx={{
-                flexGrow: 1,
-                maxHeight: 600,
-                width: '100%',
-                overflowX: 'auto',
-                '&::-webkit-scrollbar': { height: '5px' },
-                '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: '4px' },
-              }}
-            >
-              <Table size="small" sx={{ minWidth: 550 }}>
-                  <TableHead sx={{ backgroundColor: '#f8fafc' }}>
-                    <TableRow sx={{ '& th': { color: '#0f172a', fontWeight: 700, fontSize: '0.75rem', borderBottom: '1px solid #e2e8f0' } }}>
-                      <TableCell>Staff Member</TableCell>
-                      <TableCell>Email</TableCell>
-                      <TableCell>Role</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell align="right">Action</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {staffList.map((member) => (
-                      <TableRow
-                        key={member.id}
-                        sx={{
-                          '&:hover': { backgroundColor: '#f8fafc' },
-                          '& td': { borderColor: '#f1f5f9' },
-                        }}
-                      >
-                        <TableCell sx={{ py: 1.5 }}>
-                          <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>
-                            {member.first_name} {member.last_name}
-                          </Typography>
-                        </TableCell>
-                        <TableCell sx={{ py: 1.5 }}>
-                          <Typography variant="caption" sx={{ fontFamily: 'monospace', color: '#64748b' }}>
-                            {member.email}
-                          </Typography>
-                        </TableCell>
-                        <TableCell sx={{ py: 1.5 }}>
-                          <Chip
-                            label={member.role?.name || member.role?.slug || 'Staff'}
-                            size="small"
-                            sx={{
-                              backgroundColor: '#eff6ff',
-                              color: '#1d4ed8',
-                              border: '1px solid #bfdbfe',
-                              fontWeight: 600,
-                              fontSize: '0.72rem',
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell sx={{ py: 1.5 }}>
-                          <Chip
-                            label={member.is_active ? 'Active' : 'Inactive'}
-                            size="small"
-                            color={member.is_active ? 'success' : 'default'}
-                            variant="outlined"
-                            sx={{ fontSize: '0.7rem', height: 22 }}
-                          />
-                        </TableCell>
-                        <TableCell align="right" sx={{ py: 1.5 }}>
-                          <Button
-                            size="small"
-                            variant="text"
-                            color={member.is_active ? 'error' : 'success'}
-                            onClick={() => handleToggleStatus(member)}
-                            disabled={statusUpdatingId === member.id}
-                            sx={{ fontSize: '0.72rem', textTransform: 'none', py: 0.2 }}
-                          >
-                            {statusUpdatingId === member.id ? (
-                              <CircularProgress size={14} />
-                            ) : member.is_active ? (
-                              'Deactivate'
-                            ) : (
-                              'Activate'
-                            )}
-                          </Button>
-                        </TableCell>
+            {/* Staff Search Filter */}
+            <Box sx={{ mb: 2 }}>
+              <TextField
+                size="small"
+                fullWidth
+                placeholder="Search staff by name, email, or role..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+              />
+            </Box>
+
+            {filteredStaff.length === 0 ? (
+              <Box sx={{ py: 6, textAlign: 'center' }}>
+                <Typography variant="body2" sx={{ color: '#64748b' }}>
+                  {searchQuery ? 'No staff members found matching your search.' : 'No staff accounts recorded yet.'}
+                </Typography>
+              </Box>
+            ) : (
+              <>
+                <TableContainer
+                  sx={{
+                    flexGrow: 1,
+                    maxHeight: 600,
+                    width: '100%',
+                    overflowX: 'auto',
+                    '&::-webkit-scrollbar': { height: '5px' },
+                    '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: '4px' },
+                  }}
+                >
+                  <Table size="small" sx={{ minWidth: 550 }}>
+                    <TableHead sx={{ backgroundColor: '#f8fafc' }}>
+                      <TableRow sx={{ '& th': { color: '#0f172a', fontWeight: 700, fontSize: '0.75rem', borderBottom: '1px solid #e2e8f0' } }}>
+                        <TableCell>Staff Member</TableCell>
+                        <TableCell>Email</TableCell>
+                        <TableCell>Role</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell align="right">Action</TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Paper>
+                    </TableHead>
+                    <TableBody>
+                      {paginatedStaff.map((member) => (
+                        <TableRow
+                          key={member.id}
+                          sx={{
+                            '&:hover': { backgroundColor: '#f8fafc' },
+                            '& td': { borderColor: '#f1f5f9' },
+                          }}
+                        >
+                          <TableCell sx={{ py: 1.5 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>
+                              {member.first_name} {member.last_name}
+                            </Typography>
+                          </TableCell>
+                          <TableCell sx={{ py: 1.5 }}>
+                            <Typography variant="caption" sx={{ fontFamily: 'monospace', color: '#64748b' }}>
+                              {member.email}
+                            </Typography>
+                          </TableCell>
+                          <TableCell sx={{ py: 1.5 }}>
+                            <Chip
+                              label={member.role?.name || member.role?.slug || 'Staff'}
+                              size="small"
+                              sx={{
+                                backgroundColor: '#eff6ff',
+                                color: '#1d4ed8',
+                                border: '1px solid #bfdbfe',
+                                fontWeight: 600,
+                                fontSize: '0.72rem',
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell sx={{ py: 1.5 }}>
+                            <Chip
+                              label={member.is_active ? 'Active' : 'Inactive'}
+                              size="small"
+                              color={member.is_active ? 'success' : 'default'}
+                              variant="outlined"
+                              sx={{ fontSize: '0.7rem', height: 22 }}
+                            />
+                          </TableCell>
+                          <TableCell align="right" sx={{ py: 1.5 }}>
+                            <Button
+                              size="small"
+                              variant="text"
+                              color={member.is_active ? 'error' : 'success'}
+                              onClick={() => handleToggleStatus(member)}
+                              disabled={statusUpdatingId === member.id}
+                              sx={{ fontSize: '0.72rem', textTransform: 'none', py: 0.2 }}
+                            >
+                              {statusUpdatingId === member.id ? (
+                                <CircularProgress size={14} />
+                              ) : member.is_active ? (
+                                'Deactivate'
+                              ) : (
+                                'Activate'
+                              )}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+
+                <PaginationControl
+                  currentPage={page}
+                  totalItems={filteredStaff.length}
+                  pageSize={PAGE_SIZE}
+                  onPageChange={setPage}
+                  itemLabel="staff"
+                />
+              </>
+            )}
+          </Paper>
         </Box>
       )}
     </Box>

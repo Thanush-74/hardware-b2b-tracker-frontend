@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -29,6 +29,9 @@ import { inspectionService, productService } from '../services/businessService';
 import { getStaff } from '../services/staffService';
 import { getCanonicalProducts } from '../utils/canonicalProducts';
 import { InspectionIcon } from '../components/Icons';
+import PaginationControl from '../components/PaginationControl';
+
+const PAGE_SIZE = 10;
 
 const RESULT_COLORS = {
   Passed: { bg: '#f0fdf4', text: '#15803d', border: '#bbf7d0' },
@@ -76,6 +79,9 @@ const InspectionManagementPage = () => {
   const [apiError, setApiError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
+  // Pagination state
+  const [page, setPage] = useState(1);
+
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [resultFilter, setResultFilter] = useState('ALL');
@@ -118,7 +124,7 @@ const InspectionManagementPage = () => {
     setApiError('');
     try {
       const [inspRes, summaryRes, prodRes, staffRes] = await Promise.all([
-        inspectionService.getAll(),
+        inspectionService.getAll({ limit: 1000 }),
         inspectionService.getSummary().catch(() => null),
         productService.getAll({ limit: 100 }).catch(() => []),
         getStaff().catch(() => []),
@@ -253,22 +259,44 @@ const InspectionManagementPage = () => {
   };
 
   // Filtered List
-  const filteredList = inspections.filter((item) => {
-    const q = searchQuery.toLowerCase().trim();
-    const inspectorName = `${item.inspector?.first_name || ''} ${item.inspector?.last_name || ''}`.toLowerCase();
-    const matchesSearch =
-      !q ||
-      item.batch_number?.toLowerCase().includes(q) ||
-      item.product?.name?.toLowerCase().includes(q) ||
-      item.defect_type?.toLowerCase().includes(q) ||
-      inspectorName.includes(q) ||
-      item.notes?.toLowerCase().includes(q);
+  const filteredList = useMemo(() => {
+    return inspections.filter((item) => {
+      const q = searchQuery.toLowerCase().trim();
+      const inspectorName = `${item.inspector?.first_name || ''} ${item.inspector?.last_name || ''}`.toLowerCase();
+      const matchesSearch =
+        !q ||
+        item.batch_number?.toLowerCase().includes(q) ||
+        item.product?.name?.toLowerCase().includes(q) ||
+        item.defect_type?.toLowerCase().includes(q) ||
+        inspectorName.includes(q) ||
+        item.notes?.toLowerCase().includes(q);
 
-    const matchesResult = resultFilter === 'ALL' || item.result === resultFilter;
-    const matchesSeverity = severityFilter === 'ALL' || item.severity === severityFilter;
+      const matchesResult = resultFilter === 'ALL' || item.result === resultFilter;
+      const matchesSeverity = severityFilter === 'ALL' || item.severity === severityFilter;
 
-    return matchesSearch && matchesResult && matchesSeverity;
-  });
+      return matchesSearch && matchesResult && matchesSeverity;
+    });
+  }, [inspections, searchQuery, resultFilter, severityFilter]);
+
+  const paginatedList = useMemo(() => {
+    const startIndex = (page - 1) * PAGE_SIZE;
+    return filteredList.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [filteredList, page]);
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setPage(1);
+  };
+
+  const handleResultFilterChange = (e) => {
+    setResultFilter(e.target.value);
+    setPage(1);
+  };
+
+  const handleSeverityFilterChange = (e) => {
+    setSeverityFilter(e.target.value);
+    setPage(1);
+  };
 
   // KPI Calculations
   const passRate = summary?.passRatePercentage !== undefined
@@ -470,7 +498,7 @@ const InspectionManagementPage = () => {
             fullWidth
             placeholder="Search batch #, defect type, inspector, product..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
           />
           <TextField
             select
@@ -478,7 +506,7 @@ const InspectionManagementPage = () => {
             fullWidth
             label="QA Result"
             value={resultFilter}
-            onChange={(e) => setResultFilter(e.target.value)}
+            onChange={handleResultFilterChange}
           >
             <MenuItem value="ALL">All Results</MenuItem>
             {RESULTS.map((res) => (
@@ -493,7 +521,7 @@ const InspectionManagementPage = () => {
             fullWidth
             label="Severity"
             value={severityFilter}
-            onChange={(e) => setSeverityFilter(e.target.value)}
+            onChange={handleSeverityFilterChange}
           >
             <MenuItem value="ALL">All Severities</MenuItem>
             {SEVERITIES.map((sev) => (
@@ -543,162 +571,171 @@ const InspectionManagementPage = () => {
             )}
           </Box>
         ) : (
-          <TableContainer
-            sx={{
-              width: '100%',
-              overflowX: 'auto',
-              minWidth: 0,
-              '&::-webkit-scrollbar': { height: '5px' },
-              '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(148, 163, 184, 0.25)', borderRadius: '4px' },
-            }}
-          >
-            <Table sx={{ width: '100%', minWidth: 720 }}>
-              <TableHead sx={{ backgroundColor: '#f9fafb' }}>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Batch / Audit</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Product & Inspector</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Yield Rate & Units</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Defect & Severity</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Result</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700, color: '#111827' }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredList.map((item) => {
-                  const resStyle = RESULT_COLORS[item.result] || {
-                    bg: '#f9fafb',
-                    text: '#111827',
-                    border: '#e5e7eb',
-                  };
+          <>
+            <TableContainer
+              sx={{
+                width: '100%',
+                overflowX: 'auto',
+                minWidth: 0,
+                '&::-webkit-scrollbar': { height: '5px' },
+                '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(148, 163, 184, 0.25)', borderRadius: '4px' },
+              }}
+            >
+              <Table sx={{ width: '100%', minWidth: 720 }}>
+                <TableHead sx={{ backgroundColor: '#f9fafb' }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Batch / Audit</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Product & Inspector</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Yield Rate & Units</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Defect & Severity</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Result</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700, color: '#111827' }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paginatedList.map((item) => {
+                    const resStyle = RESULT_COLORS[item.result] || {
+                      bg: '#f9fafb',
+                      text: '#111827',
+                      border: '#e5e7eb',
+                    };
 
-                  const sevStyle = SEVERITY_COLORS[item.severity] || {
-                    bg: '#f9fafb',
-                    text: '#111827',
-                  };
+                    const sevStyle = SEVERITY_COLORS[item.severity] || {
+                      bg: '#f9fafb',
+                      text: '#111827',
+                    };
 
-                  const inspected = Number(item.quantity_inspected) || 1;
-                  const passed = Number(item.passed_quantity) || 0;
-                  const failed = Number(item.failed_quantity) || 0;
-                  const yieldPct = Math.round((passed / inspected) * 100);
+                    const inspected = Number(item.quantity_inspected) || 1;
+                    const passed = Number(item.passed_quantity) || 0;
+                    const failed = Number(item.failed_quantity) || 0;
+                    const yieldPct = Math.round((passed / inspected) * 100);
 
-                  const inspectorName = item.inspector
-                    ? `${item.inspector.first_name} ${item.inspector.last_name}`
-                    : `Staff #${item.inspector_id}`;
+                    const inspectorName = item.inspector
+                      ? `${item.inspector.first_name} ${item.inspector.last_name}`
+                      : `Staff #${item.inspector_id}`;
 
-                  return (
-                    <TableRow key={item.id} hover>
-                      <TableCell>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700, fontFamily: 'monospace', color: 'primary.light' }}>
-                          {item.batch_number || `Batch #${item.id}`}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                          {item.inspection_date || 'N/A'}
-                        </Typography>
-                      </TableCell>
-
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {item.product?.name || 'General Batch Inspection'}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                          Audited by: {inspectorName}
-                        </Typography>
-                      </TableCell>
-
-                      <TableCell sx={{ minWidth: 180 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                          <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                            {passed} / {inspected} passed
+                    return (
+                      <TableRow key={item.id} hover>
+                        <TableCell>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontFamily: 'monospace', color: 'primary.light' }}>
+                            {item.batch_number || `Batch #${item.id}`}
                           </Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 700, color: yieldPct >= 95 ? 'success.main' : 'warning.main' }}>
-                            {yieldPct}%
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            {item.inspection_date || 'N/A'}
                           </Typography>
-                        </Box>
-                        <LinearProgress
-                          variant="determinate"
-                          value={yieldPct}
-                          sx={{
-                            height: 6,
-                            borderRadius: 3,
-                            backgroundColor: '#e5e7eb',
-                            '& .MuiLinearProgress-bar': {
-                              backgroundColor: yieldPct >= 95 ? 'success.main' : 'warning.main',
+                        </TableCell>
+
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {item.product?.name || 'General Batch Inspection'}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                            Audited by: {inspectorName}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell sx={{ minWidth: 180 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                            <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                              {passed} / {inspected} passed
+                            </Typography>
+                            <Typography variant="caption" sx={{ fontWeight: 700, color: yieldPct >= 95 ? 'success.main' : 'warning.main' }}>
+                              {yieldPct}%
+                            </Typography>
+                          </Box>
+                          <LinearProgress
+                            variant="determinate"
+                            value={yieldPct}
+                            sx={{
+                              height: 6,
                               borderRadius: 3,
-                            },
-                          }}
-                        />
-                        {failed > 0 && (
-                          <Typography variant="caption" sx={{ color: 'error.main', display: 'block', mt: 0.5 }}>
-                            {failed} unit(s) rejected
+                              backgroundColor: '#e5e7eb',
+                              '& .MuiLinearProgress-bar': {
+                                backgroundColor: yieldPct >= 95 ? 'success.main' : 'warning.main',
+                                borderRadius: 3,
+                              },
+                            }}
+                          />
+                          {failed > 0 && (
+                            <Typography variant="caption" sx={{ color: 'error.main', display: 'block', mt: 0.5 }}>
+                              {failed} unit(s) rejected
+                            </Typography>
+                          )}
+                        </TableCell>
+
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            {item.defect_type || 'None / Clean Pass'}
                           </Typography>
-                        )}
-                      </TableCell>
+                          <Chip
+                            label={item.severity}
+                            size="small"
+                            sx={{
+                              backgroundColor: sevStyle.bg,
+                              color: sevStyle.text,
+                              fontWeight: 700,
+                              fontSize: '0.7rem',
+                              height: 20,
+                              mt: 0.5,
+                            }}
+                          />
+                        </TableCell>
 
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                          {item.defect_type || 'None / Clean Pass'}
-                        </Typography>
-                        <Chip
-                          label={item.severity}
-                          size="small"
-                          sx={{
-                            backgroundColor: sevStyle.bg,
-                            color: sevStyle.text,
-                            fontWeight: 700,
-                            fontSize: '0.7rem',
-                            height: 20,
-                            mt: 0.5,
-                          }}
-                        />
-                      </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={item.result}
+                            size="small"
+                            sx={{
+                              backgroundColor: resStyle.bg,
+                              color: resStyle.text,
+                              borderColor: resStyle.border,
+                              borderWidth: 1,
+                              borderStyle: 'solid',
+                              fontWeight: 700,
+                            }}
+                          />
+                        </TableCell>
 
-                      <TableCell>
-                        <Chip
-                          label={item.result}
-                          size="small"
-                          sx={{
-                            backgroundColor: resStyle.bg,
-                            color: resStyle.text,
-                            borderColor: resStyle.border,
-                            borderWidth: 1,
-                            borderStyle: 'solid',
-                            fontWeight: 700,
-                          }}
-                        />
-                      </TableCell>
-
-                      <TableCell align="right">
-                        <Stack direction="row" spacing={1} justifyContent="flex-end">
-                          {canEdit && (
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              color="inherit"
-                              onClick={() => handleOpenEdit(item)}
-                              sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.4 }}
-                            >
-                              Edit
-                            </Button>
-                          )}
-                          {canDelete && (
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              color="error"
-                              onClick={() => setDeleteId(item.id)}
-                              sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.4 }}
-                            >
-                              Delete
-                            </Button>
-                          )}
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                        <TableCell align="right">
+                          <Stack direction="row" spacing={1} justifyContent="flex-end">
+                            {canEdit && (
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="inherit"
+                                onClick={() => handleOpenEdit(item)}
+                                sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.4 }}
+                              >
+                                Edit
+                              </Button>
+                            )}
+                            {canDelete && (
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="error"
+                                onClick={() => setDeleteId(item.id)}
+                                sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.4 }}
+                              >
+                                Delete
+                              </Button>
+                            )}
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <PaginationControl
+              currentPage={page}
+              totalItems={filteredList.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={setPage}
+              itemLabel="quality inspections"
+            />
+          </>
         )}
       </Paper>
 

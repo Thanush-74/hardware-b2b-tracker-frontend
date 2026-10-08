@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -28,6 +28,9 @@ import { manufacturingService, productService } from '../services/businessServic
 import { getStaff } from '../services/staffService';
 import { getCanonicalProducts } from '../utils/canonicalProducts';
 import { ManufacturingIcon, StaffIcon } from '../components/Icons';
+import PaginationControl from '../components/PaginationControl';
+
+const PAGE_SIZE = 10;
 
 const WORK_STATUS_COLORS = {
   Working: { bg: '#f0fdf4', text: '#15803d', border: '#bbf7d0' },
@@ -63,6 +66,9 @@ const ManufacturingManagementPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [apiError, setApiError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  // Pagination state
+  const [page, setPage] = useState(1);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -224,17 +230,39 @@ const ManufacturingManagementPage = () => {
   };
 
   // Filter list
-  const filteredAssignments = assignments.filter((item) => {
-    const q = searchQuery.toLowerCase().trim();
-    const staffName = `${item.staff?.first_name || ''} ${item.staff?.last_name || ''}`.toLowerCase();
-    const sectorName = item.sector?.toLowerCase() || '';
+  const filteredAssignments = useMemo(() => {
+    return assignments.filter((item) => {
+      const q = searchQuery.toLowerCase().trim();
+      const staffName = `${item.staff?.first_name || ''} ${item.staff?.last_name || ''}`.toLowerCase();
+      const sectorName = item.sector?.toLowerCase() || '';
 
-    const matchesSearch = !q || staffName.includes(q) || sectorName.includes(q) || item.notes?.toLowerCase().includes(q);
-    const matchesSector = sectorFilter === 'ALL' || item.sector === sectorFilter;
-    const matchesStatus = statusFilter === 'ALL' || item.status === statusFilter;
+      const matchesSearch = !q || staffName.includes(q) || sectorName.includes(q) || item.notes?.toLowerCase().includes(q);
+      const matchesSector = sectorFilter === 'ALL' || item.sector === sectorFilter;
+      const matchesStatus = statusFilter === 'ALL' || item.status === statusFilter;
 
-    return matchesSearch && matchesSector && matchesStatus;
-  });
+      return matchesSearch && matchesSector && matchesStatus;
+    });
+  }, [assignments, searchQuery, sectorFilter, statusFilter]);
+
+  const paginatedAssignments = useMemo(() => {
+    const startIndex = (page - 1) * PAGE_SIZE;
+    return filteredAssignments.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [filteredAssignments, page]);
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setPage(1);
+  };
+
+  const handleSectorFilterChange = (e) => {
+    setSectorFilter(e.target.value);
+    setPage(1);
+  };
+
+  const handleStatusFilterChange = (e) => {
+    setStatusFilter(e.target.value);
+    setPage(1);
+  };
 
   // Unique sectors from list for dropdown filter
   const uniqueSectors = Array.from(new Set(assignments.map((a) => a.sector).filter(Boolean)));
@@ -417,7 +445,7 @@ const ManufacturingManagementPage = () => {
               fullWidth
               placeholder="Search technician, sector, or workstation..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
             />
           </Box>
           <TextField
@@ -426,7 +454,7 @@ const ManufacturingManagementPage = () => {
             fullWidth
             label="Work Station / Sector"
             value={sectorFilter}
-            onChange={(e) => setSectorFilter(e.target.value)}
+            onChange={handleSectorFilterChange}
           >
             <MenuItem value="ALL">All Sectors</MenuItem>
             {uniqueSectors.map((sec) => (
@@ -441,7 +469,7 @@ const ManufacturingManagementPage = () => {
             fullWidth
             label="Status"
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={handleStatusFilterChange}
           >
             <MenuItem value="ALL">All Statuses</MenuItem>
             <MenuItem value="Working">Working</MenuItem>
@@ -490,123 +518,132 @@ const ManufacturingManagementPage = () => {
             )}
           </Box>
         ) : (
-          <TableContainer
-            sx={{
-              width: '100%',
-              overflowX: 'auto',
-              '&::-webkit-scrollbar': { height: '5px' },
-              '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: '4px' },
-            }}
-          >
-            <Table sx={{ minWidth: 700 }}>
-              <TableHead sx={{ backgroundColor: '#f9fafb' }}>
-                <TableRow sx={{ '& th': { color: '#0f172a', fontWeight: 700, borderBottom: '1px solid #e5e7eb' } }}>
-                  <TableCell>Technician / Staff</TableCell>
-                  <TableCell>Work Station & Sector</TableCell>
-                  <TableCell>Shift</TableCell>
-                  <TableCell>Product Line</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredAssignments.map((item) => {
-                  const statusStyle = WORK_STATUS_COLORS[item.status] || {
-                    bg: '#f9fafb',
-                    text: '#0f172a',
-                    border: '#e5e7eb',
-                  };
+          <>
+            <TableContainer
+              sx={{
+                width: '100%',
+                overflowX: 'auto',
+                '&::-webkit-scrollbar': { height: '5px' },
+                '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: '4px' },
+              }}
+            >
+              <Table sx={{ minWidth: 700 }}>
+                <TableHead sx={{ backgroundColor: '#f9fafb' }}>
+                  <TableRow sx={{ '& th': { color: '#0f172a', fontWeight: 700, borderBottom: '1px solid #e5e7eb' } }}>
+                    <TableCell>Technician / Staff</TableCell>
+                    <TableCell>Work Station & Sector</TableCell>
+                    <TableCell>Shift</TableCell>
+                    <TableCell>Product Line</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paginatedAssignments.map((item) => {
+                    const statusStyle = WORK_STATUS_COLORS[item.status] || {
+                      bg: '#f9fafb',
+                      text: '#0f172a',
+                      border: '#e5e7eb',
+                    };
 
-                  const staffName = item.staff
-                    ? `${item.staff.first_name} ${item.staff.last_name}`
-                    : `Staff #${item.staff_id}`;
+                    const staffName = item.staff
+                      ? `${item.staff.first_name} ${item.staff.last_name}`
+                      : `Staff #${item.staff_id}`;
 
-                  return (
-                    <TableRow key={item.id} hover>
-                      <TableCell>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a' }}>
-                          {staffName}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: '#64748b' }}>
-                          {item.staff?.email || `ID #${item.staff_id}`}
-                        </Typography>
-                      </TableCell>
-
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#2563eb' }}>
-                          {item.sector}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: '#64748b' }}>
-                          Since: {item.start_date || 'N/A'}
-                        </Typography>
-                      </TableCell>
-
-                      <TableCell>
-                        <Chip
-                          label={`${item.shift || 'Day'} Shift`}
-                          size="small"
-                          sx={{ backgroundColor: '#f1f5f9', color: '#334155', fontWeight: 600 }}
-                        />
-                      </TableCell>
-
-                      <TableCell>
-                        <Typography variant="body2">
-                          {item.product?.name || 'General Component Assembly'}
-                        </Typography>
-                        {item.product?.type && (
-                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                            {item.product.type}
+                    return (
+                      <TableRow key={item.id} hover>
+                        <TableCell>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a' }}>
+                            {staffName}
                           </Typography>
-                        )}
-                      </TableCell>
+                          <Typography variant="caption" sx={{ color: '#64748b' }}>
+                            {item.staff?.email || `ID #${item.staff_id}`}
+                          </Typography>
+                        </TableCell>
 
-                      <TableCell>
-                        <Chip
-                          label={item.status}
-                          size="small"
-                          sx={{
-                            backgroundColor: statusStyle.bg,
-                            color: statusStyle.text,
-                            borderColor: statusStyle.border,
-                            borderWidth: 1,
-                            borderStyle: 'solid',
-                            fontWeight: 700,
-                          }}
-                        />
-                      </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: '#2563eb' }}>
+                            {item.sector}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: '#64748b' }}>
+                            Since: {item.start_date || 'N/A'}
+                          </Typography>
+                        </TableCell>
 
-                      <TableCell align="right">
-                        <Stack direction="row" spacing={1} justifyContent="flex-end">
-                          {canEdit && (
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              color="inherit"
-                              onClick={() => handleOpenEdit(item)}
-                              sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.4 }}
-                            >
-                              Edit
-                            </Button>
+                        <TableCell>
+                          <Chip
+                            label={`${item.shift || 'Day'} Shift`}
+                            size="small"
+                            sx={{ backgroundColor: '#f1f5f9', color: '#334155', fontWeight: 600 }}
+                          />
+                        </TableCell>
+
+                        <TableCell>
+                          <Typography variant="body2">
+                            {item.product?.name || 'General Component Assembly'}
+                          </Typography>
+                          {item.product?.type && (
+                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                              {item.product.type}
+                            </Typography>
                           )}
-                          {canDelete && (
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              color="error"
-                              onClick={() => setDeleteId(item.id)}
-                              sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.4 }}
-                            >
-                              Remove
-                            </Button>
-                          )}
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                        </TableCell>
+
+                        <TableCell>
+                          <Chip
+                            label={item.status}
+                            size="small"
+                            sx={{
+                              backgroundColor: statusStyle.bg,
+                              color: statusStyle.text,
+                              borderColor: statusStyle.border,
+                              borderWidth: 1,
+                              borderStyle: 'solid',
+                              fontWeight: 700,
+                            }}
+                          />
+                        </TableCell>
+
+                        <TableCell align="right">
+                          <Stack direction="row" spacing={1} justifyContent="flex-end">
+                            {canEdit && (
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="inherit"
+                                onClick={() => handleOpenEdit(item)}
+                                sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.4 }}
+                              >
+                                Edit
+                              </Button>
+                            )}
+                            {canDelete && (
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="error"
+                                onClick={() => setDeleteId(item.id)}
+                                sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.4 }}
+                              >
+                                Remove
+                              </Button>
+                            )}
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <PaginationControl
+              currentPage={page}
+              totalItems={filteredAssignments.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={setPage}
+              itemLabel="assignments"
+            />
+          </>
         )}
       </Paper>
 

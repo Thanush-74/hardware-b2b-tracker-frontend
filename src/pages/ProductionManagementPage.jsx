@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -28,6 +28,9 @@ import { useAuth } from '../context/AuthContext';
 import { productionService, productService } from '../services/businessService';
 import { getCanonicalProducts } from '../utils/canonicalProducts';
 import { ProductionIcon } from '../components/Icons';
+import PaginationControl from '../components/PaginationControl';
+
+const PAGE_SIZE = 10;
 
 const PRODUCTION_STATUS_COLORS = {
   Planned: { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' },
@@ -48,6 +51,9 @@ const ProductionManagementPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [apiError, setApiError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  // Pagination state
+  const [page, setPage] = useState(1);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -85,7 +91,7 @@ const ProductionManagementPage = () => {
     setApiError('');
     try {
       const [prodRes, productsRes] = await Promise.all([
-        productionService.getAll({ limit: 100 }),
+        productionService.getAll({ limit: 1000 }),
         productService.getAll({ limit: 100 }).catch(() => []),
       ]);
 
@@ -231,6 +237,23 @@ const ProductionManagementPage = () => {
       item.status?.toLowerCase() === statusFilter.toLowerCase();
     return matchesSearch && matchesStatus;
   });
+
+  // Paginated slice
+  const paginatedList = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredList.slice(start, start + PAGE_SIZE);
+  }, [filteredList, page]);
+
+  // Filter change handlers that reset to page 1
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setPage(1);
+  };
+
+  const handleStatusFilterChange = (e) => {
+    setStatusFilter(e.target.value);
+    setPage(1);
+  };
 
   // KPI Calculations
   const totalBatches = productionList.length;
@@ -439,7 +462,7 @@ const ProductionManagementPage = () => {
             fullWidth
             placeholder="Search by Product Name, Type, or Notes..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
           />
           <TextField
             select
@@ -447,7 +470,7 @@ const ProductionManagementPage = () => {
             fullWidth
             label="Batch Status"
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={handleStatusFilterChange}
           >
             <MenuItem value="ALL">All Batch Statuses</MenuItem>
             <MenuItem value="Planned">Planned</MenuItem>
@@ -498,145 +521,155 @@ const ProductionManagementPage = () => {
             )}
           </Box>
         ) : (
-          <TableContainer
-            sx={{
-              width: '100%',
-              overflowX: 'auto',
-              minWidth: 0,
-              '&::-webkit-scrollbar': { height: '5px' },
-              '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(148, 163, 184, 0.25)', borderRadius: '4px' },
-            }}
-          >
-            <Table sx={{ width: '100%', minWidth: 700 }}>
-              <TableHead sx={{ backgroundColor: '#f9fafb' }}>
-                <TableRow sx={{ '& th': { color: '#0f172a', fontWeight: 700, borderBottom: '1px solid #e5e7eb' } }}>
-                  <TableCell sx={{ fontWeight: 700 }}>Batch & Product</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Progress & Output</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Weekly Capacity</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Schedule Dates</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredList.map((batch) => {
-                  const statusStyle = PRODUCTION_STATUS_COLORS[batch.status] || {
-                    bg: '#f9fafb',
-                    text: '#0f172a',
-                    border: '#e5e7eb',
-                  };
+          <>
+            <TableContainer
+              sx={{
+                width: '100%',
+                overflowX: 'auto',
+                minWidth: 0,
+                '&::-webkit-scrollbar': { height: '5px' },
+                '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(148, 163, 184, 0.25)', borderRadius: '4px' },
+              }}
+            >
+              <Table sx={{ width: '100%', minWidth: 700 }}>
+                <TableHead sx={{ backgroundColor: '#f9fafb' }}>
+                  <TableRow sx={{ '& th': { color: '#0f172a', fontWeight: 700, borderBottom: '1px solid #e5e7eb' } }}>
+                    <TableCell sx={{ fontWeight: 700 }}>Batch & Product</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Progress & Output</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Weekly Capacity</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Schedule Dates</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paginatedList.map((batch) => {
+                    const statusStyle = PRODUCTION_STATUS_COLORS[batch.status] || {
+                      bg: '#f9fafb',
+                      text: '#0f172a',
+                      border: '#e5e7eb',
+                    };
 
-                  const planned = Number(batch.quantity_planned) || 0;
-                  const completed = Number(batch.quantity_completed) || 0;
-                  const producing = Number(batch.quantity_producing) || 0;
-                  const completionPercentage = planned > 0 ? Math.min(100, Math.round((completed / planned) * 100)) : 0;
+                    const planned = Number(batch.quantity_planned) || 0;
+                    const completed = Number(batch.quantity_completed) || 0;
+                    const producing = Number(batch.quantity_producing) || 0;
+                    const completionPercentage = planned > 0 ? Math.min(100, Math.round((completed / planned) * 100)) : 0;
 
-                  return (
-                    <TableRow key={batch.id} hover>
-                      <TableCell>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a' }}>
-                          {batch.product_name}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: '#64748b' }}>
-                          Batch #{batch.id} {batch.product_type ? `• ${batch.product_type}` : ''}
-                        </Typography>
-                      </TableCell>
-
-                      <TableCell sx={{ minWidth: 200 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                          <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                            {completed} / {planned} units
+                    return (
+                      <TableRow key={batch.id} hover>
+                        <TableCell>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a' }}>
+                            {batch.product_name}
                           </Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 700, color: '#2563eb' }}>
-                            {completionPercentage}%
+                          <Typography variant="caption" sx={{ color: '#64748b' }}>
+                            Batch #{batch.id} {batch.product_type ? `• ${batch.product_type}` : ''}
                           </Typography>
-                        </Box>
-                        <LinearProgress
-                          variant="determinate"
-                          value={completionPercentage}
-                          sx={{
-                            height: 7,
-                            borderRadius: 3,
-                            backgroundColor: '#e5e7eb',
-                            '& .MuiLinearProgress-bar': {
-                              backgroundColor: completionPercentage === 100 ? '#16a34a' : '#2563eb',
+                        </TableCell>
+
+                        <TableCell sx={{ minWidth: 200 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                            <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                              {completed} / {planned} units
+                            </Typography>
+                            <Typography variant="caption" sx={{ fontWeight: 700, color: '#2563eb' }}>
+                              {completionPercentage}%
+                            </Typography>
+                          </Box>
+                          <LinearProgress
+                            variant="determinate"
+                            value={completionPercentage}
+                            sx={{
+                              height: 7,
                               borderRadius: 3,
-                            },
-                          }}
-                        />
-                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.5 }}>
-                          Producing: {producing} units in-progress
-                        </Typography>
-                      </TableCell>
+                              backgroundColor: '#e5e7eb',
+                              '& .MuiLinearProgress-bar': {
+                                backgroundColor: completionPercentage === 100 ? '#16a34a' : '#2563eb',
+                                borderRadius: 3,
+                              },
+                            }}
+                          />
+                          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.5 }}>
+                            Producing: {producing} units in-progress
+                          </Typography>
+                        </TableCell>
 
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'monospace' }}>
-                          {Number(batch.weekly_capacity || 0).toLocaleString()}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                          units / week
-                        </Typography>
-                      </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'monospace' }}>
+                            {Number(batch.weekly_capacity || 0).toLocaleString()}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            units / week
+                          </Typography>
+                        </TableCell>
 
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          Start: {batch.start_date || 'N/A'}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                          Exp: {batch.expected_completion_date || 'Ongoing'}
-                        </Typography>
-                      </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            Start: {batch.start_date || 'N/A'}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                            Exp: {batch.expected_completion_date || 'Ongoing'}
+                          </Typography>
+                        </TableCell>
 
-                      <TableCell>
-                        <Chip
-                          label={batch.status}
-                          size="small"
-                          onClick={canEdit ? () => handleOpenStatusDialog(batch) : undefined}
-                          sx={{
-                            backgroundColor: statusStyle.bg,
-                            color: statusStyle.text,
-                            borderColor: statusStyle.border,
-                            borderWidth: 1,
-                            borderStyle: 'solid',
-                            fontWeight: 700,
-                            cursor: canEdit ? 'pointer' : 'default',
-                            '&:hover': canEdit ? { filter: 'brightness(1.2)' } : {},
-                          }}
-                        />
-                      </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={batch.status}
+                            size="small"
+                            onClick={canEdit ? () => handleOpenStatusDialog(batch) : undefined}
+                            sx={{
+                              backgroundColor: statusStyle.bg,
+                              color: statusStyle.text,
+                              borderColor: statusStyle.border,
+                              borderWidth: 1,
+                              borderStyle: 'solid',
+                              fontWeight: 700,
+                              cursor: canEdit ? 'pointer' : 'default',
+                              '&:hover': canEdit ? { filter: 'brightness(1.2)' } : {},
+                            }}
+                          />
+                        </TableCell>
 
-                      <TableCell align="right">
-                        <Stack direction="row" spacing={1} justifyContent="flex-end">
-                          {canEdit && (
-                            <>
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                color="inherit"
-                                onClick={() => handleOpenProgressDialog(batch)}
-                                sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.4 }}
-                              >
-                                Log Progress
-                              </Button>
-                              <Button
-                                size="small"
-                                variant="contained"
-                                color="primary"
-                                onClick={() => handleOpenStatusDialog(batch)}
-                                sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.4 }}
-                              >
-                                Status
-                              </Button>
-                            </>
-                          )}
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                        <TableCell align="right">
+                          <Stack direction="row" spacing={1} justifyContent="flex-end">
+                            {canEdit && (
+                              <>
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  color="inherit"
+                                  onClick={() => handleOpenProgressDialog(batch)}
+                                  sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.4 }}
+                                >
+                                  Log Progress
+                                </Button>
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  color="primary"
+                                  onClick={() => handleOpenStatusDialog(batch)}
+                                  sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.4 }}
+                                >
+                                  Status
+                                </Button>
+                              </>
+                            )}
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            <PaginationControl
+              currentPage={page}
+              totalItems={filteredList.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={setPage}
+              itemLabel="batches"
+            />
+          </>
         )}
       </Paper>
 

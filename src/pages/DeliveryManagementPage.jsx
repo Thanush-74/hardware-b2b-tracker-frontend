@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -31,6 +31,9 @@ import { useAuth } from '../context/AuthContext';
 import { deliveryService, orderService } from '../services/businessService';
 import { getStaff } from '../services/staffService';
 import { DeliveriesIcon, OrdersIcon, StaffIcon } from '../components/Icons';
+import PaginationControl from '../components/PaginationControl';
+
+const PAGE_SIZE = 10;
 
 const DELIVERY_STATUS_COLORS = {
   Pending: { bg: '#fffbeb', text: '#b45309', border: '#fde68a' },
@@ -55,6 +58,9 @@ const DeliveryManagementPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [apiError, setApiError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  // Pagination state
+  const [page, setPage] = useState(1);
 
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState('');
@@ -95,8 +101,8 @@ const DeliveryManagementPage = () => {
     setApiError('');
     try {
       const [delivRes, ordersRes, staffRes] = await Promise.all([
-        deliveryService.getAll(),
-        orderService.getAll().catch(() => []),
+        deliveryService.getAll({ limit: 1000 }),
+        orderService.getAll({ limit: 1000 }).catch(() => []),
         getStaff().catch(() => []),
       ]);
 
@@ -266,6 +272,23 @@ const DeliveryManagementPage = () => {
     const matchesStatus = statusFilter === 'ALL' || deliv.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  // Paginated slice
+  const paginatedDeliveries = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredDeliveries.slice(start, start + PAGE_SIZE);
+  }, [filteredDeliveries, page]);
+
+  // Filter change handlers that reset to page 1
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setPage(1);
+  };
+
+  const handleStatusFilterChange = (e) => {
+    setStatusFilter(e.target.value);
+    setPage(1);
+  };
 
   // KPIs
   const totalDeliveries = deliveries.length;
@@ -462,7 +485,7 @@ const DeliveryManagementPage = () => {
             fullWidth
             placeholder="Search by Tracking #, Order #, Recipient, Driver, Address..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
           />
           <TextField
             select
@@ -470,7 +493,7 @@ const DeliveryManagementPage = () => {
             fullWidth
             label="Delivery Status"
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={handleStatusFilterChange}
           >
             <MenuItem value="ALL">All Delivery Statuses</MenuItem>
             <MenuItem value="Pending">Pending</MenuItem>
@@ -523,147 +546,157 @@ const DeliveryManagementPage = () => {
             )}
           </Box>
         ) : (
-          <TableContainer
-            sx={{
-              width: '100%',
-              overflowX: 'auto',
-              '&::-webkit-scrollbar': { height: '5px' },
-              '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: '4px' },
-            }}
-          >
-            <Table sx={{ minWidth: 720 }}>
-              <TableHead sx={{ backgroundColor: '#f9fafb' }}>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Tracking Number</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Order & Customer</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Destination Address</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Assigned Driver</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Delivery Status</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700, color: '#111827' }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredDeliveries.map((delivery) => {
-                  const statusStyle = DELIVERY_STATUS_COLORS[delivery.status] || {
-                    bg: '#f9fafb',
-                    text: '#111827',
-                    border: '#e5e7eb',
-                  };
+          <>
+            <TableContainer
+              sx={{
+                width: '100%',
+                overflowX: 'auto',
+                '&::-webkit-scrollbar': { height: '5px' },
+                '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: '4px' },
+              }}
+            >
+              <Table sx={{ minWidth: 720 }}>
+                <TableHead sx={{ backgroundColor: '#f9fafb' }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Tracking Number</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Order & Customer</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Destination Address</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Assigned Driver</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#111827' }}>Delivery Status</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700, color: '#111827' }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paginatedDeliveries.map((delivery) => {
+                    const statusStyle = DELIVERY_STATUS_COLORS[delivery.status] || {
+                      bg: '#f9fafb',
+                      text: '#111827',
+                      border: '#e5e7eb',
+                    };
 
-                  return (
-                    <TableRow key={delivery.id} hover>
-                      <TableCell>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700, fontFamily: 'monospace', color: 'info.light' }}>
-                          {delivery.tracking_number}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                          Exp: {delivery.expected_delivery_date || 'Not specified'}
-                        </Typography>
-                      </TableCell>
-
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                          {delivery.order_number || `Order #${delivery.order_id}`}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                          Customer: {delivery.customer_name || delivery.recipient_name || 'N/A'}
-                        </Typography>
-                      </TableCell>
-
-                      <TableCell sx={{ maxWidth: 220 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                          {delivery.recipient_name}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', wordBreak: 'break-word' }}>
-                          {delivery.delivery_address}
-                        </Typography>
-                        {delivery.recipient_phone && (
-                          <Typography variant="caption" sx={{ color: 'primary.light', display: 'block' }}>
-                            Tel: {delivery.recipient_phone}
+                    return (
+                      <TableRow key={delivery.id} hover>
+                        <TableCell>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontFamily: 'monospace', color: 'info.light' }}>
+                            {delivery.tracking_number}
                           </Typography>
-                        )}
-                      </TableCell>
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            Exp: {delivery.expected_delivery_date || 'Not specified'}
+                          </Typography>
+                        </TableCell>
 
-                      <TableCell>
-                        {delivery.delivery_staff_id ? (
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                            {delivery.order_number || `Order #${delivery.order_id}`}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                            Customer: {delivery.customer_name || delivery.recipient_name || 'N/A'}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell sx={{ maxWidth: 220 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                            {delivery.recipient_name}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', wordBreak: 'break-word' }}>
+                            {delivery.delivery_address}
+                          </Typography>
+                          {delivery.recipient_phone && (
+                            <Typography variant="caption" sx={{ color: 'primary.light', display: 'block' }}>
+                              Tel: {delivery.recipient_phone}
+                            </Typography>
+                          )}
+                        </TableCell>
+
+                        <TableCell>
+                          {delivery.delivery_staff_id ? (
+                            <Chip
+                              icon={<StaffIcon sx={{ fontSize: 16 }} />}
+                              label={delivery.delivery_person}
+                              size="small"
+                              onClick={canEdit ? () => handleOpenAssignDialog(delivery) : undefined}
+                              sx={{
+                                backgroundColor: '#f3f4f6',
+                                color: '#111827',
+                                border: '1px solid #e5e7eb',
+                                fontWeight: 600,
+                                cursor: canEdit ? 'pointer' : 'default',
+                              }}
+                            />
+                          ) : (
+                            <Chip
+                              label="Unassigned"
+                              size="small"
+                              onClick={canEdit ? () => handleOpenAssignDialog(delivery) : undefined}
+                              sx={{
+                                backgroundColor: '#fffbeb',
+                                color: '#b45309',
+                                border: '1px dashed #fde68a',
+                                fontWeight: 600,
+                                cursor: canEdit ? 'pointer' : 'default',
+                              }}
+                            />
+                          )}
+                        </TableCell>
+
+                        <TableCell>
                           <Chip
-                            icon={<StaffIcon sx={{ fontSize: 16 }} />}
-                            label={delivery.delivery_person}
+                            label={delivery.status}
                             size="small"
-                            onClick={canEdit ? () => handleOpenAssignDialog(delivery) : undefined}
+                            onClick={canEdit ? () => handleOpenStatusDialog(delivery) : undefined}
                             sx={{
-                              backgroundColor: '#f3f4f6',
-                              color: '#111827',
-                              border: '1px solid #e5e7eb',
-                              fontWeight: 600,
+                              backgroundColor: statusStyle.bg,
+                              color: statusStyle.text,
+                              borderColor: statusStyle.border,
+                              borderWidth: 1,
+                              borderStyle: 'solid',
+                              fontWeight: 700,
                               cursor: canEdit ? 'pointer' : 'default',
+                              '&:hover': canEdit ? { filter: 'brightness(1.2)' } : {},
                             }}
                           />
-                        ) : (
-                          <Chip
-                            label="Unassigned"
-                            size="small"
-                            onClick={canEdit ? () => handleOpenAssignDialog(delivery) : undefined}
-                            sx={{
-                              backgroundColor: '#fffbeb',
-                              color: '#b45309',
-                              border: '1px dashed #fde68a',
-                              fontWeight: 600,
-                              cursor: canEdit ? 'pointer' : 'default',
-                            }}
-                          />
-                        )}
-                      </TableCell>
+                        </TableCell>
 
-                      <TableCell>
-                        <Chip
-                          label={delivery.status}
-                          size="small"
-                          onClick={canEdit ? () => handleOpenStatusDialog(delivery) : undefined}
-                          sx={{
-                            backgroundColor: statusStyle.bg,
-                            color: statusStyle.text,
-                            borderColor: statusStyle.border,
-                            borderWidth: 1,
-                            borderStyle: 'solid',
-                            fontWeight: 700,
-                            cursor: canEdit ? 'pointer' : 'default',
-                            '&:hover': canEdit ? { filter: 'brightness(1.2)' } : {},
-                          }}
-                        />
-                      </TableCell>
-
-                      <TableCell align="right">
-                        <Stack direction="row" spacing={1} justifyContent="flex-end">
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            color="inherit"
-                            onClick={() => handleOpenViewDetails(delivery)}
-                            sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.4 }}
-                          >
-                            Details
-                          </Button>
-
-                          {canEdit && (
+                        <TableCell align="right">
+                          <Stack direction="row" spacing={1} justifyContent="flex-end">
                             <Button
                               size="small"
-                              variant="contained"
-                              color="primary"
-                              onClick={() => handleOpenStatusDialog(delivery)}
+                              variant="outlined"
+                              color="inherit"
+                              onClick={() => handleOpenViewDetails(delivery)}
                               sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.4 }}
                             >
-                              Update Status
+                              Details
                             </Button>
-                          )}
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
+
+                            {canEdit && (
+                              <Button
+                                size="small"
+                                variant="contained"
+                                color="primary"
+                                onClick={() => handleOpenStatusDialog(delivery)}
+                                sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.4 }}
+                              >
+                                Update Status
+                              </Button>
+                            )}
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            <PaginationControl
+              currentPage={page}
+              totalItems={filteredDeliveries.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={setPage}
+              itemLabel="deliveries"
+            />
+          </>
         )}
       </Paper>
 
