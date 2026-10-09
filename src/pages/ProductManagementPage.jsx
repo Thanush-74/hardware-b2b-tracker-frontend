@@ -75,99 +75,14 @@ const BulletDotIcon = () => (
   />
 );
 
-/**
- * EXACT 4 CANONICAL PRODUCTS SPECIFICATION
- * Frontend-only configuration for descriptions and components.
- */
-const CANONICAL_CATALOG = [
-  {
-    key: 'gpu',
-    canonicalName: 'GPU',
-    categoryType: 'Graphics Card (GPU)',
-    matchTypes: ['GPU', 'GRAPHICS CARD (GPU)', 'GRAPHICS'],
-    description:
-      'A Graphics Processing Unit designed to handle graphics rendering, video processing, and parallel computing tasks.',
-    materials: [
-      'GPU semiconductor chip',
-      'Silicon',
-      'Copper',
-      'Aluminum heatsink',
-      'Printed Circuit Board (PCB)',
-      'VRAM memory chips',
-      'Solder',
-      'Thermal interface material',
-      'Electronic capacitors and other components',
-    ],
-    defaultPrice: 950.0,
-    defaultStock: 40,
-  },
-  {
-    key: 'ram',
-    canonicalName: 'RAM',
-    categoryType: 'RAM Memory',
-    matchTypes: ['RAM', 'RAM MEMORY', 'MEMORY'],
-    description:
-      'Random Access Memory used to temporarily store data and instructions that the processor needs for fast access while applications are running.',
-    materials: [
-      'DRAM memory chips',
-      'Silicon',
-      'Printed Circuit Board (PCB)',
-      'Copper traces',
-      'Gold-plated electrical contacts',
-      'Solder',
-      'Capacitors and resistors',
-    ],
-    defaultPrice: 120.0,
-    defaultStock: 40,
-  },
-  {
-    key: 'rom_ssd',
-    canonicalName: 'ROM / SSD',
-    categoryType: 'SSD Storage',
-    matchTypes: ['SSD', 'SSD STORAGE', 'ROM', 'STORAGE', 'NVME'],
-    description:
-      'A solid-state storage device used to permanently store the operating system, applications, and user data.',
-    materials: [
-      'NAND flash memory chips',
-      'Silicon',
-      'Controller chip',
-      'Printed Circuit Board (PCB)',
-      'Copper traces',
-      'Aluminum or other metal casing',
-      'Solder',
-      'Electronic components',
-    ],
-    defaultPrice: 89.5,
-    defaultStock: 80,
-  },
-  {
-    key: 'motherboard',
-    canonicalName: 'Motherboard',
-    categoryType: 'Motherboard',
-    matchTypes: ['MOTHERBOARD', 'MAINBOARD'],
-    description:
-      'The main circuit board of a computer that connects and allows communication between the processor, memory, storage, graphics hardware, power supply, and other components.',
-    materials: [
-      'Fiberglass and epoxy resin PCB material',
-      'Copper traces',
-      'Silicon integrated circuits',
-      'Aluminum heatsinks',
-      'Gold-plated contacts/connectors',
-      'Solder',
-      'Capacitors',
-      'Resistors',
-      'Connectors and sockets',
-    ],
-    defaultPrice: 210.0,
-    defaultStock: 30,
-  },
-];
-
 const HARDWARE_TYPES = [
   'SSD Storage',
   'RAM Memory',
   'Motherboard',
   'Graphics Card (GPU)',
+  'GPU',
+  'RAM',
+  'ROM / SSD',
 ];
 
 const ProductManagementPage = () => {
@@ -181,6 +96,7 @@ const ProductManagementPage = () => {
 
   // Products Data State from Backend
   const [rawProducts, setRawProducts] = useState([]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [apiError, setApiError] = useState('');
@@ -211,6 +127,8 @@ const ProductManagementPage = () => {
     setApiError('');
     try {
       const res = await productService.getAll({ limit: 100 });
+      console.log(res.products, "res");
+
       const items = res?.products || res?.rows || (Array.isArray(res) ? res : []);
       setRawProducts(items);
     } catch (err) {
@@ -225,54 +143,16 @@ const ProductManagementPage = () => {
   }, [fetchProducts]);
 
   /**
-   * FRONTEND-ONLY FILTERING & CANONICAL MAPPING:
-   * Filter backend items and merge with the 4 canonical catalog products.
-   * Only the 4 products (GPU, RAM, ROM / SSD Storage, Motherboard) are displayed.
+   * Display all products from backend, filtered by search query.
    */
   const displayProducts = useMemo(() => {
-    return CANONICAL_CATALOG.map((canonical) => {
-      // Find matching backend product items
-      const matchingBackendList = rawProducts.filter((p) => {
-        const pType = (p.type || '').trim().toUpperCase();
-        const pName = (p.name || '').trim().toUpperCase();
-        return canonical.matchTypes.some(
-          (m) => pType.includes(m) || pName.includes(m)
-        );
-      });
-
-      // Prioritize active product with available quantity > 0
-      const matchedBackend =
-        matchingBackendList.find((p) => p.is_active && Number(p.available_quantity) > 0) ||
-        matchingBackendList.find((p) => p.is_active) ||
-        matchingBackendList[0];
-
-      const productId = matchedBackend?.id || canonical.key;
-      const price = matchedBackend?.price !== undefined ? Number(matchedBackend.price) : canonical.defaultPrice;
-      const quantity = matchedBackend?.available_quantity !== undefined ? Number(matchedBackend.available_quantity) : canonical.defaultStock;
-      const isActive = matchedBackend?.is_active !== undefined ? matchedBackend.is_active : true;
-
-      return {
-        id: productId,
-        rawProduct: matchedBackend || null,
-        key: canonical.key,
-        name: canonical.canonicalName,
-        type: canonical.categoryType,
-        description: canonical.description,
-        materials: canonical.materials,
-        price: price,
-        available_quantity: quantity,
-        is_active: isActive,
-      };
-    }).filter((p) => {
-      if (!searchQuery.trim()) return true;
-      const q = searchQuery.toLowerCase();
-      return (
-        p.name.toLowerCase().includes(q) ||
-        p.type.toLowerCase().includes(q) ||
-        p.description.toLowerCase().includes(q) ||
-        p.materials.some((m) => m.toLowerCase().includes(q))
-      );
-    });
+    if (!searchQuery.trim()) return rawProducts;
+    const q = searchQuery.toLowerCase();
+    return rawProducts.filter((p) =>
+      (p.name || '').toLowerCase().includes(q) ||
+      (p.type || '').toLowerCase().includes(q) ||
+      (p.description || '').toLowerCase().includes(q)
+    );
   }, [rawProducts, searchQuery]);
 
   // Open Details Modal
@@ -296,8 +176,8 @@ const ProductManagementPage = () => {
   const handleOpenEdit = (product, e) => {
     if (e) e.stopPropagation();
     setSelectedProduct(product);
-    setFormName(product.rawProduct?.name || product.name || '');
-    setFormType(product.rawProduct?.type || product.type || 'SSD Storage');
+    setFormName(product.name || '');
+    setFormType(product.type || 'SSD Storage');
     setFormPrice(String(product.price || ''));
     setFormQuantity(String(product.available_quantity ?? '0'));
     setFormDescription(product.description || '');
@@ -361,16 +241,14 @@ const ProductManagementPage = () => {
     setIsSubmitting(true);
     setApiError('');
     try {
-      const targetId = selectedProduct.rawProduct?.id || selectedProduct.id;
-      if (targetId && !isNaN(Number(targetId))) {
-        await productService.update(targetId, {
-          name: formName.trim(),
-          type: formType.trim(),
-          price: Number(formPrice),
-          available_quantity: Number(formQuantity),
-          description: formDescription.trim() || undefined,
-        });
-      }
+      const targetId = selectedProduct.id;
+      await productService.update(targetId, {
+        name: formName.trim(),
+        type: formType.trim(),
+        price: Number(formPrice),
+        available_quantity: Number(formQuantity),
+        description: formDescription.trim() || undefined,
+      });
 
       setActionSuccess(`Product "${selectedProduct.name}" updated successfully!`);
       setIsEditOpen(false);
@@ -388,10 +266,7 @@ const ProductManagementPage = () => {
     setIsSubmitting(true);
     setApiError('');
     try {
-      const targetId = selectedProduct.rawProduct?.id || selectedProduct.id;
-      if (targetId && !isNaN(Number(targetId))) {
-        await productService.delete(targetId);
-      }
+      await productService.delete(selectedProduct.id);
       setActionSuccess(`Product "${selectedProduct.name}" deactivated successfully.`);
       setIsDeleteOpen(false);
       fetchProducts();
@@ -408,14 +283,8 @@ const ProductManagementPage = () => {
     setAddingToCartId(product.id);
     setApiError('');
     try {
-      // Use backend ID if matched, or resolve from raw products
-      const targetId = product.rawProduct?.id || (typeof product.id === 'number' || !isNaN(Number(product.id)) ? product.id : null);
-      if (targetId) {
-        await cartService.addItem(targetId, 1);
-        setActionSuccess(`1 unit of "${product.name}" added to cart!`);
-      } else {
-        setActionSuccess(`1 unit of "${product.name}" added to cart!`);
-      }
+      await cartService.addItem(product.id, 1);
+      setActionSuccess(`1 unit of "${product.name}" added to cart!`);
     } catch (err) {
       setApiError(err.message || 'Failed to add item to cart.');
     } finally {
@@ -533,7 +402,7 @@ const ProductManagementPage = () => {
             />
           </Box>
           <Stack direction="row" spacing={1.5} alignItems="center" justifyContent={{ xs: 'flex-start', sm: 'flex-end' }}>
-            <Chip label={`Catalog Items: ${displayProducts.length} of 4`} size="small" sx={{ fontWeight: 600, backgroundColor: '#eff6ff', color: '#1d4ed8' }} />
+            <Chip label={`Showing: ${displayProducts.length} of ${rawProducts.length}`} size="small" sx={{ fontWeight: 600, backgroundColor: '#eff6ff', color: '#1d4ed8' }} />
             <Button size="small" variant="outlined" onClick={fetchProducts} disabled={isLoading} sx={{ textTransform: 'none', borderColor: '#d1d5db', color: '#0f172a' }}>
               Refresh
             </Button>
@@ -561,9 +430,11 @@ const ProductManagementPage = () => {
             const qty = Number(product.available_quantity ?? 0);
             const isOutOfStock = qty <= 0;
             const isLowStock = qty > 0 && qty <= 10;
+            const specs = product.specifications || {};
+            const specEntries = Object.entries(specs);
 
             return (
-              <Grid item xs={12} sm={6} md={6} lg={3} key={product.key}>
+              <Grid item xs={12} sm={6} md={6} lg={3} key={product.id}>
                 <Paper
                   elevation={0}
                   sx={{
@@ -603,20 +474,20 @@ const ProductManagementPage = () => {
                           !product.is_active
                             ? 'Inactive'
                             : isOutOfStock
-                            ? 'Out of Stock'
-                            : isLowStock
-                            ? 'Low Stock'
-                            : 'In Stock'
+                              ? 'Out of Stock'
+                              : isLowStock
+                                ? 'Low Stock'
+                                : 'In Stock'
                         }
                         size="small"
                         color={
                           !product.is_active
                             ? 'default'
                             : isOutOfStock
-                            ? 'error'
-                            : isLowStock
-                            ? 'warning'
-                            : 'success'
+                              ? 'error'
+                              : isLowStock
+                                ? 'warning'
+                                : 'success'
                         }
                         variant="outlined"
                         sx={{ fontSize: '0.68rem', height: 20 }}
@@ -624,7 +495,7 @@ const ProductManagementPage = () => {
                     </Box>
 
                     {/* Product Name */}
-                    <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', mb: 1 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', mb: 0.5 }}>
                       {product.name}
                     </Typography>
 
@@ -634,16 +505,45 @@ const ProductManagementPage = () => {
                       sx={{
                         color: '#475569',
                         lineHeight: 1.55,
-                        mb: 2,
-                        minHeight: 65,
+                        mb: 1.5,
+                        minHeight: 40,
                         display: '-webkit-box',
-                        WebkitLineClamp: 3,
+                        WebkitLineClamp: 2,
                         WebkitBoxOrient: 'vertical',
                         overflow: 'hidden',
                       }}
                     >
-                      {product.description}
+                      {product.description || <Box component="span" sx={{ color: '#94a3b8', fontStyle: 'italic' }}>No description provided.</Box>}
                     </Typography>
+
+                    {/* Specifications */}
+                    {specEntries.length > 0 && (
+                      <Box
+                        sx={{
+                          mb: 1.5,
+                          p: 1.5,
+                          borderRadius: 1.5,
+                          backgroundColor: '#f8fafc',
+                          border: '1px solid #e2e8f0',
+                        }}
+                      >
+                        <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, display: 'block', mb: 0.75, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          Specifications
+                        </Typography>
+                        <Stack spacing={0.4}>
+                          {specEntries.map(([key, val]) => (
+                            <Box key={key} sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+                              <Typography variant="caption" sx={{ color: '#64748b', textTransform: 'capitalize' }}>
+                                {key.replace(/_/g, ' ')}
+                              </Typography>
+                              <Typography variant="caption" sx={{ fontWeight: 700, color: '#0f172a', textAlign: 'right' }}>
+                                {String(val)}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Stack>
+                      </Box>
+                    )}
 
                     {/* Price & Quantity Info */}
                     <Box
@@ -794,15 +694,15 @@ const ProductManagementPage = () => {
                     !selectedProduct.is_active
                       ? 'Deactivated'
                       : Number(selectedProduct.available_quantity) <= 0
-                      ? 'Out of Stock'
-                      : 'In Stock'
+                        ? 'Out of Stock'
+                        : 'In Stock'
                   }
                   color={
                     !selectedProduct.is_active
                       ? 'default'
                       : Number(selectedProduct.available_quantity) <= 0
-                      ? 'error'
-                      : 'success'
+                        ? 'error'
+                        : 'success'
                   }
                   variant="outlined"
                   sx={{ fontWeight: 700 }}
@@ -815,7 +715,7 @@ const ProductManagementPage = () => {
                 {/* Description Section */}
                 <Box>
                   <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.05em', mb: 1 }}>
-                    Description:
+                    Description
                   </Typography>
                   <Paper
                     elevation={0}
@@ -826,42 +726,42 @@ const ProductManagementPage = () => {
                       borderRadius: 1.5,
                     }}
                   >
-                    <Typography variant="body1" sx={{ color: '#334155', lineHeight: 1.6 }}>
-                      {selectedProduct.description}
+                    <Typography variant="body1" sx={{ color: selectedProduct.description ? '#334155' : '#94a3b8', lineHeight: 1.6, fontStyle: selectedProduct.description ? 'normal' : 'italic' }}>
+                      {selectedProduct.description || 'No description provided.'}
                     </Typography>
                   </Paper>
                 </Box>
 
-                {/* Materials / Components Used Section */}
-                <Box>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.05em', mb: 1.5 }}>
-                    Materials / Components Used:
-                  </Typography>
-                  <Paper
-                    elevation={0}
-                    sx={{
-                      p: 2,
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: 1.5,
-                    }}
-                  >
-                    <List dense disablePadding>
-                      {selectedProduct.materials && selectedProduct.materials.map((mat, idx) => (
-                        <ListItem key={idx} disableGutters sx={{ py: 0.6, display: 'flex', alignItems: 'center' }}>
-                          <BulletDotIcon />
-                          <ListItemText
-                            primary={mat}
-                            primaryTypographyProps={{
-                              variant: 'body2',
-                              sx: { color: '#1e293b', fontWeight: 500 },
-                            }}
-                          />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </Paper>
-                </Box>
+                {/* Specifications Section */}
+                {selectedProduct.specifications && Object.keys(selectedProduct.specifications).length > 0 && (
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.05em', mb: 1.5 }}>
+                      Specifications
+                    </Typography>
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: 2,
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: 1.5,
+                      }}
+                    >
+                      <Stack spacing={1}>
+                        {Object.entries(selectedProduct.specifications).map(([key, val]) => (
+                          <Box key={key} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.5, borderBottom: '1px solid #f1f5f9' }}>
+                            <Typography variant="body2" sx={{ color: '#64748b', textTransform: 'capitalize', fontWeight: 500 }}>
+                              {key.replace(/_/g, ' ')}
+                            </Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>
+                              {String(val)}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </Stack>
+                    </Paper>
+                  </Box>
+                )}
 
                 {/* Commercial Specifications & Pricing */}
                 <Box
