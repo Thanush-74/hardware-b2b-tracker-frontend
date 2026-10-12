@@ -26,11 +26,23 @@ export async function getRolePermissions(roleId) {
   return response.data;
 }
 
-// PUT /api/roles/:roleId/permissions  — update permissions for a role (admin only)
-// body: { permission_ids: [1,2,3,...] }  — backend reads req.body.permission_ids
-export async function updateRolePermissions(roleId, permissionIds) {
-  const response = await api.put(`/roles/${roleId}/permissions`, { permission_ids: permissionIds });
+// PUT /api/roles/:roleId/permissions  — update permissions/screens for a role (admin only)
+// body: { permission_ids: [1,2,3,...], screen_ids: [1,2,...] }
+export async function updateRolePermissions(roleId, permissionIds, screenIds) {
+  const payload = {};
+  if (Array.isArray(permissionIds)) {
+    payload.permission_ids = permissionIds;
+  }
+  if (Array.isArray(screenIds)) {
+    payload.screen_ids = screenIds;
+  }
+  const response = await api.put(`/roles/${roleId}/permissions`, payload);
   return response.data;
+}
+
+// Update role screen assignments (admin only)
+export async function updateRoleScreens(roleId, screenIds, permissionIds) {
+  return updateRolePermissions(roleId, permissionIds, screenIds);
 }
 
 // GET /api/permissions  — list all available permissions

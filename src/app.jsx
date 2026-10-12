@@ -19,6 +19,7 @@ import DeliveriesPage from './deliveries/DeliveriesPage';
 import ReturnsPage from './returnandreplacement/ReturnsPage';
 import StaffPage from './staff/StaffPage';
 import RolesPage from './roles/RolesPage';
+import RoleScreenSelection from './roles/screen-selection/RoleScreenSelection';
 import RevenuePage from './revenue/RevenuePage';
 import ExpensesPage from './expenses/ExpensesPage';
 import InspectionsPage from './inspections/InspectionsPage';
@@ -151,9 +152,31 @@ function App() {
           <Route
             path="/roles"
             element={
-              <ProtectedRoute requiredPermission="roles.view">
+              <ProtectedRoute adminOnly>
                 <Layout>
                   <RolesPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/roles/screens"
+            element={
+              <ProtectedRoute adminOnly>
+                <Layout>
+                  <RoleScreenSelection />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/roles/screen-selection"
+            element={
+              <ProtectedRoute adminOnly>
+                <Layout>
+                  <RoleScreenSelection />
                 </Layout>
               </ProtectedRoute>
             }

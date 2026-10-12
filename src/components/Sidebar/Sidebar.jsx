@@ -26,7 +26,7 @@ const SCREEN_MAP = {
 };
 
 function Sidebar() {
-  const { user, screens, logout } = useAuth();
+  const { user, screens, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   function handleLogout() {
@@ -45,6 +45,11 @@ function Sidebar() {
       mappedItems.push(SCREEN_MAP[screen?.slug]);
     }
   });
+
+  // Administrators can manage Roles & Permissions
+  if (isAdmin() && SCREEN_MAP.roles) {
+    mappedItems.push(SCREEN_MAP.roles);
+  }
 
   // Ensure Dashboard is always the first item in navigation
   const otherItems = mappedItems.filter((item) => item.path !== SCREEN_MAP.dashboard.path);

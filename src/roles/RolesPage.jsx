@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { getAllRoles, createRole, getRolePermissions, updateRolePermissions, getAllPermissions, getAllScreens } from '../services/roleService';
 import { useAuth } from '../context/AuthContext';
+import RoleScreenSelection from './screen-selection/RoleScreenSelection';
 
 function RolesPage() {
   const { isAdmin } = useAuth();
@@ -11,7 +12,7 @@ function RolesPage() {
   const [allPermissions, setAllPermissions] = useState([]);
   const [allScreens, setAllScreens] = useState([]); // screens from backend
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState('list'); // list | create | managePermissions
+  const [view, setView] = useState('list'); // list | create | managePermissions | screens
   const [selectedRole, setSelectedRole] = useState(null);
   const [rolePermissionIds, setRolePermissionIds] = useState(new Set());
   const [loadingPerms, setLoadingPerms] = useState(false);
@@ -48,6 +49,11 @@ function RolesPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function openConfigureScreens(role) {
+    setSelectedRole(role);
+    setView('screens');
   }
 
   async function openManagePermissions(role) {
@@ -131,6 +137,20 @@ function RolesPage() {
     setRolePermissionIds(newSet);
   }
 
+  // If viewing the Screen Selection page
+  if (view === 'screens') {
+    return (
+      <RoleScreenSelection
+        embeddedRoleId={selectedRole?.id}
+        onBack={() => {
+          setView('list');
+          setSelectedRole(null);
+          loadRoles();
+        }}
+      />
+    );
+  }
+
   return (
     <div>
       <div className="page-header">
@@ -139,9 +159,32 @@ function RolesPage() {
           <div className="page-header-sub">Define roles and control what each role can access</div>
         </div>
         {isAdmin() && view === 'list' && (
-          <button className="btn btn-primary" onClick={() => setView('create')}>+ Create Role</button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button className="btn btn-outline" onClick={() => { setSelectedRole(null); setView('screens'); }}>
+              📺 Role Screen Selection
+            </button>
+            <button className="btn btn-primary" onClick={() => setView('create')}>
+              + Create Role
+            </button>
+          </div>
         )}
       </div>
+
+      {/* Navigation tabs */}
+      {view === 'list' && (
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '1px solid var(--color-border)', paddingBottom: '12px' }}>
+          <button className="btn btn-primary btn-sm" style={{ pointerEvents: 'none' }}>
+            🔐 Roles Overview
+          </button>
+          <button
+            className="btn btn-outline btn-sm"
+            style={{ background: 'transparent', borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}
+            onClick={() => { setSelectedRole(null); setView('screens'); }}
+          >
+            📺 Screen Selection
+          </button>
+        </div>
+      )}
 
       {successMessage && <div className="alert alert-success">✔ {successMessage}</div>}
       {error && <div className="alert alert-error">⚠️ {error}</div>}
@@ -172,9 +215,14 @@ function RolesPage() {
                       <td style={{ color: '#6b7280', fontSize: '0.85rem' }}>{role.description || '—'}</td>
                       <td>
                         {isAdmin() && (
-                          <button className="btn btn-outline btn-sm" onClick={() => openManagePermissions(role)}>
-                            Manage Permissions
-                          </button>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <button className="btn btn-primary btn-sm" onClick={() => openConfigureScreens(role)}>
+                              📺 Configure Screens
+                            </button>
+                            <button className="btn btn-outline btn-sm" onClick={() => openManagePermissions(role)}>
+                              Manage Permissions
+                            </button>
+                          </div>
                         )}
                       </td>
                     </tr>
