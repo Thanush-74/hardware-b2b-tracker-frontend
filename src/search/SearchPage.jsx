@@ -1,175 +1,242 @@
 // SearchPage.jsx — Global search across products, orders, staff, etc.
 // GET /api/search?q=term
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { search } from '../services/searchService';
 
+const MODULE_CONFIG = {
+  products:    { label: 'Products',            icon: '📦', defaultRoute: '/products' },
+  orders:      { label: 'Orders',              icon: '📋', defaultRoute: '/orders' },
+  deliveries:  { label: 'Deliveries',          icon: '🚚', defaultRoute: '/deliveries' },
+  returns:     { label: 'Returns & RMA',       icon: '↩️', defaultRoute: '/returns' },
+  inventory:   { label: 'Inventory',           icon: '🗃️', defaultRoute: '/inventory' },
+  production:  { label: 'Production Batches',  icon: '⚙️', defaultRoute: '/production' },
+  inspections: { label: 'Quality Inspections', icon: '🔍', defaultRoute: '/inspections' },
+  staff:       { label: 'Staff Management',    icon: '👥', defaultRoute: '/staff' },
+};
+
 function SearchPage() {
-  const [query, setQuery] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const initialQuery = searchParams.get('q') || '';
+
+  const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState(null); // null = not searched yet
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  async function handleSearch(event) {
-    event.preventDefault();
-    if (!query.trim()) return;
+  // Automatically execute search if query exists in URL
+  useEffect(() => {
+    const qFromUrl = searchParams.get('q') || '';
+    setQuery(qFromUrl);
+    if (qFromUrl.trim()) {
+      performSearch(qFromUrl.trim());
+    }
+  }, [searchParams]);
+
+  async function performSearch(searchTerm) {
+    if (!searchTerm) {
+      setResults(null);
+      return;
+    }
     setLoading(true);
     setError('');
-    setResults(null);
     try {
-      const result = await search(query.trim());
-      // Backend returns result.data which may be an object of { products: [], orders: [], staff: [], ... }
-      setResults(result.data || {});
+      const response = await search(searchTerm);
+      setResults(response.data || {});
     } catch (err) {
       setError(err.response?.data?.message || 'Search failed. Please try again.');
+      setResults(null);
     } finally {
       setLoading(false);
     }
   }
 
-  // Helper: render a group of search results (e.g. products, orders)
-  function renderResultGroup(label, items, renderItem) {
-    if (!items || items.length === 0) return null;
-    return (
-      <div className="search-result-group">
-        <div className="search-result-group-title">
-          {label} ({items.length})
-        </div>
-        {items.map((item, i) => (
-          <div key={item.id || i} className="search-result-item">
-            {renderItem(item)}
-          </div>
-        ))}
-      </div>
-    );
+  function handleSearchSubmit(event) {
+    event.preventDefault();
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    setSearchParams({ q: trimmed });
+    performSearch(trimmed);
   }
 
-  // Check if there are any results across all groups
-  const hasResults = results && Object.values(results).some(
-    (v) => Array.isArray(v) && v.length > 0
-  );
+  function handleClear() {
+    setQuery('');
+    setResults(null);
+    setError('');
+    setSearchParams({});
+  }
+
+  function handleItemClick(item, defaultRoute) {
+    const targetRoute = item.route || defaultRoute;
+    if (targetRoute) {
+      navigate(targetRoute);
+    }
+  }
+
+  // Calculate total result count
+  const totalCount = results
+    ? Object.values(results).reduce(
+        (sum, list) => sum + (Array.isArray(list) ? list.length : 0),
+        0
+      )
+    : 0;
 
   return (
     <div>
       <div className="page-header">
         <div>
-          <h1>🔎 Search</h1>
-          <div className="page-header-sub">Search across products, orders, staff, and more</div>
+          <h1>🔎 Global Search</h1>
+          <div className="page-header-sub">Search across products, orders, inventory, deliveries, returns, staff, and QA</div>
         </div>
       </div>
 
-      {/* Search bar */}
-      <div className="card">
-        <form onSubmit={handleSearch} style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
-          <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+      {/* Search Input Bar */}
+      <div className="card" style={{ marginBottom: 20 }}>
+        <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
+          <div className="form-group" style={{ flex: 1, marginBottom: 0, position: 'relative' }}>
             <label className="form-label" htmlFor="search-input">Search Query</label>
-            <input
-              id="search-input"
-              type="text"
-              className="form-input"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Type to search products, orders, staff…"
-              autoFocus
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                id="search-input"
+                type="text"
+                className="form-input"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search by order #, product name, staff, tracking, batch ID..."
+                style={{ paddingRight: query ? '36px' : '12px' }}
+                autoFocus
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: '#9ca3af',
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    padding: '2px 6px'
+                  }}
+                  title="Clear"
+                  aria-label="Clear query"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
           <button
             type="submit"
             className="btn btn-primary"
             disabled={loading || !query.trim()}
-            style={{ flex: '0 0 auto' }}
+            style={{ flex: '0 0 auto', height: '42px', minWidth: '120px' }}
           >
             {loading ? 'Searching…' : '🔎 Search'}
           </button>
         </form>
       </div>
 
-      {/* Error */}
+      {/* Error alert */}
       {error && <div className="alert alert-error">⚠️ {error}</div>}
 
-      {/* Loading */}
+      {/* Loading state */}
       {loading && (
-        <div className="spinner-wrapper"><div className="spinner" /> Searching…</div>
+        <div className="spinner-wrapper" style={{ padding: '40px 0' }}>
+          <div className="spinner" /> Searching across all business modules…
+        </div>
       )}
 
-      {/* Results */}
+      {/* Results container */}
       {!loading && results !== null && (
         <div className="card">
-          {!hasResults ? (
+          {totalCount === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">🔎</div>
-              <p>No results found for "<strong>{query}</strong>".</p>
-              <p>Try a different keyword or check your spelling.</p>
+              <h3>No results found</h3>
+              <p>No records matched your search for "<strong>{query}</strong>".</p>
+              <p style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: 4 }}>
+                Try searching for a different keyword, order number, or checking permissions.
+              </p>
             </div>
           ) : (
-            <>
-              <div style={{ marginBottom: '16px', color: '#6b7280', fontSize: '0.85rem' }}>
-                Showing results for "<strong>{query}</strong>"
+            <div>
+              <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#4b5563', fontSize: '0.9rem' }}>
+                  Showing <strong>{totalCount}</strong> matching result{totalCount === 1 ? '' : 's'} for "<strong>{query}</strong>"
+                </span>
+                <span style={{ fontSize: '0.8rem', color: '#9ca3af' }}>Click any result to jump to details</span>
               </div>
 
-              {/* Products */}
-              {renderResultGroup('Products', results.products, (item) => (
-                <div>
-                  <strong>{item.name}</strong> —{' '}
-                  <span style={{ color: '#6b7280' }}>{item.type}</span> — $
-                  {parseFloat(item.price || 0).toFixed(2)}
-                </div>
-              ))}
-
-              {/* Orders */}
-              {renderResultGroup('Orders', results.orders, (item) => (
-                <div>
-                  <strong>{item.order_number}</strong> —{' '}
-                  {item.customer_name} —{' '}
-                  <span className={`badge badge-${item.order_status?.toLowerCase()}`}>
-                    {item.order_status}
-                  </span>
-                </div>
-              ))}
-
-              {/* Staff */}
-              {renderResultGroup('Staff', results.staff, (item) => (
-                <div>
-                  <strong>{item.first_name} {item.last_name}</strong> —{' '}
-                  {item.email} —{' '}
-                  {item.role?.name || 'No role'}
-                </div>
-              ))}
-
-              {/* Deliveries */}
-              {renderResultGroup('Deliveries', results.deliveries, (item) => (
-                <div>
-                  <strong>{item.tracking_number}</strong> —{' '}
-                  {item.recipient_name || '-'} —{' '}
-                  <span className={`badge badge-${item.status?.toLowerCase().replace(' ', '') || 'pending'}`}>
-                    {item.status}
-                  </span>
-                </div>
-              ))}
-
-              {/* Returns */}
-              {renderResultGroup('Returns', results.returns, (item) => (
-                <div>
-                  <strong>{item.return_number}</strong> —{' '}
-                  {item.customer_name} —{' '}
-                  <span className={`badge badge-${item.status?.toLowerCase() || 'requested'}`}>
-                    {item.status}
-                  </span>
-                </div>
-              ))}
-
-              {/* Any other result groups the backend may return */}
-              {Object.entries(results).map(([key, items]) => {
-                // Skip known groups already rendered above
-                if (['products', 'orders', 'staff', 'deliveries', 'returns'].includes(key)) return null;
+              {/* Render each module section */}
+              {Object.entries(MODULE_CONFIG).map(([key, config]) => {
+                const items = results[key];
                 if (!Array.isArray(items) || items.length === 0) return null;
-                return renderResultGroup(
-                  key.charAt(0).toUpperCase() + key.slice(1),
-                  items,
-                  (item) => <div>{JSON.stringify(item)}</div>
+
+                return (
+                  <div key={key} className="search-result-group">
+                    <div className="search-result-group-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span>{config.icon}</span>
+                      <span>{config.label}</span>
+                      <span style={{ opacity: 0.75, fontWeight: 500 }}>({items.length})</span>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {items.map((item, idx) => (
+                        <div
+                          key={item.id || idx}
+                          className="search-result-item"
+                          onClick={() => handleItemClick(item, config.defaultRoute)}
+                          style={{
+                            cursor: 'pointer',
+                            padding: '12px 16px',
+                            borderRadius: '6px',
+                            border: '1px solid #edf2f7',
+                            background: '#ffffff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            transition: 'all 0.15s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.borderColor = '#1565c0';
+                            e.currentTarget.style.background = '#f8fafc';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = '#edf2f7';
+                            e.currentTarget.style.background = '#ffffff';
+                          }}
+                        >
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <div style={{ fontWeight: 600, color: '#1a1a2e', fontSize: '0.95rem' }}>
+                              {item.title || item.name}
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>
+                              {item.subtitle || item.description || ''}
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            {item.status && (
+                              <span className={`badge badge-${item.status.toLowerCase().replace(/[\s&]+/g, '') || 'info'}`}>
+                                {item.status}
+                              </span>
+                            )}
+                            <span style={{ color: '#1565c0', fontSize: '0.9rem', fontWeight: 600 }}>→</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 );
               })}
-            </>
+            </div>
           )}
         </div>
       )}

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getUnreadCount } from '../../services/notificationService';
+import GlobalSearchBar from '../SearchBar/GlobalSearchBar';
 
 // Map route paths to readable page titles
 const PAGE_TITLES = {
@@ -61,6 +62,9 @@ function Topbar() {
     <header className="topbar">
       {/* Current page name */}
       <div className="topbar-title">{pageTitle}</div>
+
+      {/* Global Search Bar */}
+      <GlobalSearchBar />
 
       <div className="topbar-right">
         {/* Notification Bell */}
