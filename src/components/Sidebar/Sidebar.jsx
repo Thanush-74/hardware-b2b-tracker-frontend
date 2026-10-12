@@ -19,6 +19,7 @@ const SCREEN_MAP = {
   roles:          { path: '/roles',          label: 'Roles & Permissions', icon: '🔐' },
   expenses:       { path: '/expenses',       label: 'Expenses',            icon: '💰' },
   inspections:    { path: '/inspections',    label: 'Quality Inspection',  icon: '🔍' },
+  inspection:     { path: '/inspections',    label: 'Quality Inspection',  icon: '🔍' },
   notifications:  { path: '/notifications',  label: 'Notifications',       icon: '🔔' },
   search:         { path: '/search',         label: 'Search',              icon: '🔎' },
 };
@@ -33,12 +34,23 @@ function Sidebar() {
   }
 
   // Build the nav items from the screens the user is allowed to access
-  const navItems = screens
-    .map((screen) => SCREEN_MAP[screen.slug])
-    .filter(Boolean); // remove any screen slugs we don't have a mapping for
+  const mappedItems = screens
+    .map((screen) => SCREEN_MAP[screen?.slug])
+    .filter(Boolean);
 
-  // If there are no allowed screens (e.g. new staff), show dashboard only
-  const displayItems = navItems.length > 0 ? navItems : [SCREEN_MAP.dashboard];
+  // Ensure Dashboard is always the first item in navigation
+  const otherItems = mappedItems.filter((item) => item.path !== SCREEN_MAP.dashboard.path);
+
+  // Deduplicate items by path
+  const seenPaths = new Set();
+  const uniqueOtherItems = otherItems.filter((item) => {
+    if (seenPaths.has(item.path)) return false;
+    seenPaths.add(item.path);
+    return true;
+  });
+
+  // Always put Dashboard first in the navigation
+  const displayItems = [SCREEN_MAP.dashboard, ...uniqueOtherItems];
 
   return (
     <aside className="sidebar">

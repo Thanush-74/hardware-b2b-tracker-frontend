@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCart } from '../../services/cartService';
 
-function ViewCart({ refreshKey, onEdit, onRemove, onClear }) {
+function ViewCart({ refreshKey, onEdit, onRemove, onClear, onPlaceOrder, isPlacingOrder, onCartLoaded }) {
   const navigate = useNavigate();
   const [cartData, setCartData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -21,8 +21,11 @@ function ViewCart({ refreshKey, onEdit, onRemove, onClear }) {
     setError('');
     try {
       const result = await getCart();
-      // Backend returns { data: { items: [...], total: 0 } } or similar
-      setCartData(result.data);
+      const data = result.data;
+      setCartData(data);
+      if (onCartLoaded) {
+        onCartLoaded(data);
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load cart.');
     } finally {
@@ -42,8 +45,19 @@ function ViewCart({ refreshKey, onEdit, onRemove, onClear }) {
     return <div className="alert alert-error">⚠️ {error}</div>;
   }
 
-  const items = cartData?.items || cartData || [];
-  const total = cartData?.total ?? 0;
+  const items = cartData?.items || (Array.isArray(cartData) ? cartData : []);
+
+  // Accurately calculate total from items
+  const calculatedTotal = items.reduce((sum, item) => {
+    const price = parseFloat(item.product?.price || item.unit_price || 0);
+    const qty = parseInt(item.quantity, 10) || 0;
+    const itemTotal = item.item_total != null ? parseFloat(item.item_total) : (price * qty);
+    return sum + (isNaN(itemTotal) ? 0 : itemTotal);
+  }, 0);
+
+  const displayTotal = cartData?.cart_total != null
+    ? parseFloat(cartData.cart_total)
+    : (cartData?.total != null ? parseFloat(cartData.total) : calculatedTotal);
 
   if (!Array.isArray(items) || items.length === 0) {
     return (
@@ -76,33 +90,41 @@ function ViewCart({ refreshKey, onEdit, onRemove, onClear }) {
             </tr>
           </thead>
           <tbody>
-            {items.map((item) => (
-              <tr key={item.id}>
-                <td><strong>{item.product?.name || item.product_id}</strong></td>
-                <td>{item.product?.type || '-'}</td>
-                <td>${parseFloat(item.product?.price || item.unit_price || 0).toFixed(2)}</td>
-                <td>{item.quantity}</td>
-                <td>
-                  ${(parseFloat(item.product?.price || item.unit_price || 0) * item.quantity).toFixed(2)}
-                </td>
-                <td>
-                  <div className="table-actions">
-                    <button
-                      className="btn btn-outline btn-sm"
-                      onClick={() => onEdit(item)}
-                    >
-                      Edit Qty
-                    </button>
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={() => onRemove(item)}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {items.map((item) => {
+              const name = item.product?.name || item.product_name || `Product #${item.product_id}`;
+              const type = item.product?.type || item.product_type || '-';
+              const price = parseFloat(item.product?.price || item.unit_price || 0);
+              const qty = item.quantity;
+              const subtotal = item.item_total != null
+                ? parseFloat(item.item_total)
+                : price * qty;
+
+              return (
+                <tr key={item.id}>
+                  <td><strong>{name}</strong></td>
+                  <td>{type}</td>
+                  <td>${price.toFixed(2)}</td>
+                  <td>{qty}</td>
+                  <td>${subtotal.toFixed(2)}</td>
+                  <td>
+                    <div className="table-actions">
+                      <button
+                        className="btn btn-outline btn-sm"
+                        onClick={() => onEdit(item)}
+                      >
+                        Edit Qty
+                      </button>
+                      <button
+                        className="btn btn-danger btn-sm"
+                        onClick={() => onRemove(item)}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -110,14 +132,21 @@ function ViewCart({ refreshKey, onEdit, onRemove, onClear }) {
       {/* Cart total and Place Order */}
       <div style={{ padding: '16px 24px', borderTop: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>
-          Total: ${parseFloat(total).toFixed(2)}
+          Total: ${displayTotal.toFixed(2)}
         </span>
         <button
           className="btn btn-primary"
-          onClick={() => navigate('/orders')}
-          title="Go to Orders page to place your order from this cart"
+          onClick={() => {
+            if (onPlaceOrder) {
+              onPlaceOrder(cartData);
+            } else {
+              navigate('/orders');
+            }
+          }}
+          disabled={isPlacingOrder}
+          title={isPlacingOrder ? 'Order form is displayed below' : 'Place order from this cart'}
         >
-          📋 Place Order
+          {isPlacingOrder ? '📋 Order Form Open ↓' : '📋 Place Order'}
         </button>
       </div>
     </div>
