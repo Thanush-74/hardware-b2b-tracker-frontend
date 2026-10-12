@@ -83,9 +83,9 @@ function ViewCart({ refreshKey, onEdit, onRemove, onClear, onPlaceOrder, isPlaci
             <tr>
               <th>Product</th>
               <th>Type</th>
-              <th>Unit Price</th>
+              <th>Unit Price (₹)</th>
               <th>Quantity</th>
-              <th>Subtotal</th>
+              <th>Subtotal (₹)</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -103,9 +103,9 @@ function ViewCart({ refreshKey, onEdit, onRemove, onClear, onPlaceOrder, isPlaci
                 <tr key={item.id}>
                   <td><strong>{name}</strong></td>
                   <td>{type}</td>
-                  <td>${price.toFixed(2)}</td>
+                  <td>₹{price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                   <td>{qty}</td>
-                  <td>${subtotal.toFixed(2)}</td>
+                  <td>₹{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                   <td>
                     <div className="table-actions">
                       <button
@@ -132,7 +132,7 @@ function ViewCart({ refreshKey, onEdit, onRemove, onClear, onPlaceOrder, isPlaci
       {/* Cart total and Place Order */}
       <div style={{ padding: '16px 24px', borderTop: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>
-          Total: ${displayTotal.toFixed(2)}
+          Total: ₹{displayTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
         </span>
         <button
           className="btn btn-primary"

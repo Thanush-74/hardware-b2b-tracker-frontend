@@ -74,7 +74,7 @@ function AddToCart({ onSuccess, onCancel }) {
           >
             {products.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.name} ({p.type}) — ${parseFloat(p.price).toFixed(2)}
+                {p.name} ({p.type}) — ₹{parseFloat(p.price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </option>
             ))}
           </select>

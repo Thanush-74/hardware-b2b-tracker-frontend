@@ -63,7 +63,7 @@ function ViewOrder({ order, onClose, onUpdateStatus, onUpdatePayment }) {
           <div className="form-label">Payment</div>
           <span className={`badge badge-${o.payment_status?.toLowerCase()}`}>{o.payment_status}</span>
           <div style={{ marginTop: '4px', fontSize: '0.8rem', color: '#6b7280' }}>
-            {o.payment_method} — Paid: ${parseFloat(o.payment_amount || 0).toFixed(2)}
+            {o.payment_method} — Paid: ₹{parseFloat(o.payment_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
           </div>
         </div>
       </div>
@@ -78,8 +78,8 @@ function ViewOrder({ order, onClose, onUpdateStatus, onUpdatePayment }) {
                 <tr>
                   <th>Product</th>
                   <th>Qty</th>
-                  <th>Unit Price</th>
-                  <th>Subtotal</th>
+                  <th>Unit Price (₹)</th>
+                  <th>Subtotal (₹)</th>
                 </tr>
               </thead>
               <tbody>
@@ -87,8 +87,8 @@ function ViewOrder({ order, onClose, onUpdateStatus, onUpdatePayment }) {
                   <tr key={item.id || i}>
                     <td>{item.product?.name || `Product #${item.product_id}`}</td>
                     <td>{item.quantity}</td>
-                    <td>${parseFloat(item.unit_price || 0).toFixed(2)}</td>
-                    <td>${(parseFloat(item.unit_price || 0) * item.quantity).toFixed(2)}</td>
+                    <td>₹{parseFloat(item.unit_price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td>₹{(parseFloat(item.unit_price || 0) * item.quantity).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                   </tr>
                 ))}
               </tbody>
@@ -99,7 +99,7 @@ function ViewOrder({ order, onClose, onUpdateStatus, onUpdatePayment }) {
 
       <div style={{ textAlign: 'right', marginBottom: '20px' }}>
         <strong style={{ fontSize: '1.1rem' }}>
-          Total: ${parseFloat(o.total_amount).toFixed(2)}
+          Total: ₹{parseFloat(o.total_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
         </strong>
       </div>
 

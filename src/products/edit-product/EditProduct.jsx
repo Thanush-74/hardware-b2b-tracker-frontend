@@ -87,7 +87,7 @@ function EditProduct({ product, onSuccess, onCancel }) {
         </div>
 
         <div className="form-group">
-          <label className="form-label" htmlFor="edit-product-price">Price ($) *</label>
+          <label className="form-label" htmlFor="edit-product-price">Price (₹) *</label>
           <input
             id="edit-product-price"
             type="number"

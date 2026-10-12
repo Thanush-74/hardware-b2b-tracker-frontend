@@ -32,7 +32,7 @@ function UpdatePaymentStatus({ order, onSuccess, onCancel }) {
   return (
     <form onSubmit={handleSubmit}>
       <p style={{ marginBottom: '16px' }}>
-        Order: <strong>{order.order_number}</strong> — Total: ${parseFloat(order.total_amount).toFixed(2)}
+        Order: <strong>{order.order_number}</strong> — Total: ₹{parseFloat(order.total_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
       </p>
 
       {error && <div className="alert alert-error">⚠️ {error}</div>}
@@ -53,7 +53,7 @@ function UpdatePaymentStatus({ order, onSuccess, onCancel }) {
         </div>
 
         <div className="form-group">
-          <label className="form-label" htmlFor="payment-amount">Amount Paid ($)</label>
+          <label className="form-label" htmlFor="payment-amount">Amount Paid (₹)</label>
           <input
             id="payment-amount"
             type="number"

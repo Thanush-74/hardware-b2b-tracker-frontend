@@ -125,8 +125,8 @@ function CreateOrder({ onSuccess, onCancel, cartData }) {
                 <tr>
                   <th>Product</th>
                   <th>Quantity</th>
-                  <th>Unit Price</th>
-                  <th>Subtotal</th>
+                  <th>Unit Price (₹)</th>
+                  <th>Subtotal (₹)</th>
                 </tr>
               </thead>
               <tbody>
@@ -140,8 +140,8 @@ function CreateOrder({ onSuccess, onCancel, cartData }) {
                     <tr key={item.id || item.product_id}>
                       <td><strong>{name}</strong></td>
                       <td>{qty}</td>
-                      <td>${price.toFixed(2)}</td>
-                      <td>${subtotal.toFixed(2)}</td>
+                      <td>₹{price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                      <td>₹{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                     </tr>
                   );
                 })}
@@ -164,7 +164,7 @@ function CreateOrder({ onSuccess, onCancel, cartData }) {
           >
             <span>Order Total:</span>
             <span style={{ color: 'var(--color-blue, #1565c0)', fontSize: '1.2rem' }}>
-              ${displayTotal.toFixed(2)}
+              ₹{displayTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </span>
           </div>
         </div>

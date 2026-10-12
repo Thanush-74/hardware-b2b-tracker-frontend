@@ -17,6 +17,7 @@ const SCREEN_MAP = {
   returns:        { path: '/returns',        label: 'Returns',             icon: '↩️' },
   staff:          { path: '/staff',          label: 'Staff Management',    icon: '👥' },
   roles:          { path: '/roles',          label: 'Roles & Permissions', icon: '🔐' },
+  revenue:        { path: '/revenue',        label: 'Revenue',             icon: '📈' },
   expenses:       { path: '/expenses',       label: 'Expenses',            icon: '💰' },
   inspections:    { path: '/inspections',    label: 'Quality Inspection',  icon: '🔍' },
   inspection:     { path: '/inspections',    label: 'Quality Inspection',  icon: '🔍' },
@@ -34,9 +35,16 @@ function Sidebar() {
   }
 
   // Build the nav items from the screens the user is allowed to access
-  const mappedItems = screens
-    .map((screen) => SCREEN_MAP[screen?.slug])
-    .filter(Boolean);
+  const mappedItems = [];
+  screens.forEach((screen) => {
+    if (screen?.slug === 'expenses') {
+      // The expenses screen permission covers both company Revenue and Operating Expenses
+      mappedItems.push({ path: '/revenue', label: 'Revenue', icon: '📈' });
+      mappedItems.push({ path: '/expenses', label: 'Expenses', icon: '💰' });
+    } else if (SCREEN_MAP[screen?.slug]) {
+      mappedItems.push(SCREEN_MAP[screen?.slug]);
+    }
+  });
 
   // Ensure Dashboard is always the first item in navigation
   const otherItems = mappedItems.filter((item) => item.path !== SCREEN_MAP.dashboard.path);

@@ -77,8 +77,8 @@ function Dashboard() {
         const result = await getExpenseSummary();
         const summary = result.data || {};
         setFinancials({
-          income: summary.total_income || 0,
-          expense: summary.total_expenses || 0,
+          income: summary.totalIncome ?? summary.total_income ?? 0,
+          expense: summary.totalExpense ?? summary.total_expenses ?? 0,
           loading: false,
         });
       } catch {
@@ -98,10 +98,10 @@ function Dashboard() {
     }
   }
 
-  // Helper to format a currency number nicely
+  // Helper to format a currency number nicely in Indian Rupees (INR)
   function formatMoney(amount) {
     if (typeof amount !== 'number') return amount;
-    return '$' + amount.toLocaleString('en-US', { minimumFractionDigits: 2 });
+    return '₹' + amount.toLocaleString('en-IN', { minimumFractionDigits: 2 });
   }
 
   // Helper to show a relative time string

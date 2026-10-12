@@ -34,7 +34,7 @@ function DeleteProduct({ product, onSuccess, onCancel }) {
         <strong>"{product.name}"</strong>?
       </p>
       <p style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '6px' }}>
-        Type: {product.type} | Price: ${parseFloat(product.price).toFixed(2)}
+        Type: {product.type} | Price: ₹{parseFloat(product.price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
       </p>
 
       {error && <div className="alert alert-error" style={{ marginTop: '16px' }}>⚠️ {error}</div>}

@@ -93,7 +93,7 @@ function OrderList({ onView, onEdit, onCreate, refreshKey }) {
                   <tr>
                     <th>Order #</th>
                     <th>Customer</th>
-                    <th>Total</th>
+                    <th>Total (₹)</th>
                     <th>Order Status</th>
                     <th>Payment</th>
                     <th>Date</th>
@@ -112,7 +112,7 @@ function OrderList({ onView, onEdit, onCreate, refreshKey }) {
                           </div>
                         )}
                       </td>
-                      <td>${parseFloat(order.total_amount).toFixed(2)}</td>
+                      <td>₹{parseFloat(order.total_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                       <td>{statusBadge(order.order_status)}</td>
                       <td>{paymentBadge(order.payment_status)}</td>
                       <td>{new Date(order.order_date).toLocaleDateString()}</td>

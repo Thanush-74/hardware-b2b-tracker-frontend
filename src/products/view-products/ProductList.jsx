@@ -133,7 +133,7 @@ function ProductList({ onEdit, onDelete, onAdd }) {
                     <th>ID</th>
                     <th>Name</th>
                     <th>Type</th>
-                    <th>Price</th>
+                    <th>Price (₹)</th>
                     <th>Qty Available</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -152,7 +152,7 @@ function ProductList({ onEdit, onDelete, onAdd }) {
                         )}
                       </td>
                       <td>{product.type}</td>
-                      <td>${parseFloat(product.price).toFixed(2)}</td>
+                      <td>₹{parseFloat(product.price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                       <td>{product.available_quantity}</td>
                       <td>{getStatusBadge(product.is_active)}</td>
                       <td>

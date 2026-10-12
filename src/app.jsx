@@ -19,6 +19,7 @@ import DeliveriesPage from './deliveries/DeliveriesPage';
 import ReturnsPage from './returnandreplacement/ReturnsPage';
 import StaffPage from './staff/StaffPage';
 import RolesPage from './roles/RolesPage';
+import RevenuePage from './revenue/RevenuePage';
 import ExpensesPage from './expenses/ExpensesPage';
 import InspectionsPage from './inspections/InspectionsPage';
 import NotificationsPage from './notifications/NotificationsPage';
@@ -153,6 +154,17 @@ function App() {
               <ProtectedRoute requiredPermission="roles.view">
                 <Layout>
                   <RolesPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/revenue"
+            element={
+              <ProtectedRoute requiredPermission="expenses.view">
+                <Layout>
+                  <RevenuePage />
                 </Layout>
               </ProtectedRoute>
             }
