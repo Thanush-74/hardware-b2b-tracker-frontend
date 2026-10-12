@@ -4,9 +4,14 @@
 import { useState } from 'react';
 import { updateProduct } from '../../services/productService';
 
-const PRODUCT_TYPES = ['GPU', 'RAM', 'ROM/SSD', 'Motherboard'];
+const PRODUCT_TYPES = ['GPU', 'RAM', 'ROM', 'Motherboard'];
 
 function EditProduct({ product, onSuccess, onCancel }) {
+  // Support canonical types + existing product's current type if custom
+  const availableTypes = product.type && !PRODUCT_TYPES.includes(product.type)
+    ? [product.type, ...PRODUCT_TYPES]
+    : PRODUCT_TYPES;
+
   // Pre-fill the form with the existing product data
   const [name, setName] = useState(product.name || '');
   const [type, setType] = useState(product.type || PRODUCT_TYPES[0]);
@@ -80,7 +85,7 @@ function EditProduct({ product, onSuccess, onCancel }) {
             value={type}
             onChange={(e) => setType(e.target.value)}
           >
-            {PRODUCT_TYPES.map((t) => (
+            {availableTypes.map((t) => (
               <option key={t} value={t}>{t}</option>
             ))}
           </select>

@@ -17,7 +17,9 @@ function AdjustStock({ inventoryItem, onSuccess, onCancel }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const productName = inventoryItem.product?.name || `Item #${inventoryItem.id}`;
+  // The inventoryItem object comes from the API which returns flat fields,
+  // not a nested product object (product_name, not product?.name).
+  const productName = inventoryItem.product_name || `Item #${inventoryItem.id}`;
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -53,7 +55,7 @@ function AdjustStock({ inventoryItem, onSuccess, onCancel }) {
       <div style={{ marginBottom: '16px', padding: '12px', background: 'var(--color-bg)', borderRadius: '8px' }}>
         <strong>{productName}</strong>
         <div style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '4px' }}>
-          Current Stock: {inventoryItem.quantity} | Reserved: {inventoryItem.reserved_quantity}
+          Current Stock: {inventoryItem.total_quantity} | Reserved: {inventoryItem.reserved_quantity}
         </div>
       </div>
 

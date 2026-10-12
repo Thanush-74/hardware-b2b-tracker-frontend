@@ -48,7 +48,7 @@ function ProductsPage() {
         <div>
           <h1>📦 Products</h1>
           <div className="page-header-sub">
-            Manage GPU, RAM, ROM/SSD, and Motherboard catalog
+            Manage GPU, RAM, ROM, and Motherboard catalog
           </div>
         </div>
       </div>

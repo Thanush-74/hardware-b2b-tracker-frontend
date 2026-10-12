@@ -6,8 +6,8 @@ import { getProducts } from '../../services/productService';
 import { addToCart } from '../../services/cartService';
 import { useAuth } from '../../context/AuthContext';
 
-// The four product types the catalog is limited to
-const PRODUCT_TYPES = ['GPU', 'RAM', 'ROM/SSD', 'Motherboard'];
+// The canonical product types the catalog focuses on
+const PRODUCT_TYPES = ['GPU', 'RAM', 'ROM', 'Motherboard'];
 
 function ProductList({ onEdit, onDelete, onAdd }) {
   const { hasPermission } = useAuth();
@@ -71,6 +71,11 @@ function ProductList({ onEdit, onDelete, onAdd }) {
       : <span className="badge badge-inactive">Inactive</span>;
   }
 
+  // Available types in filter: canonical 4 types plus any additional distinct types in DB
+  const availableTypes = Array.from(
+    new Set([...PRODUCT_TYPES, ...products.map((p) => p.type).filter(Boolean)])
+  );
+
   return (
     <div>
       {/* Filter and search bar */}
@@ -88,7 +93,7 @@ function ProductList({ onEdit, onDelete, onAdd }) {
           onChange={(e) => setFilterType(e.target.value)}
         >
           <option value="">All Types</option>
-          {PRODUCT_TYPES.map((t) => (
+          {availableTypes.map((t) => (
             <option key={t} value={t}>{t}</option>
           ))}
         </select>

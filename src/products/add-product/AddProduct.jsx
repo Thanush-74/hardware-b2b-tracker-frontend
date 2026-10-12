@@ -4,8 +4,8 @@
 import { useState } from 'react';
 import { createProduct } from '../../services/productService';
 
-// Catalog is limited to these four types only
-const PRODUCT_TYPES = ['GPU', 'RAM', 'ROM/SSD', 'Motherboard'];
+// Catalog supports the four canonical types: GPU, RAM, ROM, Motherboard
+const PRODUCT_TYPES = ['GPU', 'RAM', 'ROM', 'Motherboard'];
 
 function AddProduct({ onSuccess, onCancel }) {
   // Form field state

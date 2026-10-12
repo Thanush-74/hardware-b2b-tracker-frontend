@@ -11,6 +11,7 @@ function InventoryList({ onAdjust, refreshKey }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [filterType, setFilterType] = useState('');
 
   useEffect(() => {
     loadInventory();
@@ -30,15 +31,37 @@ function InventoryList({ onAdjust, refreshKey }) {
     }
   }
 
-  // Client-side filter by product name
+  // Canonical types plus any distinct types found in DB inventory
+  const BASE_TYPES = ['GPU', 'RAM', 'ROM', 'Motherboard'];
+  const availableTypes = Array.from(
+    new Set([...BASE_TYPES, ...inventory.map((i) => i.product_type).filter(Boolean)])
+  );
+
+  // Client-side filter by product name, product type, and type selector
   const displayed = inventory.filter((item) => {
-    const name = item.product?.name || '';
-    return name.toLowerCase().includes(search.toLowerCase());
+    const name = item.product_name || '';
+    const type = item.product_type || '';
+    const searchLower = search.toLowerCase();
+    const matchesSearch = !search || name.toLowerCase().includes(searchLower) || type.toLowerCase().includes(searchLower);
+
+    let matchesType = true;
+    if (filterType) {
+      const compactFilter = filterType.replace(/\s+/g, '').toUpperCase();
+      const compactType = type.replace(/\s+/g, '').toUpperCase();
+      if (compactFilter === 'ROM' || compactFilter === 'ROM/SSD') {
+        matchesType = compactType === 'ROM' || compactType === 'ROM/SSD' || type.toUpperCase().includes('SSD') || type.toUpperCase().includes('ROM');
+      } else {
+        matchesType = type.toLowerCase() === filterType.toLowerCase();
+      }
+    }
+
+    return matchesSearch && matchesType;
   });
 
-  function getStockBadge(qty) {
-    if (qty === 0) return <span className="badge badge-cancelled">Out of Stock</span>;
-    if (qty < 10) return <span className="badge badge-pending">Low Stock</span>;
+  // Use the stock_status string that the backend already computed.
+  function getStockBadge(status) {
+    if (status === 'Out of Stock') return <span className="badge badge-cancelled">Out of Stock</span>;
+    if (status === 'Low Stock') return <span className="badge badge-pending">Low Stock</span>;
     return <span className="badge badge-active">In Stock</span>;
   }
 
@@ -48,10 +71,20 @@ function InventoryList({ onAdjust, refreshKey }) {
         <input
           type="text"
           className="form-input"
-          placeholder="Search by product name…"
+          placeholder="Search by product name or type…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+        <select
+          className="form-select"
+          value={filterType}
+          onChange={(e) => setFilterType(e.target.value)}
+        >
+          <option value="">All Types</option>
+          {availableTypes.map((t) => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </select>
       </div>
 
       {error && <div className="alert alert-error">⚠️ {error}</div>}
@@ -82,31 +115,37 @@ function InventoryList({ onAdjust, refreshKey }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {displayed.map((item) => {
-                    const available = (item.quantity || 0) - (item.reserved_quantity || 0);
-                    return (
-                      <tr key={item.id}>
-                        <td>#{item.id}</td>
-                        <td><strong>{item.product?.name || `Product #${item.product_id}`}</strong></td>
-                        <td>{item.product?.type || '-'}</td>
-                        <td>{item.quantity}</td>
-                        <td>{item.reserved_quantity}</td>
-                        <td>{available}</td>
-                        <td>{item.location || 'Main Warehouse'}</td>
-                        <td>{getStockBadge(item.quantity)}</td>
-                        <td>
-                          {hasPermission('inventory.edit') && (
-                            <button
-                              className="btn btn-outline btn-sm"
-                              onClick={() => onAdjust(item)}
-                            >
-                              Adjust Stock
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {displayed.map((item) => (
+                    // The API returns flat fields: product_name, product_type,
+                    // total_quantity, reserved_quantity, available_quantity, stock_status.
+                    <tr key={item.id}>
+                      <td>#{item.id}</td>
+                      <td>
+                        <strong>{item.product_name}</strong>
+                        {item.is_active === false && (
+                          <span className="badge badge-inactive" style={{ marginLeft: '8px' }}>
+                            Inactive
+                          </span>
+                        )}
+                      </td>
+                      <td>{item.product_type || '-'}</td>
+                      <td>{item.total_quantity}</td>
+                      <td>{item.reserved_quantity}</td>
+                      <td>{item.available_quantity}</td>
+                      <td>{item.location || 'Main Warehouse'}</td>
+                      <td>{getStockBadge(item.stock_status)}</td>
+                      <td>
+                        {hasPermission('inventory.edit') && (
+                          <button
+                            className="btn btn-outline btn-sm"
+                            onClick={() => onAdjust(item)}
+                          >
+                            Adjust Stock
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>

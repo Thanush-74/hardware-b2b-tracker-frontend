@@ -4,6 +4,26 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
+// Defines the canonical display order for sidebar navigation items.
+// Items are sorted by the index of their path in this array;
+// any path not listed here will appear at the end.
+const NAV_ORDER = [
+  '/dashboard',
+  '/cart',
+  '/production',
+  '/returns',
+  '/manufacturing',
+  '/revenue',
+  '/expenses',
+  '/inspections',
+  '/staff',
+  '/products',
+  '/inventory',
+  '/orders',
+  '/deliveries',
+  '/roles',
+];
+
 // Map each screen slug to a route path, display name, and emoji icon
 const SCREEN_MAP = {
   dashboard:      { path: '/dashboard',      label: 'Dashboard',           icon: '🏠' },
@@ -60,6 +80,16 @@ function Sidebar() {
     if (seenPaths.has(item.path)) return false;
     seenPaths.add(item.path);
     return true;
+  });
+
+  // Sort remaining items by the canonical NAV_ORDER so the sidebar
+  // always renders in the required sequence regardless of API order.
+  uniqueOtherItems.sort((a, b) => {
+    const ai = NAV_ORDER.indexOf(a.path);
+    const bi = NAV_ORDER.indexOf(b.path);
+    const aIdx = ai === -1 ? Infinity : ai;
+    const bIdx = bi === -1 ? Infinity : bi;
+    return aIdx - bIdx;
   });
 
   // Always put Dashboard first in the navigation
