@@ -1,0 +1,76 @@
+/* Login.css — Styles for the login page */
+
+.login-page {
+  min-height: 100vh;
+  background: var(--color-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.login-card {
+  background: var(--color-white);
+  border-radius: 12px;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.3);
+  padding: 44px 40px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.login-logo {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.login-logo h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.login-logo h1 span {
+  color: var(--color-blue);
+}
+
+.login-logo p {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  margin-top: 6px;
+}
+
+.login-card h2 {
+  font-size: 1.15rem;
+  margin-bottom: 24px;
+  color: var(--color-dark);
+}
+
+.login-submit-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--color-blue);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition);
+  font-family: inherit;
+}
+
+.login-submit-btn:hover:not(:disabled) {
+  background: var(--color-blue-hover);
+}
+
+.login-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.login-footer {
+  text-align: center;
+  margin-top: 24px;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+}

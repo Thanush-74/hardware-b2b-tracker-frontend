@@ -1,215 +1,212 @@
-import React, { Suspense, lazy } from 'react';
+// App.jsx — Root application file
+// Defines all routes and wraps authenticated routes with the Layout shell
+
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, CssBaseline } from '@mui/material';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
+import Layout from './components/Layout/Layout';
 
-// Theme & Global Context
-import muiTheme from './theme/muiTheme';
-import { AuthProvider, useAuth } from './context/AuthContext';
+// Pages
+import Login from './login/Login';
+import Dashboard from './dashboard/Dashboard';
+import ProductsPage from './products/ProductsPage';
+import CartPage from './cart/CartPage';
+import InventoryPage from './inventory/InventoryPage';
+import ManufacturingPage from './manufacturing/ManufacturingPage';
+import OrdersPage from './orders/OrdersPage';
+import ProductionPage from './production/ProductionPage';
+import DeliveriesPage from './deliveries/DeliveriesPage';
+import ReturnsPage from './returnandreplacement/ReturnsPage';
+import StaffPage from './staff/StaffPage';
+import RolesPage from './roles/RolesPage';
+import ExpensesPage from './expenses/ExpensesPage';
+import InspectionsPage from './inspections/InspectionsPage';
+import NotificationsPage from './notifications/NotificationsPage';
+import SearchPage from './search/SearchPage';
 
-// Route Guards & Layout
-import { ProtectedRoute, PublicRoute, ScreenRoute, AdminRoute } from './components/ProtectedRoute';
-import AppLayout from './components/AppLayout';
-import ErrorBoundary from './components/ErrorBoundary';
-import PageLoader from './components/PageLoader';
-
-// Eagerly loaded public & essential pages
-import LoginPage from './pages/LoginPage';
-import NotFoundPage from './pages/NotFoundPage';
-
-// Lazy-loaded management module screens for optimal performance & code-splitting
-const DashboardPage = lazy(() => import('./pages/DashboardPage'));
-const StaffManagementPage = lazy(() => import('./pages/StaffManagementPage'));
-const ProductManagementPage = lazy(() => import('./pages/ProductManagementPage'));
-const InventoryManagementPage = lazy(() => import('./pages/InventoryManagementPage'));
-const CartManagementPage = lazy(() => import('./pages/CartManagementPage'));
-const OrderManagementPage = lazy(() => import('./pages/OrderManagementPage'));
-const DeliveryManagementPage = lazy(() => import('./pages/DeliveryManagementPage'));
-const ProductionManagementPage = lazy(() => import('./pages/ProductionManagementPage'));
-const ManufacturingManagementPage = lazy(() => import('./pages/ManufacturingManagementPage'));
-const ReturnsManagementPage = lazy(() => import('./pages/ReturnsManagementPage'));
-const ExpenseManagementPage = lazy(() => import('./pages/ExpenseManagementPage'));
-const InspectionManagementPage = lazy(() => import('./pages/InspectionManagementPage'));
-const RoleManagementPage = lazy(() => import('./pages/RoleManagementPage'));
-const SessionDebugPage = lazy(() => import('./pages/SessionDebugPage'));
-
-/**
- * Intelligent Dynamic Root Redirect
- * Routes authenticated users to their highest-priority authorized screen,
- * or safely defaults to /dashboard.
- */
-const RootRedirect = () => {
-  const { getDefaultRoute } = useAuth();
-  const targetRoute = getDefaultRoute() || '/dashboard';
-  return <Navigate to={targetRoute} replace />;
-};
-
-/**
- * Enterprise Application Root Component
- */
 function App() {
   return (
-    <ThemeProvider theme={muiTheme}>
-      <CssBaseline />
-      <ErrorBoundary>
-        <BrowserRouter>
-          <AuthProvider>
-            <Suspense fallback={<PageLoader message="Loading module..." />}>
-              <Routes>
-                {/* Public Authentication Route */}
-                <Route
-                  path="/login"
-                  element={
-                    <PublicRoute>
-                      <LoginPage />
-                    </PublicRoute>
-                  }
-                />
+    <BrowserRouter>
+      {/* AuthProvider wraps everything so all pages have access to auth state */}
+      <AuthProvider>
+        <Routes>
+          {/* Public route — no auth required */}
+          <Route path="/login" element={<Login />} />
 
-                {/* Authenticated Workspace & Navigation Shell */}
-                <Route
-                  element={
-                    <ProtectedRoute>
-                      <AppLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  {/* Intelligent Root Landing Redirect */}
-                  <Route path="/" element={<RootRedirect />} />
+          {/* Redirect root to dashboard */}
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-                  {/* Core Management Screens (RBAC Protected via ScreenRoute) */}
-                  <Route
-                    path="/dashboard"
-                    element={
-                      <ScreenRoute screenSlug="dashboard">
-                        <DashboardPage />
-                      </ScreenRoute>
-                    }
-                  />
+          {/* All authenticated routes share the Layout (sidebar + topbar) */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Dashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-                  <Route
-                    path="/staff"
-                    element={
-                      <ScreenRoute screenSlug="staff">
-                        <StaffManagementPage />
-                      </ScreenRoute>
-                    }
-                  />
+          <Route
+            path="/products"
+            element={
+              <ProtectedRoute requiredPermission="products.view">
+                <Layout>
+                  <ProductsPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-                  <Route
-                    path="/products"
-                    element={
-                      <ScreenRoute screenSlug="products">
-                        <ProductManagementPage />
-                      </ScreenRoute>
-                    }
-                  />
+          <Route
+            path="/cart"
+            element={
+              <ProtectedRoute requiredPermission="cart.view">
+                <Layout>
+                  <CartPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-                  <Route
-                    path="/inventory"
-                    element={
-                      <ScreenRoute screenSlug="inventory">
-                        <InventoryManagementPage />
-                      </ScreenRoute>
-                    }
-                  />
+          <Route
+            path="/inventory"
+            element={
+              <ProtectedRoute requiredPermission="inventory.view">
+                <Layout>
+                  <InventoryPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-                  <Route
-                    path="/cart"
-                    element={
-                      <ScreenRoute screenSlug="cart">
-                        <CartManagementPage />
-                      </ScreenRoute>
-                    }
-                  />
+          <Route
+            path="/manufacturing"
+            element={
+              <ProtectedRoute requiredPermission="manufacturing.view">
+                <Layout>
+                  <ManufacturingPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-                  <Route
-                    path="/orders"
-                    element={
-                      <ScreenRoute screenSlug="orders">
-                        <OrderManagementPage />
-                      </ScreenRoute>
-                    }
-                  />
+          <Route
+            path="/orders"
+            element={
+              <ProtectedRoute requiredPermission="orders.view">
+                <Layout>
+                  <OrdersPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-                  <Route
-                    path="/deliveries"
-                    element={
-                      <ScreenRoute screenSlug="deliveries">
-                        <DeliveryManagementPage />
-                      </ScreenRoute>
-                    }
-                  />
+          <Route
+            path="/production"
+            element={
+              <ProtectedRoute requiredPermission="production.view">
+                <Layout>
+                  <ProductionPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-                  <Route
-                    path="/production"
-                    element={
-                      <ScreenRoute screenSlug="production">
-                        <ProductionManagementPage />
-                      </ScreenRoute>
-                    }
-                  />
+          <Route
+            path="/deliveries"
+            element={
+              <ProtectedRoute requiredPermission="deliveries.view">
+                <Layout>
+                  <DeliveriesPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-                  <Route
-                    path="/manufacturing"
-                    element={
-                      <ScreenRoute screenSlug="manufacturing">
-                        <ManufacturingManagementPage />
-                      </ScreenRoute>
-                    }
-                  />
+          <Route
+            path="/returns"
+            element={
+              <ProtectedRoute requiredPermission="returns.view">
+                <Layout>
+                  <ReturnsPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-                  <Route
-                    path="/returns"
-                    element={
-                      <ScreenRoute screenSlug="returns">
-                        <ReturnsManagementPage />
-                      </ScreenRoute>
-                    }
-                  />
+          <Route
+            path="/staff"
+            element={
+              <ProtectedRoute requiredPermission="staff.view">
+                <Layout>
+                  <StaffPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-                  <Route
-                    path="/expenses"
-                    element={
-                      <ScreenRoute screenSlug="expenses">
-                        <ExpenseManagementPage />
-                      </ScreenRoute>
-                    }
-                  />
+          <Route
+            path="/roles"
+            element={
+              <ProtectedRoute requiredPermission="roles.view">
+                <Layout>
+                  <RolesPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-                  <Route
-                    path="/inspection"
-                    element={
-                      <ScreenRoute screenSlug="inspection">
-                        <InspectionManagementPage />
-                      </ScreenRoute>
-                    }
-                  />
+          <Route
+            path="/expenses"
+            element={
+              <ProtectedRoute requiredPermission="expenses.view">
+                <Layout>
+                  <ExpensesPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-                  {/* Administrative Configuration Routes */}
-                  <Route
-                    path="/roles"
-                    element={
-                      <AdminRoute>
-                        <RoleManagementPage />
-                      </AdminRoute>
-                    }
-                  />
+          <Route
+            path="/inspections"
+            element={
+              <ProtectedRoute requiredPermission="inspection.view">
+                <Layout>
+                  <InspectionsPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-                  {/* Diagnostics & RBAC Debugging */}
-                  <Route path="/session-debug" element={<SessionDebugPage />} />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <NotificationsPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-                  {/* 404 Catch-All within Authenticated Portal Shell */}
-                  <Route path="*" element={<NotFoundPage />} />
-                </Route>
+          <Route
+            path="/search"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SearchPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-                {/* Global Fallback Catch-All */}
-                <Route path="*" element={<NotFoundPage />} />
-              </Routes>
-            </Suspense>
-          </AuthProvider>
-        </BrowserRouter>
-      </ErrorBoundary>
-    </ThemeProvider>
+          {/* Catch-all: redirect unknown URLs to dashboard */}
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 

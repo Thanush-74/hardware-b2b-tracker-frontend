@@ -1,69 +1,44 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { login as loginApi } from '../services/authService';
-import IdleTimeoutHandler from '../components/IdleTimeoutHandler';
+// AuthContext.jsx — Provides logged-in user info to all components
+// Any component can call useAuth() to get the current user, permissions, etc.
 
+import { createContext, useContext, useState } from 'react';
+
+// Create the context object
 const AuthContext = createContext(null);
 
-export const AuthProvider = ({ children }) => {
-  const navigate = useNavigate();
-
-  const [user, setUser] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('user');
-      return savedUser ? JSON.parse(savedUser) : null;
-    } catch {
-      return null;
-    }
-  });
-
+// AuthProvider wraps the whole app (in main.jsx) so all components can access auth state
+export function AuthProvider({ children }) {
+  // Load saved session from localStorage so the user stays logged in on page refresh
   const [token, setToken] = useState(() => localStorage.getItem('token') || null);
-
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('user');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [permissions, setPermissions] = useState(() => {
-    try {
-      const savedPerms = localStorage.getItem('permissions');
-      return savedPerms ? JSON.parse(savedPerms) : [];
-    } catch {
-      return [];
-    }
+    const saved = localStorage.getItem('permissions');
+    return saved ? JSON.parse(saved) : [];
   });
-
   const [screens, setScreens] = useState(() => {
-    try {
-      const savedScreens = localStorage.getItem('screens');
-      return savedScreens ? JSON.parse(savedScreens) : [];
-    } catch {
-      return [];
-    }
+    const saved = localStorage.getItem('screens');
+    return saved ? JSON.parse(saved) : [];
   });
 
-  const [isLoading, setIsLoading] = useState(false);
+  // Called after a successful login — saves everything to state and localStorage
+  function login(data) {
+    const { token, user, permissions, screens } = data;
+    setToken(token);
+    setUser(user);
+    setPermissions(permissions);
+    setScreens(screens);
 
-  const login = async (email, password) => {
-    setIsLoading(true);
-    try {
-      const data = await loginApi(email, password);
-      // data contains: { token, user, permissions, screens }
-      const { token: receivedToken, user: receivedUser, permissions: receivedPerms, screens: receivedScreens } = data;
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+    localStorage.setItem('permissions', JSON.stringify(permissions));
+    localStorage.setItem('screens', JSON.stringify(screens));
+  }
 
-      setToken(receivedToken);
-      setUser(receivedUser);
-      setPermissions(receivedPerms || []);
-      setScreens(receivedScreens || []);
-
-      localStorage.setItem('token', receivedToken);
-      localStorage.setItem('user', JSON.stringify(receivedUser));
-      localStorage.setItem('permissions', JSON.stringify(receivedPerms || []));
-      localStorage.setItem('screens', JSON.stringify(receivedScreens || []));
-      localStorage.setItem('b2b_tracker_last_activity', String(Date.now()));
-
-      return data;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const logout = useCallback((shouldRedirect = true) => {
+  // Called when user logs out — clears everything
+  function logout() {
     setToken(null);
     setUser(null);
     setPermissions([]);
@@ -73,93 +48,40 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
     localStorage.removeItem('permissions');
     localStorage.removeItem('screens');
-    localStorage.removeItem('b2b_tracker_last_activity');
+  }
 
-    if (shouldRedirect && typeof window !== 'undefined' && window.location.pathname !== '/login') {
-      navigate('/login', { replace: true });
-    }
-  }, [navigate]);
+  // Check if the logged-in user has a specific permission slug (e.g. "products.view")
+  function hasPermission(slug) {
+    return permissions.some((p) => p.slug === slug);
+  }
 
-  // Listen for unauthorized 401 events from Axios interceptor
-  useEffect(() => {
-    const handleUnauthorized = () => {
-      logout(true);
-    };
+  // Check if the logged-in user is an admin
+  // Admin role slug is 'admin' based on the backend seeder convention
+  function isAdmin() {
+    return user && user.role && user.role.slug === 'admin';
+  }
 
-    window.addEventListener('auth:unauthorized', handleUnauthorized);
-    return () => {
-      window.removeEventListener('auth:unauthorized', handleUnauthorized);
-    };
-  }, [logout]);
-
-  // Check permission strictly against backend-returned permissions list
-  const hasPermission = useCallback(
-    (permissionSlug) => {
-      if (!permissions || permissions.length === 0) return false;
-      return permissions.some((p) => p.slug === permissionSlug);
-    },
-    [permissions]
-  );
-
-  // Check screen strictly against backend-returned screens list (by slug)
-  const hasScreen = useCallback(
-    (screenSlug) => {
-      if (!screens || screens.length === 0) return false;
-      return screens.some((s) => s.slug === screenSlug);
-    },
-    [screens]
-  );
-
-  // Check screen strictly against backend-returned screens list (by route)
-  const hasScreenRoute = useCallback(
-    (routePath) => {
-      if (!screens || screens.length === 0) return false;
-      const normalizedPath = (routePath || '').replace(/\/$/, '') || '/';
-      return screens.some((s) => {
-        const screenRoute = (s.route || '').replace(/\/$/, '') || '/';
-        return screenRoute === normalizedPath;
-      });
-    },
-    [screens]
-  );
-
-  // Determine initial default route for the user based on permitted screens
-  const getDefaultRoute = useCallback(() => {
-    if (!screens || screens.length === 0) return '/login';
-    // If dashboard is permitted, use dashboard; otherwise first permitted screen route
-    const dashboardScreen = screens.find((s) => s.slug === 'dashboard' || s.route === '/dashboard');
-    if (dashboardScreen) return dashboardScreen.route || '/dashboard';
-    return screens[0]?.route || '/';
-  }, [screens]);
-
+  // The value object is what all components get when they call useAuth()
   const value = {
-    user,
-    role: user?.role || null,
     token,
+    user,
     permissions,
     screens,
-    isAuthenticated: Boolean(token && user),
-    isLoading,
+    isLoggedIn: !!token,
     login,
     logout,
     hasPermission,
-    hasScreen,
-    hasScreenRoute,
-    getDefaultRoute,
+    isAdmin,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-      <IdleTimeoutHandler />
-    </AuthContext.Provider>
-  );
-};
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
 
-export const useAuth = () => {
+// Custom hook — makes it easy to use auth in any component: const { user } = useAuth()
+export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth must be used inside an AuthProvider');
   }
   return context;
-};
+}

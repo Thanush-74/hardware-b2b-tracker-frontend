@@ -1,16 +1,20 @@
+// api.js — Shared Axios instance for all API calls
+// All requests go through this file so we only write the base URL once.
+
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+// Read the base URL from the .env file (VITE_ prefix required by Vite)
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
+// Create one axios instance that every service module will use
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: `${BASE_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 15000,
 });
 
-// Request interceptor to attach JWT Authorization header
+// Before every request, attach the JWT token from localStorage (if logged in)
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -22,42 +26,19 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Guard to prevent repeatedly firing unauthorized events from concurrent 401 responses
-let isHandlingUnauthorized = false;
-
-// Response interceptor to handle errors cleanly
+// If the server returns 401 (Unauthorized), clear the session and redirect to login
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle unauthorized (401)
-    if (error.response?.status === 401) {
-      // Exclude initial login attempts so invalid credentials don't trigger logout events
-      const isLoginRequest = error.config?.url?.includes('/api/auth/login');
-      if (!isLoginRequest) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('permissions');
-        localStorage.removeItem('screens');
-        localStorage.removeItem('b2b_tracker_last_activity');
-        
-        if (typeof window !== 'undefined' && !isHandlingUnauthorized) {
-          isHandlingUnauthorized = true;
-          window.dispatchEvent(
-            new CustomEvent('auth:unauthorized', {
-              detail: {
-                message: error.response?.data?.message || 'Session expired. Please log in again.',
-              },
-            })
-          );
-          setTimeout(() => {
-            isHandlingUnauthorized = false;
-          }, 1500);
-        }
-      }
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('permissions');
+      localStorage.removeItem('screens');
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }
 );
 
 export default api;
-export { API_BASE_URL };

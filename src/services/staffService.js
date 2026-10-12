@@ -1,97 +1,46 @@
+// staffService.js — All API calls for Staff Management
 import api from './api';
 
-/**
- * Fetch all staff members
- * GET /api/staff
- * @param {Object} [params]
- * @returns {Promise<{ total: number, page: number, totalPages: number, staff: Array }>}
- */
-export const getStaff = async (params = {}) => {
-  try {
-    const response = await api.get('/api/staff', { params });
-    if (response.data && response.data.success) {
-      return response.data.data;
-    }
-    return response.data;
-  } catch (error) {
-    const message = error.response?.data?.message || 'Failed to fetch staff members';
-    const err = new Error(message);
-    err.statusCode = error.response?.status;
-    throw err;
-  }
-};
+// POST /api/staff  — create a new staff member (admin only)
+// body: { first_name, last_name, email, password, role_id }
+export async function createStaff(data) {
+  const response = await api.post('/staff', data);
+  return response.data;
+}
 
-/**
- * Get staff member by ID
- * GET /api/staff/:id
- * @param {number|string} id
- */
-export const getStaffById = async (id) => {
-  try {
-    const response = await api.get(`/api/staff/${id}`);
-    if (response.data && response.data.success) {
-      return response.data.data;
-    }
-    return response.data;
-  } catch (error) {
-    const message = error.response?.data?.message || 'Failed to fetch staff details';
-    const err = new Error(message);
-    err.statusCode = error.response?.status;
-    throw err;
-  }
-};
+// GET /api/staff  — list all staff
+export async function getAllStaff(params = {}) {
+  const response = await api.get('/staff', { params });
+  return response.data;
+}
 
-/**
- * Create a new staff / employee account (Admin only)
- * POST /api/staff
- * @param {Object} payload
- * @param {string} payload.first_name
- * @param {string} payload.last_name
- * @param {string} payload.email
- * @param {string} payload.password
- * @param {number|string} payload.role_id
- * @returns {Promise<Object>} Created staff member
- */
-export const createStaff = async ({ first_name, last_name, email, password, role_id }) => {
-  try {
-    const response = await api.post('/api/staff', {
-      first_name,
-      last_name,
-      email,
-      password,
-      role_id: Number(role_id),
-    });
+// GET /api/staff/:id  — get one staff member
+export async function getStaffById(id) {
+  const response = await api.get(`/staff/${id}`);
+  return response.data;
+}
 
-    if (response.data && response.data.success) {
-      return response.data.data;
-    }
-    return response.data;
-  } catch (error) {
-    const message = error.response?.data?.message || 'Failed to create staff member';
-    const err = new Error(message);
-    err.statusCode = error.response?.status;
-    err.responseData = error.response?.data;
-    throw err;
-  }
-};
+// PUT /api/staff/:id  — update staff details (admin only)
+export async function updateStaff(id, data) {
+  const response = await api.put(`/staff/${id}`, data);
+  return response.data;
+}
 
-/**
- * Update staff active status
- * PATCH /api/staff/:id/status
- * @param {number|string} id
- * @param {boolean} is_active
- */
-export const updateStaffStatus = async (id, is_active) => {
-  try {
-    const response = await api.patch(`/api/staff/${id}/status`, { is_active });
-    if (response.data && response.data.success) {
-      return response.data.data;
-    }
-    return response.data;
-  } catch (error) {
-    const message = error.response?.data?.message || 'Failed to update staff status';
-    const err = new Error(message);
-    err.statusCode = error.response?.status;
-    throw err;
-  }
-};
+// PATCH /api/staff/:id/status  — activate or deactivate staff
+// body: { is_active: true/false }
+export async function updateStaffStatus(id, is_active) {
+  const response = await api.patch(`/staff/${id}/status`, { is_active });
+  return response.data;
+}
+
+// GET /api/staff/:staffId/permissions  — get staff-specific permissions
+export async function getStaffPermissions(staffId) {
+  const response = await api.get(`/staff/${staffId}/permissions`);
+  return response.data;
+}
+
+// PUT /api/staff/:staffId/permissions  — update staff-specific permissions (admin only)
+export async function updateStaffPermissions(staffId, permissionIds) {
+  const response = await api.put(`/staff/${staffId}/permissions`, { permissionIds });
+  return response.data;
+}
