@@ -294,7 +294,7 @@ function InspectionsPage() {
 
       {/* Summary */}
       {view === 'list' && summary && (
-        <div className="stat-grid">
+      <div className="stat-grid">
           <div className="stat-card">
             <div className="stat-card-label">Total Inspections</div>
             <div className="stat-card-value">{summary.total || 0}</div>
@@ -307,11 +307,16 @@ function InspectionsPage() {
             <div className="stat-card-label">Failed</div>
             <div className="stat-card-value">{summary.failed || 0}</div>
           </div>
+          <div className="stat-card" style={{ borderLeftColor: '#00897b' }}>
+            <div className="stat-card-label">Approved</div>
+            <div className="stat-card-value">{summary.approved || 0}</div>
+          </div>
           <div className="stat-card">
             <div className="stat-card-label">Pending</div>
             <div className="stat-card-value">{summary.pending || 0}</div>
           </div>
         </div>
+
       )}
 
       {view === 'list' && (

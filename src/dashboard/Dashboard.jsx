@@ -39,14 +39,21 @@ function Dashboard() {
       setOrders({ count: 'N/A', loading: false });
     }
 
-    // Inventory — find items with low stock (quantity < 10)
+    // Inventory — find items with low stock (available stock <= 10)
     if (hasPermission('inventory.view')) {
       try {
         const result = await getAllInventory();
-        const items = result.data?.inventory || result.data || [];
-        const lowStockCount = Array.isArray(items)
-          ? items.filter((item) => item.quantity < 10).length
-          : 0;
+        const items = result.data?.inventory || (Array.isArray(result.data) ? result.data : []);
+        const lowStockCount =
+          typeof result.data?.low_stock_count === 'number'
+            ? result.data.low_stock_count
+            : Array.isArray(items)
+              ? items.filter((item) => {
+                  if (!item || !item.product_id || item.is_active === false) return false;
+                  const qty = item.available_quantity ?? item.quantity;
+                  return typeof qty === 'number' && !isNaN(qty) && qty <= 10;
+                }).length
+              : 0;
         setInventory({ lowStock: lowStockCount, loading: false });
       } catch {
         setInventory({ lowStock: '-', loading: false });
@@ -59,10 +66,16 @@ function Dashboard() {
     if (hasPermission('production.view')) {
       try {
         const result = await getAllProduction();
-        const records = result.data?.productions || result.data || [];
-        const activeCount = Array.isArray(records)
-          ? records.filter((r) => r.status === 'In Production').length
-          : 0;
+        const records =
+          result.data?.production_records ||
+          result.data?.productions ||
+          (Array.isArray(result.data) ? result.data : []);
+        const activeCount =
+          typeof result.data?.active_count === 'number'
+            ? result.data.active_count
+            : Array.isArray(records)
+              ? records.filter((r) => r.status === 'In Production').length
+              : 0;
         setProduction({ active: activeCount, loading: false });
       } catch {
         setProduction({ active: '-', loading: false });
