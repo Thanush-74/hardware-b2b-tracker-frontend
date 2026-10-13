@@ -26,16 +26,51 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// If the server returns 401 (Unauthorized), clear the session and redirect to login
+// Callback registered by AuthContext to synchronize in-memory React auth state
+let unauthorizedHandler = null;
+let isHandling401 = false;
+
+/**
+ * Register a callback to be notified when an authenticated API call receives a 401.
+ * Allows AuthContext to clear its internal state and redirect cleanly.
+ */
+export function registerUnauthorizedHandler(handler) {
+  unauthorizedHandler = handler;
+  return () => {
+    if (unauthorizedHandler === handler) {
+      unauthorizedHandler = null;
+    }
+  };
+}
+
+// If the server returns 401 (Unauthorized) on an authenticated request,
+// clear credentials, notify AuthContext, and redirect to login without looping
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
+    const isLoginEndpoint = error.config?.url?.includes('/auth/login');
+
+    if (error.response && error.response.status === 401 && !isLoginEndpoint) {
+      // 1. Clear authentication data stored in localStorage
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       localStorage.removeItem('permissions');
       localStorage.removeItem('screens');
-      window.location.href = '/login';
+
+      // 2. Prevent duplicate redirect loops if multiple requests fail with 401 simultaneously
+      if (!isHandling401) {
+        isHandling401 = true;
+        setTimeout(() => {
+          isHandling401 = false;
+        }, 2000);
+
+        // 3. Clear AuthContext state if registered, or fallback to redirect
+        if (typeof unauthorizedHandler === 'function') {
+          unauthorizedHandler();
+        } else if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+      }
     }
     return Promise.reject(error);
   }

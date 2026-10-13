@@ -24,28 +24,28 @@ const test = (title, fn) => {
   }
 };
 
-// 1. Default idle timeout is exactly 15 minutes = 900,000 ms
-test('Default idle timeout is exactly 15 minutes (900,000 ms)', () => {
-  assert.strictEqual(DEFAULT_IDLE_TIMEOUT_MS, 15 * 60 * 1000);
-  assert.strictEqual(DEFAULT_IDLE_TIMEOUT_MS, 900000);
+// 1. Default idle timeout is exactly 5 minutes = 300,000 ms
+test('Default idle timeout is exactly 5 minutes (300,000 ms)', () => {
+  assert.strictEqual(DEFAULT_IDLE_TIMEOUT_MS, 5 * 60 * 1000);
+  assert.strictEqual(DEFAULT_IDLE_TIMEOUT_MS, 300000);
 });
 
-// 2. Default warning threshold is exactly 1 minute = 60,000 ms
-test('Default warning threshold is exactly 1 minute (60,000 ms)', () => {
-  assert.strictEqual(DEFAULT_IDLE_WARNING_MS, 60 * 1000);
-  assert.strictEqual(DEFAULT_IDLE_WARNING_MS, 60000);
+// 2. Default warning threshold is exactly 30 seconds = 30,000 ms
+test('Default warning threshold is exactly 30 seconds (30,000 ms)', () => {
+  assert.strictEqual(DEFAULT_IDLE_WARNING_MS, 30 * 1000);
+  assert.strictEqual(DEFAULT_IDLE_WARNING_MS, 30000);
 });
 
-// 3. getIdleTimeoutMs returns 900,000 ms by default
+// 3. getIdleTimeoutMs returns 300,000 ms by default
 test('getIdleTimeoutMs returns DEFAULT_IDLE_TIMEOUT_MS when not overridden', () => {
   const timeout = getIdleTimeoutMs();
-  assert.strictEqual(timeout, 900000);
+  assert.strictEqual(timeout, 300000);
 });
 
-// 4. getIdleWarningMs returns 60,000 ms by default
+// 4. getIdleWarningMs returns 30,000 ms by default
 test('getIdleWarningMs returns DEFAULT_IDLE_WARNING_MS when not overridden', () => {
   const warning = getIdleWarningMs();
-  assert.strictEqual(warning, 60000);
+  assert.strictEqual(warning, 30000);
 });
 
 // 5. Dynamic override for browser tests (window.__IDLE_TIMEOUT_MS__)
