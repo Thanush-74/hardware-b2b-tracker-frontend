@@ -4,13 +4,14 @@
 import { useState } from 'react';
 import { createProduct } from '../../services/productService';
 
-// Catalog supports the four canonical types: GPU, RAM, ROM, Motherboard
-const PRODUCT_TYPES = ['GPU', 'RAM', 'ROM', 'Motherboard'];
+// Catalog supports GPU, RAM, ROM/SSD, Motherboard, and custom types
+const PRODUCT_TYPES = ['GPU', 'RAM', 'ROM/SSD', 'Motherboard', 'Power Supply', 'Cooling / Thermal', 'Chassis / Case', 'Other'];
 
 function AddProduct({ onSuccess, onCancel }) {
   // Form field state
   const [name, setName] = useState('');
   const [type, setType] = useState(PRODUCT_TYPES[0]);
+  const [customType, setCustomType] = useState('');
   const [price, setPrice] = useState('');
   const [availableQuantity, setAvailableQuantity] = useState('');
   const [description, setDescription] = useState('');
@@ -26,10 +27,14 @@ function AddProduct({ onSuccess, onCancel }) {
     setLoading(true);
 
     try {
+      const resolvedType = type === 'Other'
+        ? (customType.trim() || 'Custom Component')
+        : type;
+
       // Build the product data object
       const productData = {
         name: name.trim(),
-        type,
+        type: resolvedType,
         price: parseFloat(price),
         available_quantity: parseInt(availableQuantity, 10),
         description: description.trim() || null,
@@ -87,6 +92,21 @@ function AddProduct({ onSuccess, onCancel }) {
             ))}
           </select>
         </div>
+
+        {type === 'Other' && (
+          <div className="form-group">
+            <label className="form-label" htmlFor="product-custom-type">Custom Type Name *</label>
+            <input
+              id="product-custom-type"
+              type="text"
+              className="form-input"
+              value={customType}
+              onChange={(e) => setCustomType(e.target.value)}
+              placeholder="e.g. Optical Transceiver, FPGA"
+              required
+            />
+          </div>
+        )}
 
         <div className="form-group">
           <label className="form-label" htmlFor="product-price">Price (₹) *</label>

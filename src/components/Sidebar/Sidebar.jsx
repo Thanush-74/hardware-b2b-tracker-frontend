@@ -1,99 +1,118 @@
 // Sidebar.jsx — The left navigation sidebar
-// Reads the user's permitted screens from auth context to build the nav menu dynamically
+// Reorganized with expandable parent menus and dynamic role-based access
 
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import {
+  EXPANDED_STORAGE_KEY,
+  NAV_STRUCTURE,
+  isPathActive,
+  isItemAuthorized,
+  getInitialExpandedState,
+} from './sidebarConfig';
 
-// Defines the canonical display order for sidebar navigation items.
-// Items are sorted by the index of their path in this array;
-// any path not listed here will appear at the end.
-const NAV_ORDER = [
-  '/dashboard',
-  '/cart',
-  '/production',
-  '/returns',
-  '/manufacturing',
-  '/revenue',
-  '/expenses',
-  '/inspections',
-  '/staff',
-  '/products',
-  '/inventory',
-  '/orders',
-  '/deliveries',
-  '/roles',
-];
-
-// Map each screen slug to a route path, display name, and emoji icon
-const SCREEN_MAP = {
-  dashboard:      { path: '/dashboard',      label: 'Dashboard',           icon: '🏠' },
-  products:       { path: '/products',       label: 'Products',            icon: '📦' },
-  cart:           { path: '/cart',           label: 'Cart',                icon: '🛒' },
-  inventory:      { path: '/inventory',      label: 'Inventory',           icon: '🗃️' },
-  manufacturing:  { path: '/manufacturing',  label: 'Manufacturing',       icon: '🔧' },
-  orders:         { path: '/orders',         label: 'Orders',              icon: '📋' },
-  production:     { path: '/production',     label: 'Production',          icon: '⚙️' },
-  deliveries:     { path: '/deliveries',     label: 'Deliveries',          icon: '🚚' },
-  returns:        { path: '/returns',        label: 'Returns',             icon: '↩️' },
-  staff:          { path: '/staff',          label: 'Staff Management',    icon: '👥' },
-  roles:          { path: '/roles',          label: 'Roles & Permissions', icon: '🔐' },
-  revenue:        { path: '/revenue',        label: 'Revenue',             icon: '📈' },
-  expenses:       { path: '/expenses',       label: 'Expenses',            icon: '💰' },
-  inspections:    { path: '/inspections',    label: 'Quality Inspection',  icon: '🔍' },
-  inspection:     { path: '/inspections',    label: 'Quality Inspection',  icon: '🔍' },
-  notifications:  { path: '/notifications',  label: 'Notifications',       icon: '🔔' },
-  search:         { path: '/search',         label: 'Search',              icon: '🔎' },
-};
+/**
+ * Chevron icon that smoothly rotates when expandable parent is opened
+ */
+function ChevronIcon({ isOpen }) {
+  return (
+    <span className={`nav-chevron ${isOpen ? 'open' : ''}`} aria-hidden="true">
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <polyline points="9 18 15 12 9 6" />
+      </svg>
+    </span>
+  );
+}
 
 function Sidebar() {
-  const { user, screens, logout, isAdmin } = useAuth();
+  const authContext = useAuth();
+  const { user, logout } = authContext;
+  const location = useLocation();
   const navigate = useNavigate();
+
+  const [expandedParents, setExpandedParents] = useState(() =>
+    getInitialExpandedState(location.pathname)
+  );
+
+  // Automatically expand parent whenever location.pathname matches any of its children
+  useEffect(() => {
+    let changed = false;
+    const updated = { ...expandedParents };
+
+    NAV_STRUCTURE.forEach((entry) => {
+      if (entry.type === 'parent' && Array.isArray(entry.children)) {
+        const activeChild = entry.children.some((c) => isPathActive(c.path, location.pathname));
+        if (activeChild && !updated[entry.id]) {
+          updated[entry.id] = true;
+          changed = true;
+        }
+      }
+    });
+
+    if (changed) {
+      setExpandedParents(updated);
+      try {
+        sessionStorage.setItem(EXPANDED_STORAGE_KEY, JSON.stringify(updated));
+      } catch {
+        // Ignore storage quota errors
+      }
+    }
+  }, [location.pathname]);
+
+  function toggleParent(parentId) {
+    setExpandedParents((prev) => {
+      const nextState = { ...prev, [parentId]: !prev[parentId] };
+      try {
+        sessionStorage.setItem(EXPANDED_STORAGE_KEY, JSON.stringify(nextState));
+      } catch {
+        // Ignore storage quota errors
+      }
+      return nextState;
+    });
+  }
 
   function handleLogout() {
     logout();
     navigate('/login');
   }
 
-  // Build the nav items from the screens the user is allowed to access
-  const mappedItems = [];
-  screens.forEach((screen) => {
-    if (screen?.slug === 'expenses') {
-      // The expenses screen permission covers both company Revenue and Operating Expenses
-      mappedItems.push({ path: '/revenue', label: 'Revenue', icon: '📈' });
-      mappedItems.push({ path: '/expenses', label: 'Expenses', icon: '💰' });
-    } else if (SCREEN_MAP[screen?.slug]) {
-      mappedItems.push(SCREEN_MAP[screen?.slug]);
+  // Build the authorized navigation menu dynamically:
+  // - Main level items only show if authorized
+  // - Parent menus only show if at least ONE of their children is authorized
+  const visibleNav = NAV_STRUCTURE.map((entry) => {
+    if (entry.type === 'item') {
+      const allowed = isItemAuthorized(entry, authContext);
+      return allowed ? entry : null;
     }
-  });
 
-  // Administrators can manage Roles & Permissions
-  if (isAdmin() && SCREEN_MAP.roles) {
-    mappedItems.push(SCREEN_MAP.roles);
-  }
+    if (entry.type === 'parent') {
+      const authorizedChildren = entry.children.filter((child) =>
+        isItemAuthorized(child, authContext)
+      );
 
-  // Ensure Dashboard is always the first item in navigation
-  const otherItems = mappedItems.filter((item) => item.path !== SCREEN_MAP.dashboard.path);
+      // Hide parent if user cannot access any of its children
+      if (authorizedChildren.length === 0) {
+        return null;
+      }
 
-  // Deduplicate items by path
-  const seenPaths = new Set();
-  const uniqueOtherItems = otherItems.filter((item) => {
-    if (seenPaths.has(item.path)) return false;
-    seenPaths.add(item.path);
-    return true;
-  });
+      return {
+        ...entry,
+        children: authorizedChildren,
+      };
+    }
 
-  // Sort remaining items by the canonical NAV_ORDER so the sidebar
-  // always renders in the required sequence regardless of API order.
-  uniqueOtherItems.sort((a, b) => {
-    const ai = NAV_ORDER.indexOf(a.path);
-    const bi = NAV_ORDER.indexOf(b.path);
-    const aIdx = ai === -1 ? Infinity : ai;
-    const bIdx = bi === -1 ? Infinity : bi;
-    return aIdx - bIdx;
-  });
-
-  // Always put Dashboard first in the navigation
-  const displayItems = [SCREEN_MAP.dashboard, ...uniqueOtherItems];
+    return null;
+  }).filter(Boolean);
 
   return (
     <aside className="sidebar">
@@ -106,20 +125,77 @@ function Sidebar() {
       </div>
 
       {/* Navigation Links */}
-      <nav className="sidebar-nav">
+      <nav className="sidebar-nav" aria-label="Main Navigation">
         <div className="sidebar-section-title">Navigation</div>
-        {displayItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) =>
-              'sidebar-nav-item' + (isActive ? ' active' : '')
-            }
-          >
-            <span className="nav-icon">{item.icon}</span>
-            {item.label}
-          </NavLink>
-        ))}
+
+        {visibleNav.map((entry) => {
+          if (entry.type === 'item') {
+            const active = isPathActive(entry.path, location.pathname);
+            return (
+              <NavLink
+                key={entry.id}
+                to={entry.path}
+                className={({ isActive }) =>
+                  'sidebar-nav-item' + (isActive || active ? ' active' : '')
+                }
+              >
+                <span className="nav-icon">{entry.icon}</span>
+                <span className="nav-label">{entry.label}</span>
+              </NavLink>
+            );
+          }
+
+          if (entry.type === 'parent') {
+            const isExpanded = !!expandedParents[entry.id];
+            const hasActiveChild = entry.children.some((c) =>
+              isPathActive(c.path, location.pathname)
+            );
+
+            return (
+              <div key={entry.id} className="sidebar-parent-group">
+                <button
+                  type="button"
+                  className={`sidebar-parent-btn ${hasActiveChild ? 'has-active-child' : ''}`}
+                  onClick={() => toggleParent(entry.id)}
+                  aria-expanded={isExpanded}
+                  aria-controls={`submenu-${entry.id}`}
+                >
+                  <span className="nav-icon">{entry.icon}</span>
+                  <span className="nav-label">{entry.label}</span>
+                  <ChevronIcon isOpen={isExpanded} />
+                </button>
+
+                {isExpanded && (
+                  <div
+                    id={`submenu-${entry.id}`}
+                    className="sidebar-submenu"
+                    role="region"
+                    aria-label={entry.label}
+                  >
+                    {entry.children.map((child) => {
+                      const childActive = isPathActive(child.path, location.pathname);
+                      return (
+                        <NavLink
+                          key={child.id}
+                          to={child.path}
+                          className={({ isActive }) =>
+                            'sidebar-subnav-item' +
+                            (isActive || childActive ? ' active' : '')
+                          }
+                        >
+                          <span className="nav-icon">{child.icon}</span>
+                          <span className="nav-label">{child.label}</span>
+                        </NavLink>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          return null;
+        })}
       </nav>
 
       {/* Current user info at the bottom */}
@@ -131,6 +207,7 @@ function Sidebar() {
           </div>
         )}
         <button
+          type="button"
           onClick={handleLogout}
           style={{
             marginTop: '10px',

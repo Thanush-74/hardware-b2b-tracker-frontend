@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test:session": "node scripts/test-frontend-session.js",
+    "test:sidebar": "node scripts/test-sidebar-reorganization.js",
     "zip": "tar -a -cf ../frontend.zip --exclude=node_modules --exclude=.git ."
   },
   "dependencies": {

@@ -8,6 +8,7 @@ import { getAllInventory } from '../services/inventoryService';
 import { getAllProduction } from '../services/productionService';
 import { getExpenseSummary } from '../services/expenseService';
 import { getNotifications } from '../services/notificationService';
+import { getInspectionSummary } from '../services/inspectionService';
 
 function Dashboard() {
   const { user, hasPermission } = useAuth();
@@ -17,6 +18,7 @@ function Dashboard() {
   const [inventory, setInventory] = useState({ lowStock: 0, loading: true });
   const [production, setProduction] = useState({ active: 0, loading: true });
   const [financials, setFinancials] = useState({ income: 0, expense: 0, loading: true });
+  const [inspections, setInspections] = useState({ total: 0, approved: 0, loading: true });
   const [recentNotifications, setRecentNotifications] = useState([]);
 
   // Fetch all dashboard data when the component first loads
@@ -101,6 +103,24 @@ function Dashboard() {
       setFinancials({ income: 'N/A', expense: 'N/A', loading: false });
     }
 
+    // Quality inspection summary
+    if (hasPermission('inspection.view')) {
+      try {
+        const result = await getInspectionSummary();
+        const data = result.data || result;
+        setInspections({
+          total: data.total || data.totalReports || 0,
+          approved: data.approved || 0,
+          passed: data.passed || 0,
+          loading: false,
+        });
+      } catch {
+        setInspections({ total: '-', approved: '-', loading: false });
+      }
+    } else {
+      setInspections({ total: 'N/A', approved: 'N/A', loading: false });
+    }
+
     // Recent notifications (just the latest 5)
     try {
       const result = await getNotifications({ limit: 5 });
@@ -164,6 +184,14 @@ function Dashboard() {
             {production.loading ? '…' : production.active}
           </div>
           <div className="stat-card-sub">Currently in production</div>
+        </div>
+
+        <div className="stat-card" style={{ borderLeftColor: '#00897b' }}>
+          <div className="stat-card-label">Quality Inspections</div>
+          <div className="stat-card-value">
+            {inspections.loading ? '…' : `${inspections.approved}/${inspections.total}`}
+          </div>
+          <div className="stat-card-sub">Approved / Total Inspections</div>
         </div>
 
         <div className="stat-card">
@@ -232,6 +260,12 @@ function Dashboard() {
           )}
           {hasPermission('deliveries.view') && (
             <a href="/deliveries" className="btn btn-outline">🚚 Deliveries</a>
+          )}
+          {hasPermission('production.view') && (
+            <a href="/production" className="btn btn-outline">🏭 Production</a>
+          )}
+          {hasPermission('inspection.view') && (
+            <a href="/inspections" className="btn btn-outline">🔍 Quality Inspection</a>
           )}
         </div>
       </div>

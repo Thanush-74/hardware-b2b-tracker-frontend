@@ -1,5 +1,5 @@
 // ManufacturingPage.jsx — Manufacturing assignments with full CRUD
-// Covers view, create, update, and delete manufacturing assignments
+// Covers view, create, update, and delete manufacturing assignments linked to Production Batches
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -12,6 +12,7 @@ import {
 } from '../services/manufacturingService';
 import { getAllStaff } from '../services/staffService';
 import { getProducts } from '../services/productService';
+import { getAllProduction } from '../services/productionService';
 
 const SECTORS = ['Assembly', 'Testing', 'Packaging', 'Logistics', 'Quality Control', 'Other'];
 const STATUSES = ['Working', 'On Break', 'Completed', 'Reassigned', 'Inactive'];
@@ -23,6 +24,7 @@ function ManufacturingPage() {
   const [summary, setSummary] = useState(null);
   const [staff, setStaff] = useState([]);
   const [products, setProducts] = useState([]);
+  const [productions, setProductions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('list'); // list | create | edit
   const [selectedAssignment, setSelectedAssignment] = useState(null);
@@ -33,6 +35,8 @@ function ManufacturingPage() {
   const [staffId, setStaffId] = useState('');
   const [sector, setSector] = useState(SECTORS[0]);
   const [productId, setProductId] = useState('');
+  const [productionId, setProductionId] = useState('');
+  const [completedQuantity, setCompletedQuantity] = useState('0');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [status, setStatus] = useState(STATUSES[0]);
@@ -48,16 +52,18 @@ function ManufacturingPage() {
     setLoading(true);
     setError('');
     try {
-      const [assignResult, staffResult, productResult, summaryResult] = await Promise.all([
+      const [assignResult, staffResult, productResult, summaryResult, prodResult] = await Promise.all([
         getAllAssignments(),
         getAllStaff(),
         getProducts(),
         getManufacturingSummary(),
+        getAllProduction(),
       ]);
       setAssignments(assignResult.data?.assignments || assignResult.data || []);
       setStaff(staffResult.data?.staff || staffResult.data || []);
       setProducts(productResult.data?.products || productResult.data || []);
       setSummary(summaryResult.data || null);
+      setProductions(prodResult.data?.production_records || prodResult.data?.productions || []);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load data.');
     } finally {
@@ -70,7 +76,9 @@ function ManufacturingPage() {
     setStaffId(staff[0]?.id || '');
     setSector(SECTORS[0]);
     setProductId(products[0]?.id || '');
-    setStartDate('');
+    setProductionId('');
+    setCompletedQuantity('0');
+    setStartDate(new Date().toISOString().slice(0, 10));
     setEndDate('');
     setStatus(STATUSES[0]);
     setShift(SHIFTS[0]);
@@ -84,12 +92,24 @@ function ManufacturingPage() {
     setStaffId(assignment.staff_id || '');
     setSector(assignment.sector || SECTORS[0]);
     setProductId(assignment.product_id || '');
+    setProductionId(assignment.production_id ? String(assignment.production_id) : '');
+    setCompletedQuantity(String(assignment.completed_quantity || 0));
     setStartDate(assignment.start_date ? assignment.start_date.slice(0, 10) : '');
     setEndDate(assignment.end_date ? assignment.end_date.slice(0, 10) : '');
     setStatus(assignment.status || STATUSES[0]);
     setShift(assignment.shift || SHIFTS[0]);
     setNotes(assignment.notes || '');
     setView('edit');
+  }
+
+  function handleProductionChange(prodId) {
+    setProductionId(prodId);
+    if (prodId) {
+      const chosenProd = productions.find((p) => String(p.id) === String(prodId));
+      if (chosenProd && chosenProd.product_id) {
+        setProductId(chosenProd.product_id);
+      }
+    }
   }
 
   async function handleFormSubmit(event) {
@@ -100,6 +120,8 @@ function ManufacturingPage() {
       staff_id: staffId,
       sector,
       product_id: productId || null,
+      production_id: productionId ? parseInt(productionId, 10) : null,
+      completed_quantity: parseInt(completedQuantity, 10) || 0,
       start_date: startDate || null,
       end_date: endDate || null,
       status,
@@ -109,10 +131,10 @@ function ManufacturingPage() {
     try {
       if (view === 'edit' && selectedAssignment) {
         await updateAssignment(selectedAssignment.id, data);
-        setSuccessMessage('Assignment updated!');
+        setSuccessMessage('Assignment updated successfully!');
       } else {
         await createAssignment(data);
-        setSuccessMessage('Assignment created!');
+        setSuccessMessage('Assignment created and linked to production batch!');
       }
       setView('list');
       loadAll();
@@ -147,12 +169,17 @@ function ManufacturingPage() {
     return s ? `${s.first_name} ${s.last_name}` : `#${id}`;
   }
 
+  function getProductName(id) {
+    const p = products.find((pr) => String(pr.id) === String(id));
+    return p ? p.name : (id ? `#${id}` : '-');
+  }
+
   return (
     <div>
       <div className="page-header">
         <div>
           <h1>🔧 Manufacturing</h1>
-          <div className="page-header-sub">Manage sector assignments and shift schedules</div>
+          <div className="page-header-sub">Manage sector assignments, shift schedules, and batch progress</div>
         </div>
         {hasPermission('manufacturing.create') && view === 'list' && (
           <button className="btn btn-primary" onClick={openCreate}>+ New Assignment</button>
@@ -198,10 +225,12 @@ function ManufacturingPage() {
                     <tr>
                       <th>Staff</th>
                       <th>Sector</th>
+                      <th>Product</th>
+                      <th>Production Batch</th>
+                      <th>Completed Units</th>
                       <th>Shift</th>
                       <th>Status</th>
                       <th>Start Date</th>
-                      <th>End Date</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -210,6 +239,17 @@ function ManufacturingPage() {
                       <tr key={a.id}>
                         <td>{getStaffName(a.staff_id)}</td>
                         <td>{a.sector}</td>
+                        <td>{getProductName(a.product_id)}</td>
+                        <td>
+                          {a.production_id ? (
+                            <span className="badge badge-primary">Batch #{a.production_id}</span>
+                          ) : (
+                            <span style={{ color: 'var(--color-text-muted, #64748b)' }}>-</span>
+                          )}
+                        </td>
+                        <td>
+                          <strong>{a.completed_quantity || 0}</strong>
+                        </td>
                         <td>{a.shift}</td>
                         <td>
                           <span className={`badge badge-${a.status?.toLowerCase().replace(' ', '') || 'working'}`}>
@@ -217,7 +257,6 @@ function ManufacturingPage() {
                           </span>
                         </td>
                         <td>{a.start_date ? new Date(a.start_date).toLocaleDateString() : '-'}</td>
-                        <td>{a.end_date ? new Date(a.end_date).toLocaleDateString() : '-'}</td>
                         <td>
                           <div className="table-actions">
                             {hasPermission('manufacturing.edit') && (
@@ -266,6 +305,23 @@ function ManufacturingPage() {
               </div>
 
               <div className="form-group">
+                <label className="form-label" htmlFor="mfg-production">Production Batch (optional)</label>
+                <select
+                  id="mfg-production"
+                  className="form-select"
+                  value={productionId}
+                  onChange={(e) => handleProductionChange(e.target.value)}
+                >
+                  <option value="">-- None (Standalone Line) --</option>
+                  {productions.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      Batch #{p.id} - {p.product_name || getProductName(p.product_id)} (Target: {p.quantity_planned}, Done: {p.quantity_completed})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
                 <label className="form-label" htmlFor="mfg-product">Product (optional)</label>
                 <select id="mfg-product" className="form-select" value={productId}
                   onChange={(e) => setProductId(e.target.value)}>
@@ -274,6 +330,19 @@ function ManufacturingPage() {
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
                 </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="mfg-completed">Completed Units</label>
+                <input
+                  id="mfg-completed"
+                  type="number"
+                  className="form-input"
+                  min="0"
+                  value={completedQuantity}
+                  onChange={(e) => setCompletedQuantity(e.target.value)}
+                  placeholder="0"
+                />
               </div>
 
               <div className="form-group">
@@ -308,7 +377,7 @@ function ManufacturingPage() {
             <div className="form-group">
               <label className="form-label" htmlFor="mfg-notes">Notes</label>
               <textarea id="mfg-notes" className="form-textarea" value={notes}
-                onChange={(e) => setNotes(e.target.value)} />
+                onChange={(e) => setNotes(e.target.value)} placeholder="Shift notes or manufacturing remarks…" />
             </div>
 
             <div className="form-actions">

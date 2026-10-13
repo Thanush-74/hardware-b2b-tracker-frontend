@@ -20,6 +20,7 @@ const PAGE_TITLES = {
   '/returns':       'Returns & Replacement',
   '/staff':         'Staff Management',
   '/roles':         'Roles & Permissions',
+  '/revenue':       'Revenue Management',
   '/expenses':      'Expenses & Financials',
   '/inspections':   'Quality Inspection',
   '/notifications': 'Notifications',

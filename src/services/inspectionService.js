@@ -31,6 +31,12 @@ export async function updateInspection(id, data) {
   return response.data;
 }
 
+// PUT /api/inspections/:id/approve  — approve inspection and post accepted units to inventory
+export async function approveInspection(id) {
+  const response = await api.put(`/inspections/${id}/approve`);
+  return response.data;
+}
+
 // DELETE /api/inspections/:id  — delete an inspection
 export async function deleteInspection(id) {
   const response = await api.delete(`/inspections/${id}`);

@@ -1,5 +1,5 @@
 // InspectionsPage.jsx — Quality Inspection management
-// Covers summary, list, create, edit, and delete
+// Connects inspection records to Production Batches and directly updates sellable Inventory upon approval
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -8,12 +8,14 @@ import {
   getAllInspections,
   createInspection,
   updateInspection,
+  approveInspection,
   deleteInspection,
 } from '../services/inspectionService';
 import { getAllStaff } from '../services/staffService';
 import { getProducts } from '../services/productService';
+import { getAllProduction } from '../services/productionService';
 
-const ITEM_TYPES = ['Finished Good', 'Raw Material', 'Return', 'Production Batch'];
+const ITEM_TYPES = ['Finished Good', 'Production Batch', 'Raw Material', 'Return'];
 const RESULTS = ['Pending', 'Passed', 'Failed', 'Repairable', 'Replacement Required', 'Approved'];
 const SEVERITIES = ['Low', 'Medium', 'High', 'Critical'];
 
@@ -23,6 +25,7 @@ function InspectionsPage() {
   const [summary, setSummary] = useState(null);
   const [staff, setStaff] = useState([]);
   const [products, setProducts] = useState([]);
+  const [productions, setProductions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('list'); // list | create | edit
   const [selectedInspection, setSelectedInspection] = useState(null);
@@ -32,6 +35,7 @@ function InspectionsPage() {
   // Form fields
   const [inspectorId, setInspectorId] = useState('');
   const [productId, setProductId] = useState('');
+  const [productionId, setProductionId] = useState('');
   const [inspectionDate, setInspectionDate] = useState('');
   const [itemType, setItemType] = useState(ITEM_TYPES[0]);
   const [batchNumber, setBatchNumber] = useState('');
@@ -43,6 +47,7 @@ function InspectionsPage() {
   const [severity, setSeverity] = useState(SEVERITIES[0]);
   const [notes, setNotes] = useState('');
   const [formLoading, setFormLoading] = useState(false);
+  const [approvingId, setApprovingId] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -52,16 +57,18 @@ function InspectionsPage() {
     setLoading(true);
     setError('');
     try {
-      const [inspResult, staffResult, productResult, summaryResult] = await Promise.all([
+      const [inspResult, staffResult, productResult, summaryResult, prodResult] = await Promise.all([
         getAllInspections(),
         getAllStaff(),
         getProducts(),
         getInspectionSummary(),
+        getAllProduction(),
       ]);
       setInspections(inspResult.data?.inspections || inspResult.data || []);
       setStaff(staffResult.data?.staff || staffResult.data || []);
       setProducts(productResult.data?.products || productResult.data || []);
       setSummary(summaryResult.data || null);
+      setProductions(prodResult.data?.production_records || prodResult.data?.productions || []);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load inspections.');
     } finally {
@@ -72,11 +79,16 @@ function InspectionsPage() {
   function resetForm() {
     setInspectorId(staff[0]?.id || '');
     setProductId('');
+    setProductionId('');
     setInspectionDate(new Date().toISOString().slice(0, 10));
     setItemType(ITEM_TYPES[0]);
     setBatchNumber('');
-    setQtyInspected('1'); setQtyPassed('0'); setQtyFailed('0');
-    setResult(RESULTS[0]); setDefectType(''); setSeverity(SEVERITIES[0]);
+    setQtyInspected('1');
+    setQtyPassed('0');
+    setQtyFailed('0');
+    setResult(RESULTS[0]);
+    setDefectType('');
+    setSeverity(SEVERITIES[0]);
     setNotes('');
   }
 
@@ -90,6 +102,7 @@ function InspectionsPage() {
     setSelectedInspection(inspection);
     setInspectorId(inspection.inspector_id || '');
     setProductId(inspection.product_id || '');
+    setProductionId(inspection.production_id ? String(inspection.production_id) : '');
     setInspectionDate(inspection.inspection_date ? inspection.inspection_date.slice(0, 10) : '');
     setItemType(inspection.item_type || ITEM_TYPES[0]);
     setBatchNumber(inspection.batch_number || '');
@@ -103,10 +116,27 @@ function InspectionsPage() {
     setView('edit');
   }
 
+  function handleProductionChange(prodId) {
+    setProductionId(prodId);
+    if (prodId) {
+      const p = productions.find((pr) => String(pr.id) === String(prodId));
+      if (p) {
+        if (p.product_id) setProductId(p.product_id);
+        if (p.quantity_completed > 0) {
+          setQtyInspected(String(p.quantity_completed));
+          setQtyPassed(String(p.quantity_completed));
+          setQtyFailed('0');
+        }
+        setItemType('Production Batch');
+      }
+    }
+  }
+
   function buildFormData() {
     return {
       inspector_id: inspectorId,
       product_id: productId || null,
+      production_id: productionId ? parseInt(productionId, 10) : null,
       inspection_date: inspectionDate,
       item_type: itemType,
       batch_number: batchNumber.trim() || null,
@@ -126,7 +156,7 @@ function InspectionsPage() {
     setError('');
     try {
       await createInspection(buildFormData());
-      setSuccessMessage('Inspection created!');
+      setSuccessMessage('Inspection created successfully!');
       setView('list');
       loadData();
       setTimeout(() => setSuccessMessage(''), 4000);
@@ -143,7 +173,7 @@ function InspectionsPage() {
     setError('');
     try {
       await updateInspection(selectedInspection.id, buildFormData());
-      setSuccessMessage('Inspection updated!');
+      setSuccessMessage('Inspection updated successfully!');
       setView('list');
       loadData();
       setTimeout(() => setSuccessMessage(''), 4000);
@@ -151,6 +181,21 @@ function InspectionsPage() {
       setError(err.response?.data?.message || 'Failed to update inspection.');
     } finally {
       setFormLoading(false);
+    }
+  }
+
+  async function handleApprove(insp) {
+    setApprovingId(insp.id);
+    setError('');
+    try {
+      await approveInspection(insp.id);
+      setSuccessMessage(`Inspection #${insp.id} approved! Exactly ${insp.passed_quantity} units added to sellable inventory.`);
+      loadData();
+      setTimeout(() => setSuccessMessage(''), 5000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to approve inspection.');
+    } finally {
+      setApprovingId(null);
     }
   }
 
@@ -178,8 +223,11 @@ function InspectionsPage() {
 
   function resultBadge(res) {
     const map = {
-      'Passed': 'badge-delivered', 'Failed': 'badge-inactive', 'Pending': 'badge-pending',
-      'Approved': 'badge-active', 'Repairable': 'badge-processing',
+      'Passed': 'badge-delivered',
+      'Failed': 'badge-inactive',
+      'Pending': 'badge-pending',
+      'Approved': 'badge-active',
+      'Repairable': 'badge-processing',
       'Replacement Required': 'badge-shipped',
     };
     return <span className={`badge ${map[res] || 'badge-pending'}`}>{res}</span>;
@@ -200,6 +248,20 @@ function InspectionsPage() {
               ))}
             </select>
           </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="insp-production">Production Batch (optional)</label>
+            <select id="insp-production" className="form-select" value={productionId}
+              onChange={(e) => handleProductionChange(e.target.value)}>
+              <option value="">-- None (Standalone Inspection) --</option>
+              {productions.map((p) => (
+                <option key={p.id} value={p.id}>
+                  Batch #{p.id} - {p.product_name || getProductName(p.product_id)} (Completed: {p.quantity_completed}/{p.quantity_planned})
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="form-group">
             <label className="form-label" htmlFor="insp-product">Product (optional)</label>
             <select id="insp-product" className="form-select" value={productId}
@@ -210,11 +272,13 @@ function InspectionsPage() {
               ))}
             </select>
           </div>
+
           <div className="form-group">
             <label className="form-label" htmlFor="insp-date">Inspection Date *</label>
             <input id="insp-date" type="date" className="form-input" value={inspectionDate}
               onChange={(e) => setInspectionDate(e.target.value)} required />
           </div>
+
           <div className="form-group">
             <label className="form-label" htmlFor="insp-type">Item Type</label>
             <select id="insp-type" className="form-select" value={itemType}
@@ -222,26 +286,31 @@ function InspectionsPage() {
               {ITEM_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
+
           <div className="form-group">
-            <label className="form-label" htmlFor="insp-batch">Batch Number</label>
+            <label className="form-label" htmlFor="insp-batch">Batch Number / Serial</label>
             <input id="insp-batch" type="text" className="form-input" value={batchNumber}
-              onChange={(e) => setBatchNumber(e.target.value)} placeholder="Optional batch ID" />
+              onChange={(e) => setBatchNumber(e.target.value)} placeholder="e.g. BATCH-2026-001" />
           </div>
+
           <div className="form-group">
-            <label className="form-label" htmlFor="insp-qty">Qty Inspected</label>
+            <label className="form-label" htmlFor="insp-qty">Qty Inspected *</label>
             <input id="insp-qty" type="number" className="form-input" value={qtyInspected}
-              onChange={(e) => setQtyInspected(e.target.value)} min="1" />
+              onChange={(e) => setQtyInspected(e.target.value)} min="1" required />
           </div>
+
           <div className="form-group">
             <label className="form-label" htmlFor="insp-passed">Qty Passed</label>
             <input id="insp-passed" type="number" className="form-input" value={qtyPassed}
               onChange={(e) => setQtyPassed(e.target.value)} min="0" />
           </div>
+
           <div className="form-group">
             <label className="form-label" htmlFor="insp-failed">Qty Failed</label>
             <input id="insp-failed" type="number" className="form-input" value={qtyFailed}
               onChange={(e) => setQtyFailed(e.target.value)} min="0" />
           </div>
+
           <div className="form-group">
             <label className="form-label" htmlFor="insp-result">Result</label>
             <select id="insp-result" className="form-select" value={result}
@@ -249,6 +318,7 @@ function InspectionsPage() {
               {RESULTS.map((r) => <option key={r} value={r}>{r}</option>)}
             </select>
           </div>
+
           <div className="form-group">
             <label className="form-label" htmlFor="insp-severity">Severity</label>
             <select id="insp-severity" className="form-select" value={severity}
@@ -256,17 +326,20 @@ function InspectionsPage() {
               {SEVERITIES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
+
           <div className="form-group">
             <label className="form-label" htmlFor="insp-defect">Defect Type</label>
             <input id="insp-defect" type="text" className="form-input" value={defectType}
-              onChange={(e) => setDefectType(e.target.value)} placeholder="e.g. Soldering defect" />
+              onChange={(e) => setDefectType(e.target.value)} placeholder="e.g. Memory timing failure, Solder bridge" />
           </div>
         </div>
+
         <div className="form-group">
           <label className="form-label" htmlFor="insp-notes">Notes</label>
           <textarea id="insp-notes" className="form-textarea" value={notes}
-            onChange={(e) => setNotes(e.target.value)} />
+            onChange={(e) => setNotes(e.target.value)} placeholder="Inspection notes or QA remarks…" />
         </div>
+
         <div className="form-actions">
           <button type="button" className="btn btn-outline" onClick={() => setView('list')} disabled={formLoading}>Cancel</button>
           <button type="submit" className="btn btn-primary" disabled={formLoading}>
@@ -282,7 +355,7 @@ function InspectionsPage() {
       <div className="page-header">
         <div>
           <h1>🔍 Quality Inspection</h1>
-          <div className="page-header-sub">Log and track hardware quality inspections</div>
+          <div className="page-header-sub">Log, verify hardware quality, and approve units for sellable stock</div>
         </div>
         {hasPermission('inspection.create') && view === 'list' && (
           <button className="btn btn-primary" onClick={openCreate}>+ New Inspection</button>
@@ -294,7 +367,7 @@ function InspectionsPage() {
 
       {/* Summary */}
       {view === 'list' && summary && (
-      <div className="stat-grid">
+        <div className="stat-grid">
           <div className="stat-card">
             <div className="stat-card-label">Total Inspections</div>
             <div className="stat-card-value">{summary.total || 0}</div>
@@ -316,7 +389,6 @@ function InspectionsPage() {
             <div className="stat-card-value">{summary.pending || 0}</div>
           </div>
         </div>
-
       )}
 
       {view === 'list' && (
@@ -337,11 +409,11 @@ function InspectionsPage() {
                       <th>ID</th>
                       <th>Inspector</th>
                       <th>Product</th>
+                      <th>Batch</th>
                       <th>Date</th>
-                      <th>Item Type</th>
                       <th>Inspected / Pass / Fail</th>
                       <th>Result</th>
-                      <th>Severity</th>
+                      <th>Stock Posted</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -351,13 +423,34 @@ function InspectionsPage() {
                         <td>#{insp.id}</td>
                         <td>{getStaffName(insp.inspector_id)}</td>
                         <td>{getProductName(insp.product_id)}</td>
+                        <td>
+                          {insp.production_id ? (
+                            <span className="badge badge-primary">Batch #{insp.production_id}</span>
+                          ) : (
+                            insp.batch_number || '-'
+                          )}
+                        </td>
                         <td>{new Date(insp.inspection_date).toLocaleDateString()}</td>
-                        <td>{insp.item_type}</td>
                         <td>{insp.quantity_inspected} / {insp.passed_quantity} / {insp.failed_quantity}</td>
                         <td>{resultBadge(insp.result)}</td>
-                        <td>{insp.severity}</td>
+                        <td>
+                          {insp.inventory_posted ? (
+                            <span className="badge badge-active">✔ Added to Stock</span>
+                          ) : (
+                            <span style={{ color: 'var(--color-text-muted, #64748b)', fontSize: '0.85rem' }}>Pending Approval</span>
+                          )}
+                        </td>
                         <td>
                           <div className="table-actions">
+                            {!insp.inventory_posted && insp.passed_quantity > 0 && insp.result !== 'Failed' && hasPermission('inspection.edit') && (
+                              <button
+                                className="btn btn-primary btn-sm"
+                                onClick={() => handleApprove(insp)}
+                                disabled={approvingId === insp.id}
+                              >
+                                {approvingId === insp.id ? 'Approving…' : '✔ Approve & Add Stock'}
+                              </button>
+                            )}
                             {hasPermission('inspection.edit') && (
                               <button className="btn btn-outline btn-sm" onClick={() => openEdit(insp)}>Edit</button>
                             )}

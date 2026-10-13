@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { updateProduct } from '../../services/productService';
 
-const PRODUCT_TYPES = ['GPU', 'RAM', 'ROM', 'Motherboard'];
+const PRODUCT_TYPES = ['GPU', 'RAM', 'ROM/SSD', 'Motherboard', 'Power Supply', 'Cooling / Thermal', 'Chassis / Case'];
 
 function EditProduct({ product, onSuccess, onCancel }) {
   // Support canonical types + existing product's current type if custom
